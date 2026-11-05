@@ -85,7 +85,9 @@ aside{display:flex;flex-direction:column;gap:14px;min-width:0}
 #trans .cf{position:absolute;width:8px;height:8px;top:-10px;animation:cfall 1.8s linear forwards}
 @keyframes cfall{to{transform:translateY(105vh) rotate(540deg)}}
 @media(prefers-reduced-motion:reduce){.modal:not([hidden])>.sheet,#trans .banner,#trans .cf{animation:none}}
-.photo{background:#0b0e1e;padding:6px;display:flex;justify-content:center}
+.photo{background:#0b0e1e;padding:6px;display:flex;justify-content:center}.photo[hidden]{display:none}
+/* режим «на весь экран»: только поле и нижняя панель */
+html.fs body{padding:0}html.fs .wrap{gap:0}html.fs .wrap>header,html.fs #netbar{display:none!important}html.fs .stage>.frame{margin:0 auto!important}
 .photo canvas{width:min(240px,60vw);height:auto;display:block}
 #treebox,#gearbox,#epibox,#invbox,#photobox{position:fixed;z-index:20;padding:12px}
 #invbox .slot{width:84px;height:84px}#invbox .slot span{font-size:10px}#invbox .slots{min-height:40px}
@@ -100,8 +102,6 @@ aside{display:flex;flex-direction:column;gap:14px;min-width:0}
 .treeside{flex:0 0 32%;background:#0b0e1e;padding:4px}
 .treeside canvas{width:100%;height:auto;display:block}
 .treemsg{margin:0;font-size:14px;color:var(--cream);min-height:1.5em}
-.gearhelp{background:#151a33;box-shadow:inset 0 0 0 2px var(--gold);padding:10px 14px;font-size:14px;line-height:1.45}
-.gearhelp ol{margin:6px 0 8px;padding-left:20px;display:flex;flex-direction:column;gap:4px}.gearhelp b{color:var(--gold)}
 .gearrow{display:flex;flex-wrap:wrap;gap:8px}
 .tray{display:flex;flex-wrap:wrap;gap:6px;min-height:56px}
 .tray button{width:56px;height:56px;padding:4px;background:var(--panel2);border:0;box-shadow:0 0 0 2px #0b0e1e;cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -189,6 +189,7 @@ aside{display:flex;flex-direction:column;gap:14px;min-width:0}
             <button class="btn notesbtn" id="photobtn" hidden>Фото ёлки</button>
             <button class="btn notesbtn" id="invbtn">Инвентарь</button>
             <button class="btn notesbtn" id="helpbtn" type="button">Как играть</button>
+            <button class="btn notesbtn" id="fsbtn" type="button" title="Игра на весь экран">Весь экран</button>
             <button class="btn notesbtn" id="notesbtn">Записки <span id="nc">0</span></button>
           </div>
         </div>
@@ -243,20 +244,11 @@ aside{display:flex;flex-direction:column;gap:14px;min-width:0}
       <div class="modal" id="gearbox" hidden>
         <div class="sheet treesheet">
           <h3>Механизм часов: вставьте найденные шестерёнки</h3>
-          <div class="gearhelp" id="gearhelp" hidden>
-            <b>Как починить часы</b>
-            <ol>
-              <li>По башне спрятаны <b>6 шестерёнок</b>. Каждую видит только тот, кто её нашёл.</li>
-              <li>Подойдите к механизму и <b>нажмите на свою шестерёнку внизу</b>: она сама встанет на своё место.</li>
-              <li>Когда встанут все шестерёнки, стрелки пойдут и откроется дверь к конюшне.</li>
-            </ol>
-            <button class="btn go" type="button" id="gearhelpok">Понятно</button>
-          </div>
           <canvas id="gearcv" width="1152" height="768" aria-label="Механизм часов"></canvas>
           <p class="treemsg" id="gearmsg"></p>
           <div class="tray" id="geartray"></div>
           <p class="treemsg" id="gearothers" style="color:var(--muted);font-size:13px"></p>
-          <div class="gearrow"><button class="btn ghost" type="button" id="gearclose">Отойти от механизма</button><button class="btn ghost" type="button" id="gearhelpbtn">Как это работает?</button></div>
+          <div class="gearrow"><button class="btn ghost" type="button" id="gearclose">Отойти от механизма</button></div>
         </div>
       </div>
       <div class="modal" id="epibox" hidden>
@@ -1254,7 +1246,7 @@ function renderSide(){
   else if(levelOf(ROOM)==='kitchen'&&sk){document.getElementById('pcl').textContent='Пряники';document.getElementById('pc').textContent=sk.done?'готовы':'в миске '+sk.bowl.length+'/5'}
   else if(ROOM==='loft'||ROOM==='forge'){document.getElementById('pcl').textContent='Упряжка';document.getElementById('pc').textContent=(ss?Object.keys(ss.slot).length:0)+'/8'}
   else if(ROOM==='boss'&&sb){document.getElementById('pcl').textContent=sb.phase==='win'?'Королева':'Жезлы';document.getElementById('pc').textContent=sb.phase==='win'?'побеждена':sb.wands.filter(w=>w.owner!==null).length+'/6'}
-  else if(ROOM==='clock'&&sc){document.getElementById('pcl').textContent=sc.done?'Часы':'Шестерёнки';document.getElementById('pc').textContent=sc.done?'идут':GUSED.filter(i=>sc.g[i].peg).length+'/6'}
+  else if(ROOM==='clock'&&sc){document.getElementById('pcl').textContent=sc.done?'Часы':'Шестерёнки';document.getElementById('pc').textContent=sc.done?'идут':GUSED.filter(i=>sc.g[i].owner!==null).length+'/6'}
   else if(ROOM==='obs'){document.getElementById('pcl').textContent='Луч';document.getElementById('pc').textContent=(so?so.passed:0)+'/4'}
   else if(ROOM==='stable'){document.getElementById('pcl').textContent='Упряжка';document.getElementById('pc').textContent=(ss?Object.keys(ss.slot).length:0)+'/8'}
   else if(ROOM==='work'){document.getElementById('pcl').textContent='Подарки';document.getElementById('pc').textContent=(sw?sw.boxes.filter(b=>b.done).length:0)+'/8'}
@@ -1449,7 +1441,7 @@ const ITEMS_W=[
  {x:205,y:66,hit:[176, 3, 53, 40],act(){if(sw.high)return'На стеллаже игрушки на следующий год.';if(!has('стремянка'))return'Стеллаж с игрушками. До верхней полки не дотянуться.';
    sw.high=true;drop('стремянка');take('табличка «Ева»');return'Со стремянки достали табличку «Ева» и… '+letter('Ева')}},
  {x:226,y:66,hit:[229, 40, 8, 25],act(){if(sw.behind)return'За стеллажом только пыль.';sw.behind=true;take('табличка «Гоша»');return'За стеллажом застряла табличка «Гоша»!'}},
- {x:236,y:80,hit:[233, 19, 19, 56],act(){if(sw.ladder)return'Тут стояла стремянка.';sw.ladder=true;take('стремянка');return'Вы взяли стремянку.'}},
+ {x:236,y:80,hit:[232, 24, 21, 52],act(){if(sw.ladder)return'Тут стояла стремянка. Её уже взяли.';sw.ladder=true;take('стремянка');return'Вы взяли стремянку.'}},
  {x:210,y:98,hit:[215, 76, 30, 35],act(){if(sw.sack)return'Пусто. Подарки уже на конвейере.';sw.sack=true;return'Сверху в мешке лежит конверт… '+letter('Алиса')}},
  {x:36,y:132,hit:[1, 112, 30, 28],act(){if(sw.junk)return'Заяц без уха, мяч без воздуха и грустный робот.';sw.junk=true;return'Под зайцем без уха лежит конверт… '+letter('Лёва')}},
  {x:18,y:90,hit:[7, 81, 21, 19],act(){if(sw.mat)return'Под ковриком больше ничего.';sw.mat=true;return'Под ковриком у входа конверт… '+letter('Гоша')}},
@@ -2117,6 +2109,8 @@ function hdWorkImg(t,dt){
   // движение ленты
   if(sw.running){const off=(t*12)%8;for(let s=0;s<LOOPLEN;s+=8){const [x,y]=loopPos(s+off);g.fillStyle='rgba(30,18,10,.35)';g.fillRect(x*2-1,y*2-1,3,3)}
     g.save();g.globalCompositeOperation='screen';glow(g,IX(612),IY(522),18+2*Math.sin(t*6),'rgba(255,150,60,.55)');glow(g,IX(945),IY(565),10,'rgba(255,170,80,.5)');g.restore()}
+  // стремянка у правой стены (на фоне её нет: пропадает, когда её взяли)
+  if(!sw.ladder&&okI(ICOIMG['стремянка'])){g.save();g.imageSmoothingEnabled=true;g.drawImage(ICOIMG['стремянка'],IX(1385),IY(140),IX(125),IY(295));g.restore()}
   // шкафчик: замок со значками / открыт
   if(sw.locker)gp('w_locker');
   // доска заказов: листок с цифрами
@@ -2455,7 +2449,7 @@ const INTRO={
  stable:{n:4,t:'Конюшня',d:'Санте нужны сани. Узнайте, какой олень в каком стойле, подкуйте хромого и запрягите всех восьмерых по правилам Санты.',l:[]},
  kitchen:{n:5,t:'Пряничная кухня',d:'Олени запряжены, но до дворца Королевы им не долететь. Помогут только волшебные пряники миссис Клаус. Королева заморозила книгу рецептов, уцелели лишь отдельные страницы. Испеките пряники по рецепту. Кухня, кладовая и погреб связаны дверью и люком.',l:[]},
  obs:{n:6,t:'Обсерватория',d:'Сани готовы, олени сыты. Но где замок Снежной Королевы? Дорогу к нему покажет только северное сияние. Откройте купол и направьте луч звезды через зеркала в кристалл.',l:[]},
- clock:{n:3,t:'Часовая башня',d:'Королева остановила главные часы Северного полюса: пока они стоят, полночь не наступит. Найдите в башне 6 шестерёнок и вставьте их в механизм на стене.',l:[]},
+ clock:{n:3,t:'Часовая башня',d:'Королева остановила главные часы Северного полюса: пока они стоят, полночь не наступит. Найдите в башне 6 шестерёнок и вставьте их в механизм на стене, каждую в контур своего размера.',l:[]},
  boss:{n:7,t:'Ледяной дворец',d:'Санта вморожен в лёд рядом с троном Снежной Королевы. Обычным оружием её не победить. Найдите световые жезлы, вмёрзшие в лёд по всему залу, и все вместе сразитесь с Королевой. У каждого три жизни. Кто попал под ледяные колья, теряет жизнь, а без жизней замерзает. Замёрзшего отогревают только всей командой: встаньте вокруг него и держитесь рядом, пока лёд не растает.',l:[]}
 };
 const introBox=document.getElementById('introbox');
@@ -2478,8 +2472,8 @@ const GSIZE=['S','S','M','M','L','L','XL','XL'];
 // штырьки и закреплённые шестерёнки, координаты панели 1536x1024
 const PEGS={a:[666,424],b:[833,363],c:[1033,363],d:[682,652],e:[851,681],f:[1000,668],u:[850,850],w:[1300,530],x:[784,530],y:[1036,522],z:[1270,180]};
 const PEGCOL={a:'#c8333a',b:'#3a6fc4',c:'#2f8a4e',d:'#d9b45a',e:'#8a4ec4',f:'#e8ecf2',u:'#2f8a4e',w:'#c8333a',x:'#e07a2a',y:'#3a6fc4',z:'#d9b45a'};
-// упрощённая версия: у каждой нужной шестерёнки своё место, она встаёт туда сама (шестерёнки 5 и 7 не используются)
-const GTARGET={0:'a',1:'f',2:'d',3:'c',4:'e',6:'b'};const GUSED=Object.keys(GTARGET).map(Number);
+// упрощённая версия: в механизме нарисованы контуры 6 нужных шестерёнок, шестерёнка встаёт в контур своего размера (шестерёнки 5 и 7 не используются)
+const GTARGET={0:'a',1:'f',2:'d',3:'c',4:'e',6:'b'};const TSIZE={};for(const i in GTARGET)TSIZE[GTARGET[i]]=GSIZE[i];const GUSED=Object.keys(GTARGET).map(Number);
 const GFIX={D:{c:[560,530],s:'L',img:5},H:{c:[1167,301],s:'M',img:3},N:{c:[1141,720],s:'L',img:4}};
 let sc;
 function freshC(){return{pen:0,g:GSIZE.map(()=>({owner:null,peg:null})),chest:false,rug:false,loft:false,shelf:false,jar:false,bench:false,drawer:false,bp:false,done:false,doneT:0,ang:{}}}
@@ -2504,7 +2498,7 @@ const ITEMS_C=[
  {x:122,y:108,hit:[108,78,30,10],act(){if(sc.bench)return'На верстаке гайки и винтики.';sc.bench=true;return'Среди деталей на верстаке '+gotGear(2)+'! Её видите только вы.'}},
  {x:99,y:108,hit:[90,88,18,17],act(){if(sc.drawer)return'Ящик пуст.';sc.drawer=true;return'В ящике верстака '+gotGear(4)+'! Её видите только вы.'}},
  {x:164,y:108,hit:[155,88,18,17],act(){return'Отвёртки, пинцеты и пружины.'}},
- {x:152,y:108,hit:[142,60,23,16],act(){if(!sc.bp){sc.bp=true;TEAM.notes.push({t:'Записка на чертеже',b:'«Сундук часовщика: сколько гирь висит в башне, сколько ламп горит, сколько заснеженных окон. Считайте окна целиком, а не стёкла: окно из шести стёкол — одно окно»'});renderSide()}
+ {x:152,y:108,hit:[142,60,23,16],act(){if(!sc.bp){sc.bp=true;TEAM.notes.push({t:'Записка на чертеже',b:'«Сундук часовщика: сколько гирь висит в башне, сколько ламп горит, сколько маятников»'});renderSide()}
    return'Чертёж часового механизма. В углу приписка про сундук, она теперь в «Записках».'}},
  {x:130,y:114,hit:[103,104,57,8],hidden:true,act(){if(sc.rug)return'Под ковриком больше ничего.';sc.rug=true;return'Под ковриком лежала '+gotGear(3)+'! Её видите только вы.'}},
  {x:188,y:108,hit:[177,88,22,15],act(){if(sc.chest)return'Сундук пуст.';
@@ -2531,25 +2525,21 @@ function hdClockLight(t){
 // ---------- механизм крупным планом ----------
 const gearBox=document.getElementById('gearbox'),gcv=document.getElementById('gearcv'),gmsg=document.getElementById('gearmsg');
 let gearSel=null,gearRaf=0,gearLast=0;
-let gearHelpSeen=false;
-function gearHelp(on){document.getElementById('gearhelp').hidden=!on;if(on){gearHelpSeen=true;setTimeout(()=>document.getElementById('gearhelpok').focus(),30)}}
-document.getElementById('gearhelpok').addEventListener('click',()=>{gearHelp(false);document.getElementById('gearclose').focus()});
-document.getElementById('gearhelpbtn').addEventListener('click',()=>gearHelp(document.getElementById('gearhelp').hidden));
-function openGears(){gearSel=null;gearBox.hidden=false;const fh=!gearHelpSeen&&!sc.done;gearHelp(fh);keys.clear();gmsg.textContent=sc.done?'Часы идут!':'Нажмите на свою шестерёнку внизу: она сама встанет на место.';renderGearTray();gearLast=performance.now();cancelAnimationFrame(gearRaf);gearRaf=requestAnimationFrame(drawGears);if(!fh)setTimeout(()=>document.getElementById('gearclose').focus(),30)}
+function openGears(){gearSel=null;gearBox.hidden=false;keys.clear();gmsg.textContent=sc.done?'Часы идут!':'Выберите шестерёнку внизу и нажмите на контур такого же размера.';renderGearTray();gearLast=performance.now();cancelAnimationFrame(gearRaf);gearRaf=requestAnimationFrame(drawGears);setTimeout(()=>document.getElementById('gearclose').focus(),30)}
 function closeGears(){gearBox.hidden=true;cancelAnimationFrame(gearRaf);cv.focus()}
 document.getElementById('gearclose').addEventListener('click',closeGears);
-function placeGear(i){if(sc.done||!(i in GTARGET))return;const o=sc.g[i];if(o.peg)return;o.peg=GTARGET[i];sfx('gear');
-  const left=GUSED.filter(k=>!sc.g[k].peg).length;
+function placeGear(i,peg){if(sc.done||!(i in GTARGET))return;const o=sc.g[i];if(o.peg)return;o.peg=peg;gearSel=null;sfx('gear');
+  const left=Object.keys(TSIZE).filter(p=>!sc.g.some(q=>q.peg===p)).length;
   if(!left){sc.done=true;sfx('level');setTimeout(()=>{for(let k=0;k<3;k++)setTimeout(()=>sfx('bells'),k*500)},400);sc.doneT=performance.now();gmsg.textContent='Все шестерёнки на месте! Часы снова идут к полуночи. Дверь во двор открыта.';
     setTimeout(()=>{closeGears();say(people[me],'Часы пошли! Дверь во двор, к конюшне, открылась.')},2600)}
-  else gmsg.textContent='Шестерёнка встала на место! Осталось '+left+' из 6.';
+  else gmsg.textContent='Шестерёнка встала на место! Осталось '+left+'.';
   renderGearTray();renderSide()}
 function renderGearTray(){const tr=document.getElementById('geartray');tr.innerHTML='';
   const mine=sc.g.map((o,i)=>({o,i})).filter(x=>x.o.owner===me&&!x.o.peg&&(x.i in GTARGET));
   if(!mine.length){const s2=document.createElement('span');s2.className='empty';s2.textContent='У вас нет свободных шестерёнок. Ищите их в башне или спросите у команды.';tr.appendChild(s2)}
-  mine.forEach(({i})=>{const b=document.createElement('button');b.type='button';const nm=GNAME[GSIZE[i]];b.title='Вставить: '+nm+' шестерёнка';b.setAttribute('aria-label','Вставить: '+nm+' шестерёнка');b.setAttribute('aria-pressed',gearSel===i?'true':'false');
+  mine.forEach(({i})=>{const b=document.createElement('button');b.type='button';const nm=GNAME[GSIZE[i]];b.title=nm+' шестерёнка';b.setAttribute('aria-label',nm+' шестерёнка');b.setAttribute('aria-pressed',gearSel===i?'true':'false');
     const im=document.createElement('img');im.src=GIMG[i].src;im.alt='';const sz={S:24,M:32,L:40,XL:48}[GSIZE[i]];im.style.width=sz+'px';im.style.height=sz+'px';b.appendChild(im);
-    b.addEventListener('click',()=>placeGear(i));tr.appendChild(b)});
+    b.addEventListener('click',()=>{gearSel=gearSel===i?null:i;gmsg.textContent=gearSel!==null?'Теперь нажмите на контур такого же размера.':'Выберите шестерёнку внизу и нажмите на контур такого же размера.';renderGearTray()});tr.appendChild(b)});
   const others={};sc.g.forEach(o=>{if(o.owner!==null&&o.owner!==me&&!o.peg)others[o.owner]=(others[o.owner]||0)+1});
   const os=document.getElementById('gearothers');const parts=Object.keys(others).map(k=>OUTFITS[k].name+': '+others[k]);
   os.textContent=parts.length?'Шестерёнки у других: '+parts.join(', ')+'. Попросите их подойти к механизму и вставить.':''}
@@ -2573,12 +2563,18 @@ function drawGears(now){
   // стрелка у гири: она ведёт механизм по часовой
   if(!sc.done){const f=GFIX.D,r=GR[f.s]+22;x.save();x.strokeStyle='rgba(242,193,78,.9)';x.lineWidth=7;x.lineCap='round';x.beginPath();x.arc(f.c[0],f.c[1],r,-Math.PI*.95,-Math.PI*.35);x.stroke();
     const ea=-Math.PI*.35,ex=f.c[0]+Math.cos(ea)*r,ey=f.c[1]+Math.sin(ea)*r;x.fillStyle='rgba(242,193,78,.9)';x.beginPath();x.moveTo(ex+14,ey+2);x.lineTo(ex-10,ey-12);x.lineTo(ex-6,ey+16);x.closePath();x.fill();x.restore()}
-  // пустые места: пунктир размера нужной шестерёнки
-  if(!sc.done){const pul=.5+.5*Math.sin(now/260);for(const i of GUSED){if(sc.g[i].peg)continue;const c=PEGS[GTARGET[i]],r=GR[GSIZE[i]];x.save();x.lineWidth=5;x.setLineDash([14,10]);x.strokeStyle=`rgba(255,240,200,${.35+.3*pul})`;x.beginPath();x.arc(c[0],c[1],r,0,Math.PI*2);x.stroke();x.restore()}}
+  // контуры нужных шестерёнок: игроки сами вставляют шестерёнку в контур её размера
+  if(!sc.done){const pul=.5+.5*Math.sin(now/260),sel=gearSel!==null?GSIZE[gearSel]:null;for(const p in TSIZE){if(sc.g.some(o=>o.peg===p))continue;const c=PEGS[p],r=GR[TSIZE[p]],on=sel===TSIZE[p];
+    x.save();x.lineWidth=on?7:5;x.setLineDash([14,10]);x.strokeStyle=on?`rgba(141,255,176,${.6+.4*pul})`:'rgba(255,240,200,.55)';x.beginPath();x.arc(c[0],c[1],r,0,Math.PI*2);x.stroke();x.restore()}}
   if(sc.done){x.globalCompositeOperation='screen';const gr=x.createRadialGradient(768,512,0,768,512,700);gr.addColorStop(0,'rgba(255,220,140,.25)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,1536,1024);x.globalCompositeOperation='source-over'}
   if(!gearBox.hidden)gearRaf=requestAnimationFrame(drawGears);
 }
-gcv.addEventListener('pointerdown',()=>{if(!sc.done)gmsg.textContent='Нажмите на свою шестерёнку внизу: она сама встанет на место.'});
+gcv.addEventListener('pointerdown',e=>{if(sc.done)return;const r=gcv.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*1536,py=(e.clientY-r.top)/r.height*1024;
+  let peg=null,bd=1e9;for(const p in TSIZE){if(sc.g.some(o=>o.peg===p))continue;const d=Math.hypot(px-PEGS[p][0],py-PEGS[p][1]);if(d<GR[TSIZE[p]]+10&&d<bd){bd=d;peg=p}}
+  if(gearSel===null){gmsg.textContent='Сначала выберите шестерёнку внизу.';return}
+  if(!peg){gmsg.textContent='Нажмите на пустой контур.';return}
+  if(TSIZE[peg]!==GSIZE[gearSel]){sfx('wrong');gmsg.textContent='Не подходит по размеру. Нужна '+GNAME[TSIZE[peg]]+' шестерёнка.';return}
+  placeGear(gearSel,peg)});
 
 // ================= ПОЛЁТ И БИТВА С КОРОЛЕВОЙ =================
 const BIMG={};for(const k of ['hall','sky','sleigh','fx0','fx1','fx2','fx3','block','q0','q1','q2','q3','q4']){const im=new Image();im.src='rooms/boss/'+k+'.webp';BIMG[k]=im}
@@ -2933,7 +2929,6 @@ function hdScene(k,t){const im=SIMG[k];if(im.complete&&im.naturalWidth){g.imageS
     if(sk.done)gp('k_tray');
     if(sk.melt){const e=(performance.now()-sk.melt.t)/6000;g.save();g.globalCompositeOperation='screen';glow(g,IX(1275),IY(310),10+e*8,'rgba(255,190,90,.5)');g.restore()}}
   if(k==='cellar'&&!sk.ladder&&okI(ICOIMG['стремянка'])){g.imageSmoothingEnabled=true;g.drawImage(ICOIMG['стремянка'],IX(560),IY(330),48,56);g.imageSmoothingEnabled=false}
-  if(k==='pantry'&&has('стремянка')&&okI(ICOIMG['стремянка'])){g.imageSmoothingEnabled=true;g.drawImage(ICOIMG['стремянка'],IX(1060),IY(440),52,60);g.imageSmoothingEnabled=false}
   if(k==='cellar'&&sk.tin)gp('k_tin');
   if(k==='forge'){const hs=(x,y,w,rot,sy=1)=>{const im=GP.shoe_hot_s;if(!okI(im))return;const h=w*im.naturalHeight/im.naturalWidth;g.save();g.translate(x,y);g.rotate(rot);g.scale(1,sy);g.imageSmoothingEnabled=true;g.drawImage(im,-w/2,-h/2,w,h);g.restore();g.save();g.globalCompositeOperation='screen';glow(g,x,y,w*.9,`rgba(255,120,40,${.5+.2*Math.sin(t*5)})`);g.restore()};
     if(ss.horse==='hot')hs(IX(795),IY(375),14,.3);
@@ -3038,7 +3033,7 @@ function auUI(){const box=document.getElementById('audioui');if(!box)return;
 let S=3,DPR=1,ZM=1,ZX=0,ZY=0;const ZOOM=1;
 function camSnap(){if(ROOM==='boss'){ZM=1;ZX=0;ZY=0;return}ZM=ZOOM;const p0=people[me];const vw=W/ZM,vh=H/ZM;ZX=Math.max(0,Math.min(W-vw,p0.x+8-vw/2));ZY=Math.max(0,Math.min(H-vh,p0.y+12-vh*.55))}
 function resize(){
-  const stg=document.querySelector('.stage');const box=(stg?stg.clientWidth:cv.parentElement.clientWidth)-40;const hb=document.querySelector('.hotbar');const top=cv.getBoundingClientRect().top+window.scrollY;const avH=window.innerHeight-Math.max(60,Math.min(top,140))-(hb?hb.offsetHeight:90)-30;
+  const FS=document.documentElement.classList.contains('fs');const stg=document.querySelector('.stage');const box=FS?window.innerWidth-24:(stg?stg.clientWidth:cv.parentElement.clientWidth)-40;const hb=document.querySelector('.hotbar');const top=cv.getBoundingClientRect().top+window.scrollY;const avH=FS?window.innerHeight-(hb?hb.offsetHeight:90)-28:window.innerHeight-Math.max(60,Math.min(top,140))-(hb?hb.offsetHeight:90)-30;
   S=Math.max(1.2,Math.min(8,box/W,avH/H));DPR=Math.min(2,window.devicePixelRatio||1);
   cv.style.width=(W*S)+'px';cv.style.height=(H*S)+'px';
   {const fr=cv.closest('.frame');if(fr&&!window.__SPEC)fr.style.width=(W*S+20)+'px'}
@@ -3046,6 +3041,11 @@ function resize(){
   cv.width=Math.round(W*S*DPR);cv.height=Math.round(H*S*DPR);
 }
 addEventListener('resize',resize);
+// кнопка «Весь экран»: браузерный полноэкранный режим, шапка скрывается, поле занимает весь экран
+{const fb=document.getElementById('fsbtn');const de=document.documentElement;const isFs=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+  const sync=()=>{const on=isFs();de.classList.toggle('fs',on);fb.textContent=on?'Выйти из полного экрана':'Весь экран';window.scrollTo(0,0);resize();setTimeout(resize,150)};
+  fb.addEventListener('click',()=>{try{if(isFs())(document.exitFullscreen||document.webkitExitFullscreen).call(document);else{const r=(de.requestFullscreen||de.webkitRequestFullscreen);if(r)r.call(de);else{de.classList.toggle('fs');resize()}}}catch(e){de.classList.toggle('fs');resize()}cv.focus()});
+  document.addEventListener('fullscreenchange',sync);document.addEventListener('webkitfullscreenchange',sync)}
 {const hb=document.getElementById('helpbox');document.getElementById('helpbtn').addEventListener('click',()=>{hb.hidden=false;keys.clear();setTimeout(()=>document.getElementById('helpclose').focus(),30)});document.getElementById('helpclose').addEventListener('click',()=>{hb.hidden=true;cv.focus()});addEventListener('keydown',e=>{if(e.key==='Escape'&&!hb.hidden){hb.hidden=true;cv.focus()}})}
 
 let last=performance.now(),T=0;
