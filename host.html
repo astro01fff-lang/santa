@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Панель ведущей</title>
+<style>
+:root{--bg:#0b0e1e;--p:#161b36;--p2:#0f1430;--line:#2a3060;--tx:#f4ecd8;--mu:#9aa3c7;--gold:#f2c14e;--red:#d6453d;--grn:#7cd39a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
+header{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:14px 20px;border-bottom:2px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+h1{font-size:18px;margin:0;color:var(--gold)}h2{font-size:16px;margin:0 0 10px;color:var(--gold)}h3{font-size:14px;margin:0}
+nav{display:flex;gap:6px;flex-wrap:wrap}nav button[aria-pressed=true]{background:var(--gold);color:#1a1300}
+main{padding:20px;max-width:1400px;margin:0 auto}section[hidden]{display:none}
+button,select,input,textarea{font:inherit}button{background:#232a55;color:var(--tx);border:1px solid #3a4170;padding:8px 14px;cursor:pointer;border-radius:6px}
+button:hover{border-color:var(--gold)}button.go{background:var(--gold);color:#1a1300;border-color:var(--gold);font-weight:600}button.warn{background:#5a1f1f;border-color:var(--red)}
+button:disabled{opacity:.4;cursor:not-allowed}
+input,select,textarea{background:var(--p2);color:var(--tx);border:1px solid var(--line);padding:8px 10px;border-radius:6px}
+.card{background:var(--p);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.muted{color:var(--mu);font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.kpi{background:var(--p2);border-radius:8px;padding:12px}.kpi b{display:block;font-size:24px;color:var(--gold)}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{color:var(--mu);font-weight:500}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#555;margin-right:6px}.dot.on{background:var(--grn)}.dot.away{background:var(--gold)}
+.link{font:12px ui-monospace,monospace;background:var(--p2);padding:6px 8px;border-radius:6px;word-break:break-all;flex:1;min-width:200px}
+.mon{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}.mon .cell{background:#000;border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer;position:relative}
+.mon iframe{width:100%;aspect-ratio:256/176;border:0;pointer-events:none;display:block}.mon .lbl{position:absolute;left:8px;top:6px;background:rgba(0,0,0,.6);padding:2px 8px;border-radius:4px;font-size:13px}
+#big{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:10px}#big[hidden]{display:none}#big iframe{width:min(96vw,calc((100vh - 90px)*1.4545));aspect-ratio:256/176;border:2px solid var(--gold);background:#000}
+.log{max-height:300px;overflow:auto;font-size:13px}.log div{padding:3px 0;border-bottom:1px dashed var(--line)}
+.badge{display:inline-block;padding:1px 8px;border-radius:10px;background:var(--p2);font-size:12px;color:var(--mu)}.badge.ok{color:var(--grn)}.badge.bad{color:var(--red)}
+dialog{background:var(--p);color:var(--tx);border:2px solid var(--gold);border-radius:10px;max-width:480px}dialog::backdrop{background:rgba(0,0,0,.6)}
+</style></head><body>
+<header><h1>Спасти Рождество · ведущая</h1><span id="conn" class="badge">нет связи</span><span id="sessname" class="muted"></span>
+<nav id="nav"></nav></header>
+<main>
+<section id="s-new" hidden>
+ <div class="card"><h2>Новая игра</h2>
+  <div class="row"><label>Название <input id="nName" value="Новогодний квест"></label><label>Команд <input id="nTeams" type="number" min="1" max="12" value="6" style="width:80px"></label>
+  <label>Сервер связи <select id="nBroker"><option value="e">EMQX (основной)</option><option value="h">HiveMQ (запасной)</option><option value="m">Mosquitto (запасной)</option></select></label></div>
+  <p class="muted">Сервер связи бесплатный и общий. Перед игрой нажмите «Проверить связь»: если основной не отвечает, выберите запасной.</p>
+  <div class="row"><button id="nTest">Проверить связь</button><span id="nTestRes" class="muted"></span></div>
+  <div class="row" style="margin-top:12px"><button class="go" id="nCreate">Создать игру</button></div>
+ </div>
+ <div class="card" id="prevCard" hidden><h2>Прошлые игры на этом компьютере</h2><div id="prevList"></div></div>
+</section>
+<section id="s-dash" hidden>
+ <div class="card"><div class="kpis" id="kpis"></div></div>
+ <div class="card"><h2>Ссылки для команд</h2><p class="muted">Каждую ссылку отправьте в чат своей комнаты в Google Meet. Игроки откроют её, введут имя и выберут персонажа.</p><div id="links"></div></div>
+ <div class="card"><h2>Запуск</h2>
+  <div class="row"><label><input type="checkbox" id="cReg"> Регистрация открыта</label><label><input type="checkbox" id="cLate"> Пускать опоздавших после старта</label></div>
+  <div class="row" style="margin-top:10px"><button class="go" id="bStart">Запустить игру для всех команд</button><button id="bPauseAll">Пауза для всех</button><button id="bResumeAll">Продолжить для всех</button></div>
+  <p class="muted" id="startInfo"></p></div>
+ <div class="card"><h2>Объявление всем</h2><div class="row"><input id="annTxt" style="flex:1;min-width:240px" placeholder="Например: Осталось 10 минут!"><button id="annSend">Отправить всем</button></div></div>
+ <div class="card"><h2>Журнал</h2><div class="log" id="log"></div></div>
+</section>
+<section id="s-teams" hidden><div class="teams" id="teamsBox"></div></section>
+<section id="s-mon" hidden><div class="card"><p class="muted">Это настоящие экраны команд в реальном времени. Нажмите на окно, чтобы увеличить. Если ноутбук тормозит, выключите показ.</p><div class="row"><button id="monToggle">Показать экраны</button></div></div><div class="mon" id="monBox"></div></section>
+<section id="s-hints" hidden>
+ <div class="card"><h2>Подсказка команде</h2>
+  <div class="row"><label>Команда <select id="hTeam"></select></label><span class="muted" id="hWhere"></span></div>
+  <div id="hList" style="margin:12px 0;display:flex;flex-direction:column;gap:6px"></div>
+  <div class="row"><textarea id="hTxt" rows="2" style="flex:1;min-width:260px" placeholder="Своя подсказка"></textarea><button class="go" id="hSend">Отправить команде</button></div></div>
+ <div class="card"><h2>Отправленные подсказки</h2><div class="log" id="hLog"></div></div>
+</section>
+<section id="s-res" hidden><div class="card"><h2>Результаты</h2><p class="muted">Время считается от общего старта до победы над Королевой, без пауз ведущей, плюс штрафные секунды.</p><table id="resT"></table></div></section>
+</main>
+<div id="big" hidden><div class="row"><b id="bigT"></b><button id="bigClose">Закрыть</button></div><iframe id="bigF" title="Экран команды"></iframe></div>
+<dialog id="dlg"><p id="dlgT"></p><div class="row"><button class="go" id="dlgOk">Да</button><button id="dlgNo">Отмена</button></div></dialog>
+<script src="net/mqtt.js"></script>
+<script>
+(()=>{
+const BROKERS={e:'wss://broker.emqx.io:8084/mqtt',h:'wss://broker.hivemq.com:8884/mqtt',m:'wss://test.mosquitto.org:8081/mqtt',l:'ws://127.0.0.1:9001'};
+const CHARS=['колпак Санты','наушники и пряник','очки и какао','фиолетовая куртка','платье эльфа','шапка с помпоном','костюм эльфа','рожки оленя','борода и очки-гоглы','худи и колпак','очки и подарок','костюм пряника'];
+const LV={living:'1. Гостиная',work:'2. Мастерская',clock:'3. Часовая башня',stable:'4. Конюшня',kitchen:'5. Кухня',obs:'6. Обсерватория',boss:'7. Финал'};
+const HINTS={living:['Код сейфа спрятан на часах с кукушкой: заведите их золотым ключиком и посмотрите время.','Ключ от шкафа лежит в золе. Сначала потушите камин ведром снега.','Ёлку наряжают по собранному фото: каждый вешает свои игрушки на нужные крючки.'],
+ work:['Код шкафчика на доске заказов: машинки, куклы, мячи по порядку.','Письма детей видит только тот, кто их нашёл. Прочитайте их вслух команде.','Подарок снимают с ленты, когда он проезжает рядом, и несут к коробке нужного ребёнка.'],
+ clock:['Код сундука: сколько гирь, ламп и заснеженных окон.','Шестерёнки разложены по комнате, у каждого свои. Ставьте их так, чтобы стрелки пошли по часовой.'],
+ stable:['Код сундука нарисован на санях под брезентом.','Записки Санты про оленей у разных игроков. Сложите приметы вместе и повесьте таблички.','Хромому оленю нужна новая подкова: горн, наковальня с молотком, бочка с водой. Страницы книги примет на сеновале.'],
+ kitchen:['Код жестянки: сколько жёлтых, синих и красных звёзд на рисунке на холодильнике.','Мёд во льду растапливают в кипящей кастрюле, стоя рядом.','Печь: 180 градусов, 8 минут, формочка-звезда. Для верхних полок кладовой нужна стремянка из погреба.'],
+ obs:['Код сундука: звёзды в ковше, в букве W и в поясе охотника.','Ручки от зеркал спрятаны в комнате. Кто вставил ручку, тот и поворачивает зеркало.','Путь луча нарисован на карте в тубусе. Мутные зеркала лучше обходить.'],
+ boss:['Разбейте лёд вокруг жезлов: по три удара. Каждому по жезлу.','Щит пробивается только залпом: трое стреляют почти одновременно.','Замёрзшего отогревают все остальные, встав вплотную на 3 секунды.']};
+const $=id=>document.getElementById(id);const J=o=>JSON.stringify(o);
+const LSg=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},LSs=(k,v)=>{try{localStorage.setItem(k,J(v))}catch(e){}};
+let S=null,C=null,B='',roster={players:{},rej:{}},cfg=null,pres={},prog={},snaps={},logArr=[],hintLog=[],monOn=false;
+const Q=new URLSearchParams(location.search);
+// ---------- навигация ----------
+const TABS=[['dash','Игра'],['teams','Команды'],['mon','Экраны команд'],['hints','Подсказки'],['res','Результаты']];
+function nav(t){document.querySelectorAll('main>section').forEach(s=>s.hidden=s.id!=='s-'+t);document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===t?'true':'false'));if(t==='mon'&&monOn)buildMon();render()}
+function confirmDlg(t){return new Promise(r=>{$('dlgT').textContent=t;const d=$('dlg');d.showModal();$('dlgOk').onclick=()=>{d.close();r(true)};$('dlgNo').onclick=()=>{d.close();r(false)}})}
+function log(t){const tm=new Date().toLocaleTimeString('ru-RU');logArr.unshift(tm+' · '+t);if(logArr.length>300)logArr.pop();if(S){S.log=logArr;save()}renderLog()}
+function renderLog(){const L=$('log');L.innerHTML='';logArr.slice(0,150).forEach(t=>{const d=document.createElement('div');d.textContent=t;L.appendChild(d)})}
+function save(){if(!S)return;S.cfg=cfg;S.roster=roster;S.snaps=snaps;S.hints=hintLog;LSs('santa_host_'+S.sid,S);const all=LSg('santa_host_list')||[];if(!all.includes(S.sid)){all.unshift(S.sid);LSs('santa_host_list',all.slice(0,20))}}
+// ---------- новая игра ----------
+function testBroker(code){return new Promise(res=>{const t0=Date.now();const topic='santa26/test/'+Math.random().toString(36).slice(2);let done=false;const c=MQ.connect(BROKERS[code],{keepalive:10});
+  const fin=r=>{if(done)return;done=true;try{c.end()}catch(e){}res(r)};setTimeout(()=>fin(null),8000);
+  c.on('connect',()=>{c.subscribe(topic,1);setTimeout(()=>c.publish(topic,'ping',{qos:1}),300)});c.on('message',(t,s)=>{if(s==='ping')fin(Date.now()-t0)})})}
+$('nTest').onclick=async()=>{$('nTestRes').textContent='Проверяем…';const r=await testBroker($('nBroker').value);$('nTestRes').textContent=r?('Связь есть, ответ за '+r+' мс'):'Не отвечает. Выберите другой сервер.'};
+$('nCreate').onclick=()=>{const n=Math.max(1,Math.min(12,+$('nTeams').value||1));const sid=Array.from(crypto.getRandomValues(new Uint8Array(9)),b=>'abcdefghjkmnpqrstuvwxyz23456789'[b%31]).join('');
+  S={sid,broker:$('nBroker').value,created:Date.now()};cfg={v:1,name:$('nName').value.trim()||'Новогодний квест',teams:Array.from({length:n},(_,i)=>({id:'t'+(i+1),name:'Команда '+(i+1)})),reg:true,late:false,started:false,startAt:0,pause:{all:false},pz:{},results:{}};
+  roster={players:{},rej:{}};save();location.search='?s='+sid+(Q.get('bu')?'&bu='+encodeURIComponent(Q.get('bu')):'')};
+// ---------- подключение ----------
+function boot(){const sid=Q.get('s');S=sid&&LSg('santa_host_'+sid);
+  if(!S){$('nav').innerHTML='';nav('new');const all=(LSg('santa_host_list')||[]).map(s=>LSg('santa_host_'+s)).filter(Boolean);if(all.length){$('prevCard').hidden=false;const pl=$('prevList');all.forEach(x=>{const r=document.createElement('div');r.className='row';const a=document.createElement('a');a.href='?s='+x.sid;a.textContent=(x.cfg&&x.cfg.name||'Игра')+' · '+new Date(x.created).toLocaleString('ru-RU');a.style.color='var(--gold)';r.appendChild(a);pl.appendChild(r)})}return}
+  cfg=S.cfg;roster=S.roster||{players:{},rej:{}};snaps=S.snaps||{};logArr=S.log||[];hintLog=S.hints||[];B='santa26/'+S.sid;$('sessname').textContent=cfg.name;
+  $('nav').innerHTML='';TABS.forEach(([t,n])=>{const b=document.createElement('button');b.dataset.t=t;b.textContent=n;b.onclick=()=>nav(t);$('nav').appendChild(b)});
+  C=MQ.connect(Q.get('bu')||BROKERS[S.broker],{keepalive:20,clientId:'host'+S.sid.slice(0,4)+Math.random().toString(36).slice(2,6)});
+  C.on('connect',()=>{$('conn').textContent='связь есть';$('conn').className='badge ok';C.subscribe(B+'/req',1);C.subscribe(B+'/pres/+',0);C.subscribe(B+'/host',1);C.subscribe(B+'/t/+/state',0);C.subscribe(B+'/t/+/ev',1);pubCfg();pubRoster()});
+  C.on('close',()=>{$('conn').textContent='нет связи, переподключаемся';$('conn').className='badge bad'});
+  C.on('message',onMsg);setInterval(()=>{if(C.connected)C.publish(B+'/time',J({t:Date.now()}))},2000);setInterval(render,1000);
+  nav('dash');renderLog()}
+function pubCfg(){if(C&&C.connected)C.publish(B+'/cfg',J(cfg),{qos:1,retain:true});save()}
+function pubRoster(){if(C&&C.connected)C.publish(B+'/roster',J(roster),{qos:1,retain:true});save()}
+function members(t){return Object.entries(roster.players).filter(([k,v])=>v.team===t&&!v.out).map(([k,v])=>({pid:k,...v})).sort((a,b)=>a.slot-b.slot)}
+function freeSlot(t){const used=new Set(members(t).map(m=>m.slot));for(let i=0;i<6;i++)if(!used.has(i))return i;return -1}
+function onMsg(topic,str){let m;try{m=JSON.parse(str)}catch(e){return}const rest=topic.slice(B.length+1);
+  if(rest==='req')return onReq(m);
+  if(rest.startsWith('pres/')){pres[rest.slice(5)]=Object.assign(m,{seen:Date.now()});return}
+  if(rest==='host'){if(m.ty==='prog'){prog[m.team]=Object.assign(m,{seen:Date.now()})}if(m.ty==='fin')onFin(m);return}
+  const t=rest.split('/');if(t[0]==='t'){const tid=t[1];
+    if(t[2]==='state'&&m.ty==='snap'){const arr=snaps[tid]=snaps[tid]||[];const last=arr[arr.length-1];if(!last||Date.now()-last.at>60000||last.lv!==m.lv){arr.push({at:Date.now(),lv:m.lv,s:m});if(arr.length>15)arr.shift();save()}prog[tid]=Object.assign(prog[tid]||{},{lv:m.lv,seen:Date.now()})}
+    if(t[2]==='ev'&&m.ty==='lvl')log(teamName(tid)+': переход на «'+(LV[m.next]||'полёт к замку')+'»')}}
+function teamName(t){const x=cfg.teams.find(q=>q.id===t);return x?x.name:t}
+function onReq(m){const p=roster.players[m.pid];
+  if(m.op==='join'){const t=p&&!p.out?p.team:m.team;if(!cfg.teams.some(x=>x.id===t))return;
+    if(!p||p.out){if(cfg.started&&!cfg.late)return;if(!cfg.started&&!cfg.reg)return;const sl=freeSlot(t);if(sl<0){roster.rej[m.pid]='В команде уже 6 человек.';pubRoster();return}
+      if(m.char!=null&&members(t).some(x=>x.char===m.char)){roster.rej[m.pid]='Этого персонажа только что выбрал товарищ. Выберите другого.';roster.players[m.pid]={name:m.name,team:t,slot:sl,char:null,ready:false,joined:Date.now()};pubRoster();return}
+      roster.players[m.pid]={name:(m.name||'Игрок').slice(0,16),team:t,slot:sl,char:m.char,ready:false,joined:Date.now()};delete roster.rej[m.pid];log((m.name||'Игрок')+' вошёл в '+teamName(t)+(cfg.started?' (опоздал)':''));pubRoster();return}
+    if(m.char!=null&&m.char!==p.char){if(cfg.started){roster.rej[m.pid]='После старта персонажа не поменять.';pubRoster();return}if(members(p.team).some(x=>x.pid!==m.pid&&x.char===m.char)){roster.rej[m.pid]='Этого персонажа только что выбрал товарищ. Выберите другого.';pubRoster();return}p.char=m.char;delete roster.rej[m.pid]}
+    if(m.name)p.name=m.name.slice(0,16);pubRoster();return}
+  if(m.op==='ready'&&p){p.ready=!!m.ready;pubRoster();return}}
+function onFin(m){if(cfg.results[m.team]||!cfg.started||Date.now()<cfg.startAt)return;const now=Date.now();const pz=(cfg.pz[m.team]||{total:0}).total+((cfg.pz._all||{}).total||0);const sec=Math.round((now-cfg.startAt-pz)/1000)+(m.pen||0);
+  cfg.results[m.team]={finishAt:now,pen:m.pen||0,sec};pubCfg();log(teamName(m.team)+' победила Королеву! Время '+fmt(sec))}
+const fmt=s=>s==null?'—':String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+function teamTime(tid){if(!cfg.started)return null;const r=cfg.results[tid];if(r)return r.sec;const pzT=cfg.pz[tid]||{total:0},pa=cfg.pz._all||{total:0};let p=(pzT.total||0)+(pa.total||0);if(pzT.since)p+=Date.now()-pzT.since;if(pa.since)p+=Date.now()-pa.since;return Math.max(0,Math.round((Date.now()-cfg.startAt-p)/1000))+((prog[tid]&&prog[tid].pen)||0)}
+function online(pid){const p=pres[pid];return p&&p.on}
+// ---------- управление ----------
+$('cReg').onchange=e=>{cfg.reg=e.target.checked;pubCfg();log(cfg.reg?'Регистрация открыта':'Регистрация закрыта')};
+$('cLate').onchange=e=>{cfg.late=e.target.checked;pubCfg()};
+$('bStart').onclick=async()=>{const teams=cfg.teams.filter(t=>members(t.id).some(m=>m.char!=null));if(!teams.length){alert('Пока ни одна команда не выбрала персонажей.');return}
+  const notReady=Object.values(roster.players).filter(p=>!p.out&&!p.ready).length;
+  if(!await confirmDlg('Запустить игру для всех команд?'+(notReady?' Не нажали «готов»: '+notReady+'.':'')+' После старта команды и персонажей поменять нельзя.'))return;
+  cfg.started=true;cfg.reg=false;cfg.startAt=Date.now()+4000;pubCfg();log('Старт для всех команд')};
+function pause(tid,on){const k=tid||'_all';cfg.pz[k]=cfg.pz[k]||{total:0};const z=cfg.pz[k];if(on&&!z.since){z.since=Date.now()}if(!on&&z.since){z.total+=Date.now()-z.since;delete z.since}if(tid)cfg.pause[tid]=on;else cfg.pause.all=on;pubCfg();log((tid?teamName(tid):'Все команды')+(on?': пауза':': игра продолжается'))}
+$('bPauseAll').onclick=()=>pause(null,true);$('bResumeAll').onclick=()=>pause(null,false);
+$('annSend').onclick=()=>{const t=$('annTxt').value.trim();if(!t)return;C.publish(B+'/all',J({ann:t}),{qos:1});log('Объявление: '+t);$('annTxt').value=''};
+function ctl(tid,o){o.id=Math.random().toString(36).slice(2);C.publish(B+'/t/'+tid+'/ctl',J(o),{qos:1})}
+async function teamAct(tid,a){
+  if(a==='pause')return pause(tid,!cfg.pause[tid]);
+  if(a==='restart'){if(!await confirmDlg('Начать игру команды «'+teamName(tid)+'» с самого начала? Весь её прогресс пропадёт.'))return;ctl(tid,{restart:1});log(teamName(tid)+': начата заново')}
+  if(a==='goto'){const sel=document.getElementById('goto_'+tid).value;if(!await confirmDlg('Перевести «'+teamName(tid)+'» на уровень «'+LV[sel]+'»? Невыполненные задания не засчитаются.'))return;ctl(tid,{goto:sel});log(teamName(tid)+': переведена на «'+LV[sel]+'»')}
+  if(a==='restore'){const arr=snaps[tid]||[];const k=+document.getElementById('rest_'+tid).value;const x=arr[k];if(!x)return;if(!await confirmDlg('Восстановить «'+teamName(tid)+'» к сохранению от '+new Date(x.at).toLocaleTimeString('ru-RU')+'?'))return;ctl(tid,{restore:x.s});log(teamName(tid)+': восстановлено сохранение')}}
+async function playerAct(pid,a){const p=roster.players[pid];if(!p)return;
+  if(a==='kick'){if(!await confirmDlg('Убрать '+p.name+' из игры?'))return;p.out=true;pubRoster();log(p.name+' убран(а) из игры')}
+  if(a==='move'){const t=document.getElementById('mv_'+pid).value;if(t===p.team)return;const sl=freeSlot(t);if(sl<0){alert('В той команде уже 6 человек.');return}if(members(t).some(x=>x.char===p.char))p.char=null;p.team=t;p.slot=sl;p.ready=false;pubRoster();log(p.name+' переведён(а) в '+teamName(t))}}
+// ---------- отрисовка ----------
+function render(){if(!S)return;
+  const pl=Object.entries(roster.players).filter(([k,v])=>!v.out);const on=pl.filter(([k])=>online(k)).length;const ready=cfg.teams.filter(t=>{const m=members(t.id);return m.length&&m.every(x=>x.ready)}).length;
+  const fin=Object.keys(cfg.results).length;
+  $('kpis').innerHTML='';[['Команд',cfg.teams.length],['Игроков на связи',on+' из '+pl.length],['Готовых команд',ready],['Регистрация',cfg.reg?'открыта':'закрыта'],['Игра',cfg.started?(cfg.pause.all?'пауза':'идёт'):'не начата'],['Финишировали',fin+' из '+cfg.teams.length]].forEach(([a,b])=>{const d=document.createElement('div');d.className='kpi';d.append(a);const x=document.createElement('b');x.textContent=b;d.appendChild(x);$('kpis').appendChild(d)});
+  $('cReg').checked=cfg.reg;$('cLate').checked=cfg.late;$('bStart').disabled=cfg.started;$('startInfo').textContent=cfg.started?('Игра запущена в '+new Date(cfg.startAt).toLocaleTimeString('ru-RU')):'Перед стартом проверьте, что все выбрали персонажей.';
+  const L=$('links');if(!L.dataset.done){L.dataset.done=1;const base=location.href.replace(/host\.html.*$/,'index.html');cfg.teams.forEach(t=>{const r=document.createElement('div');r.className='row';r.style.marginBottom='8px';const u=base+'?s='+S.sid+'&t='+t.id+'&b='+S.broker+(Q.get('bu')?'&bu='+encodeURIComponent(Q.get('bu')):'');
+    const nm=document.createElement('input');nm.value=t.name;nm.style.width='150px';nm.onchange=()=>{t.name=nm.value.trim()||t.name;pubCfg()};const lk=document.createElement('span');lk.className='link';lk.textContent=u;const cp=document.createElement('button');cp.textContent='Копировать';cp.onclick=()=>{navigator.clipboard.writeText(u);cp.textContent='Скопировано';setTimeout(()=>cp.textContent='Копировать',1500)};r.append(nm,lk,cp);L.appendChild(r)})}
+  if(!$('s-teams').hidden)renderTeams();if(!$('s-res').hidden)renderRes();if(!$('s-hints').hidden)renderHints()}
+let teamsSig='';
+function renderTeams(){const box=$('teamsBox');
+  const sig=J([cfg.teams,cfg.pause,cfg.results,cfg.started,Object.entries(roster.players).filter(([k,v])=>!v.out).map(([k,v])=>[k,v.team,v.char,v.ready,v.name,online(k),(pres[k]||{}).vis,(pres[k]||{}).loc]),Object.fromEntries(Object.entries(prog).map(([k,v])=>[k,[v.lv,v.pen,v.boss&&v.boss.hp]])),Object.fromEntries(Object.entries(snaps).map(([k,v])=>[k,v.length]))]);
+  box.querySelectorAll('[data-time]').forEach(e=>{e.textContent=fmt(teamTime(e.dataset.time))});
+  if(sig===teamsSig)return;const focus=document.activeElement&&document.activeElement.id;if(focus&&/^(goto_|rest_|mv_)/.test(focus))return;teamsSig=sig;box.innerHTML='';
+  cfg.teams.forEach(t=>{const c=document.createElement('div');c.className='card';const pr=prog[t.id]||{};const res=cfg.results[t.id];
+    c.innerHTML='<div class="row" style="justify-content:space-between"><h3></h3><span class="badge"></span></div><p class="muted st"></p><table><thead><tr><th>Игрок</th><th>Персонаж</th><th>Где</th><th></th></tr></thead><tbody></tbody></table><div class="row ctl" style="margin-top:10px"></div>';
+    c.querySelector('h3').textContent=t.name;c.querySelector('.badge').textContent=res?'финиш '+fmt(res.sec):cfg.pause[t.id]?'пауза':(LV[pr.lv]||'—');
+    c.querySelector('.st').innerHTML='Время: <span data-time="'+t.id+'"></span>';c.querySelector('[data-time]').textContent=fmt(teamTime(t.id));c.querySelector('.st').append(' · штрафы: '+((pr.pen)||0)+' сек'+(pr.boss&&pr.lv==='boss'?' · Королева: '+pr.boss.hp+'%':''));
+    const tb=c.querySelector('tbody');members(t.id).forEach(m=>{const tr=document.createElement('tr');const ps=pres[m.pid];const onl=online(m.pid);
+      const off=ps&&!ps.on?' · нет связи с '+new Date(ps.seen).toLocaleTimeString('ru-RU'):'';
+      tr.innerHTML='<td><span class="dot"></span><span class="nm"></span></td><td class="ch"></td><td class="lc"></td><td class="ac"></td>';tr.querySelector('.dot').className='dot'+(onl?(ps.vis===false?' away':' on'):'');tr.querySelector('.nm').textContent=m.name+(m.ready&&!cfg.started?' ✓':'');
+      tr.querySelector('.ch').textContent=m.char!=null?CHARS[m.char]:'выбирает';tr.querySelector('.lc').textContent=(ps&&ps.loc?ps.loc:'')+off+(onl&&ps.vis===false?' · свернул вкладку':'');
+      const ac=tr.querySelector('.ac');if(!cfg.started){const s=document.createElement('select');s.id='mv_'+m.pid;cfg.teams.forEach(x=>{const o=document.createElement('option');o.value=x.id;o.textContent=x.name;if(x.id===t.id)o.selected=true;s.appendChild(o)});s.onchange=()=>playerAct(m.pid,'move');s.setAttribute('aria-label','Перевести в команду');ac.appendChild(s)}
+      const k=document.createElement('button');k.textContent='Убрать';k.className='warn';k.onclick=()=>playerAct(m.pid,'kick');ac.appendChild(k);tb.appendChild(tr)});
+    if(!members(t.id).length){const tr=document.createElement('tr');tr.innerHTML='<td colspan=4 class="muted">Пока никого</td>';tb.appendChild(tr)}
+    const ct=c.querySelector('.ctl');if(cfg.started){const pb=document.createElement('button');pb.textContent=cfg.pause[t.id]?'Продолжить':'Пауза';pb.onclick=()=>teamAct(t.id,'pause');
+      const gs=document.createElement('select');gs.id='goto_'+t.id;Object.entries(LV).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v;if(k===pr.lv)o.selected=true;gs.appendChild(o)});const gb=document.createElement('button');gb.textContent='Перевести';gb.onclick=()=>teamAct(t.id,'goto');
+      const rs=document.createElement('select');rs.id='rest_'+t.id;(snaps[t.id]||[]).forEach((x,i)=>{const o=document.createElement('option');o.value=i;o.textContent=new Date(x.at).toLocaleTimeString('ru-RU')+' · '+(LV[x.lv]||x.lv);rs.appendChild(o)});rs.selectedIndex=rs.options.length-1;const rb=document.createElement('button');rb.textContent='Восстановить';rb.disabled=!rs.options.length;rb.onclick=()=>teamAct(t.id,'restore');
+      const rr=document.createElement('button');rr.textContent='Заново';rr.className='warn';rr.onclick=()=>teamAct(t.id,'restart');ct.append(pb,gs,gb,rs,rb,rr)}
+    box.appendChild(c)})}
+function renderRes(){const T=$('resT');const rows=cfg.teams.map(t=>({t,r:cfg.results[t.id],pr:prog[t.id]||{}}));const done=rows.filter(x=>x.r).sort((a,b)=>a.r.sec-b.r.sec);let place=0,prev=null;done.forEach((x,i)=>{if(x.r.sec!==prev){place=i+1;prev=x.r.sec}x.place=place});
+  T.innerHTML='<thead><tr><th>Место</th><th>Команда</th><th>Старт</th><th>Финиш</th><th>Время</th><th>Штрафы</th><th>Сейчас</th></tr></thead>';const tb=document.createElement('tbody');
+  [...done,...rows.filter(x=>!x.r)].forEach(x=>{const tr=document.createElement('tr');const tie=x.r&&done.filter(y=>y.r.sec===x.r.sec).length>1;
+    [x.place?(x.place+(tie?' (ничья)':'')):'—',x.t.name,cfg.startAt?new Date(cfg.startAt).toLocaleTimeString('ru-RU'):'—',x.r?new Date(x.r.finishAt).toLocaleTimeString('ru-RU'):'—',x.r?fmt(x.r.sec):fmt(teamTime(x.t.id))+' идёт',x.r?x.r.pen:(x.pr.pen||0),x.r?'финиш':(LV[x.pr.lv]||'—')].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});tb.appendChild(tr)});T.appendChild(tb)}
+function renderHints(){const sel=$('hTeam');if(!sel.options.length)cfg.teams.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o)});
+  const tid=sel.value;const lv=(prog[tid]||{}).lv;$('hWhere').textContent='Сейчас: '+(LV[lv]||'игра не начата');const L=$('hList');if(L.dataset.lv!==tid+lv){L.dataset.lv=tid+lv;L.innerHTML='';(HINTS[lv]||[]).forEach(h=>{const b=document.createElement('button');b.textContent=h;b.style.textAlign='left';b.onclick=()=>{$('hTxt').value=h;$('hTxt').focus()};L.appendChild(b)})}
+  const HL=$('hLog');HL.innerHTML='';hintLog.slice().reverse().forEach(h=>{const d=document.createElement('div');d.textContent=h;HL.appendChild(d)})}
+$('hTeam').onchange=()=>renderHints();
+$('hSend').onclick=()=>{const t=$('hTxt').value.trim(),tid=$('hTeam').value;if(!t||!tid)return;ctl(tid,{hint:t});hintLog.push(new Date().toLocaleTimeString('ru-RU')+' · '+teamName(tid)+': '+t);save();$('hTxt').value='';log('Подсказка для '+teamName(tid));renderHints()};
+// ---------- экраны команд ----------
+function specUrl(t){const base=location.href.replace(/host\.html.*$/,'index.html');return base+'?s='+S.sid+'&t='+t+'&b='+S.broker+'&spec=1'+(Q.get('bu')?'&bu='+encodeURIComponent(Q.get('bu')):'')}
+function buildMon(){const box=$('monBox');if(box.dataset.done)return;box.dataset.done=1;cfg.teams.forEach(t=>{const c=document.createElement('div');c.className='cell';c.tabIndex=0;c.setAttribute('role','button');c.setAttribute('aria-label','Увеличить экран: '+t.name);
+  const f=document.createElement('iframe');f.src=specUrl(t.id);f.title='Экран: '+t.name;f.loading='lazy';const l=document.createElement('span');l.className='lbl';l.textContent=t.name;c.append(f,l);
+  const open=()=>{$('bigT').textContent=t.name;$('bigF').src=specUrl(t.id);$('big').hidden=false};c.onclick=open;c.onkeydown=e=>{if(e.key==='Enter')open()};box.appendChild(c)})}
+$('monToggle').onclick=()=>{monOn=!monOn;$('monToggle').textContent=monOn?'Скрыть экраны':'Показать экраны';const box=$('monBox');if(monOn)buildMon();else{box.innerHTML='';delete box.dataset.done}};
+$('bigClose').onclick=()=>{$('big').hidden=true;$('bigF').src='about:blank'};
+window.__HOST={get cfg(){return cfg},get roster(){return roster},get prog(){return prog},get S(){return S},pause,teamAct:(t,a)=>teamAct(t,a),ctl:(t,o)=>ctl(t,o),start:()=>{cfg.started=true;cfg.reg=false;cfg.startAt=Date.now()+4000;pubCfg()},set confirmAll(v){window.confirmDlgAuto=v}};
+const _cd=confirmDlg;window.confirmDlgAuto=false;
+boot();
+})();
+</script></body></html>
