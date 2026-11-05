@@ -44,7 +44,7 @@ dialog{background:var(--p);color:var(--tx);border:2px solid var(--gold);border-r
  <div class="card"><h2>Ссылки для команд</h2><p class="muted">Каждую ссылку отправьте в чат своей комнаты в Google Meet. Игроки откроют её, введут имя и выберут персонажа.</p><div id="links"></div></div>
  <div class="card"><h2>Запуск</h2>
   <div class="row"><label><input type="checkbox" id="cReg"> Регистрация открыта</label><label><input type="checkbox" id="cLate"> Пускать опоздавших после старта</label></div>
-  <div class="row" style="margin-top:10px"><button class="go" id="bStart">Запустить игру для всех команд</button><button id="bPauseAll">Пауза для всех</button><button id="bResumeAll">Продолжить для всех</button></div>
+  <div class="row" style="margin-top:10px"><button class="go" id="bStart">Запустить игру для всех команд</button><button id="bPauseAll">Пауза для всех</button><button id="bResumeAll">Продолжить для всех</button><button class="warn" id="bEnd">Завершить игру для всех</button><button id="bNew">Новая игра</button></div>
   <p class="muted" id="startInfo"></p></div>
  <div class="card"><h2>Объявление всем</h2><div class="row"><input id="annTxt" style="flex:1;min-width:240px" placeholder="Например: Осталось 10 минут!"><button id="annSend">Отправить всем</button></div></div>
  <div class="card"><h2>Журнал</h2><div class="log" id="log"></div></div>
@@ -133,10 +133,10 @@ function onReq(m){const p=roster.players[m.pid];
     if(m.char!=null&&m.char!==p.char){if(cfg.started){roster.rej[m.pid]='После старта персонажа не поменять.';pubRoster();return}if(members(p.team).some(x=>x.pid!==m.pid&&x.char===m.char)){roster.rej[m.pid]='Этого персонажа только что выбрал товарищ. Выберите другого.';pubRoster();return}p.char=m.char;delete roster.rej[m.pid]}
     if(m.name)p.name=m.name.slice(0,16);pubRoster();return}
   if(m.op==='ready'&&p){p.ready=!!m.ready;pubRoster();return}}
-function onFin(m){if(cfg.results[m.team]||!cfg.started||Date.now()<cfg.startAt)return;const now=Date.now();const pz=(cfg.pz[m.team]||{total:0}).total+((cfg.pz._all||{}).total||0);const sec=Math.round((now-cfg.startAt-pz)/1000)+(m.pen||0);
+function onFin(m){if(cfg.ended||cfg.results[m.team]||!cfg.started||Date.now()<cfg.startAt)return;const now=Date.now();const pz=(cfg.pz[m.team]||{total:0}).total+((cfg.pz._all||{}).total||0);const sec=Math.round((now-cfg.startAt-pz)/1000)+(m.pen||0);
   cfg.results[m.team]={finishAt:now,pen:m.pen||0,sec};pubCfg();log(teamName(m.team)+' победила Королеву! Время '+fmt(sec))}
 const fmt=s=>s==null?'—':String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
-function teamTime(tid){if(!cfg.started)return null;const r=cfg.results[tid];if(r)return r.sec;const pzT=cfg.pz[tid]||{total:0},pa=cfg.pz._all||{total:0};let p=(pzT.total||0)+(pa.total||0);if(pzT.since)p+=Date.now()-pzT.since;if(pa.since)p+=Date.now()-pa.since;return Math.max(0,Math.round((Date.now()-cfg.startAt-p)/1000))+((prog[tid]&&prog[tid].pen)||0)}
+function teamTime(tid){if(!cfg.started)return null;if(cfg.ended&&!cfg.results[tid])return null;const r=cfg.results[tid];if(r)return r.sec;const pzT=cfg.pz[tid]||{total:0},pa=cfg.pz._all||{total:0};let p=(pzT.total||0)+(pa.total||0);if(pzT.since)p+=Date.now()-pzT.since;if(pa.since)p+=Date.now()-pa.since;return Math.max(0,Math.round((Date.now()-cfg.startAt-p)/1000))+((prog[tid]&&prog[tid].pen)||0)}
 function online(pid){const p=pres[pid];return p&&p.on}
 // ---------- управление ----------
 $('cReg').onchange=e=>{cfg.reg=e.target.checked;pubCfg();log(cfg.reg?'Регистрация открыта':'Регистрация закрыта')};
@@ -146,6 +146,12 @@ $('bStart').onclick=async()=>{const teams=cfg.teams.filter(t=>members(t.id).some
   if(!await confirmDlg('Запустить игру для всех команд?'+(notReady?' Не нажали «готов»: '+notReady+'.':'')+' После старта команды и персонажей поменять нельзя.'))return;
   cfg.started=true;cfg.reg=false;cfg.startAt=Date.now()+4000;pubCfg();log('Старт для всех команд')};
 function pause(tid,on){const k=tid||'_all';cfg.pz[k]=cfg.pz[k]||{total:0};const z=cfg.pz[k];if(on&&!z.since){z.since=Date.now()}if(!on&&z.since){z.total+=Date.now()-z.since;delete z.since}if(tid)cfg.pause[tid]=on;else cfg.pause.all=on;pubCfg();log((tid?teamName(tid):'Все команды')+(on?': пауза':': игра продолжается'))}
+$('bEnd').onclick=async()=>{if(cfg.ended)return;const left=cfg.teams.filter(t=>!cfg.results[t.id]).length;
+  if(!await confirmDlg('Завершить игру для всех команд?'+(left?' Ещё не финишировали: '+left+'. Они попадут в итоги без места.':'')+' Игроки увидят экран с итогами.'))return;
+  if(cfg.pause.all)pause(null,false);cfg.ended=true;cfg.endedAt=Date.now();cfg.final=finalTable();pubCfg();log('Игра завершена для всех');render()};
+$('bNew').onclick=async()=>{if(!cfg.ended&&cfg.started&&!await confirmDlg('Игра ещё идёт. Перейти к созданию новой? Текущая останется в списке прошлых игр.'))return;location.href=location.pathname+(Q.get('bu')?'?bu='+encodeURIComponent(Q.get('bu')):'')};
+function finalTable(){const rows=cfg.teams.map(t=>({name:t.name,id:t.id,r:cfg.results[t.id]}));const done=rows.filter(x=>x.r).sort((a,b)=>a.r.sec-b.r.sec);let place=0,prev=null;
+  done.forEach((x,i)=>{if(x.r.sec!==prev){place=i+1;prev=x.r.sec}x.place=place});return [...done,...rows.filter(x=>!x.r)].map(x=>({id:x.id,name:x.name,place:x.place||null,sec:x.r?x.r.sec:null,pen:x.r?x.r.pen:null}))}
 $('bPauseAll').onclick=()=>pause(null,true);$('bResumeAll').onclick=()=>pause(null,false);
 $('annSend').onclick=()=>{const t=$('annTxt').value.trim();if(!t)return;C.publish(B+'/all',J({ann:t}),{qos:1});log('Объявление: '+t);$('annTxt').value=''};
 function ctl(tid,o){o.id=Math.random().toString(36).slice(2);C.publish(B+'/t/'+tid+'/ctl',J(o),{qos:1})}
@@ -161,8 +167,8 @@ async function playerAct(pid,a){const p=roster.players[pid];if(!p)return;
 function render(){if(!S)return;
   const pl=Object.entries(roster.players).filter(([k,v])=>!v.out);const on=pl.filter(([k])=>online(k)).length;const ready=cfg.teams.filter(t=>{const m=members(t.id);return m.length&&m.every(x=>x.ready)}).length;
   const fin=Object.keys(cfg.results).length;
-  $('kpis').innerHTML='';[['Команд',cfg.teams.length],['Игроков на связи',on+' из '+pl.length],['Готовых команд',ready],['Регистрация',cfg.reg?'открыта':'закрыта'],['Игра',cfg.started?(cfg.pause.all?'пауза':'идёт'):'не начата'],['Финишировали',fin+' из '+cfg.teams.length]].forEach(([a,b])=>{const d=document.createElement('div');d.className='kpi';d.append(a);const x=document.createElement('b');x.textContent=b;d.appendChild(x);$('kpis').appendChild(d)});
-  $('cReg').checked=cfg.reg;$('cLate').checked=cfg.late;$('bStart').disabled=cfg.started;$('startInfo').textContent=cfg.started?('Игра запущена в '+new Date(cfg.startAt).toLocaleTimeString('ru-RU')):'Перед стартом проверьте, что все выбрали персонажей.';
+  $('kpis').innerHTML='';[['Команд',cfg.teams.length],['Игроков на связи',on+' из '+pl.length],['Готовых команд',ready],['Регистрация',cfg.reg?'открыта':'закрыта'],['Игра',cfg.ended?'завершена':cfg.started?(cfg.pause.all?'пауза':'идёт'):'не начата'],['Финишировали',fin+' из '+cfg.teams.length]].forEach(([a,b])=>{const d=document.createElement('div');d.className='kpi';d.append(a);const x=document.createElement('b');x.textContent=b;d.appendChild(x);$('kpis').appendChild(d)});
+  $('cReg').checked=cfg.reg;$('cLate').checked=cfg.late;$('bStart').disabled=cfg.started;$('bEnd').disabled=!cfg.started||!!cfg.ended;$('bPauseAll').disabled=$('bResumeAll').disabled=!!cfg.ended;$('startInfo').textContent=cfg.ended?('Игра завершена в '+new Date(cfg.endedAt).toLocaleTimeString('ru-RU')):cfg.started?('Игра запущена в '+new Date(cfg.startAt).toLocaleTimeString('ru-RU')):'Перед стартом проверьте, что все выбрали персонажей.';
   const L=$('links');if(!L.dataset.done){L.dataset.done=1;const base=location.href.replace(/host\.html.*$/,'index.html');cfg.teams.forEach(t=>{const r=document.createElement('div');r.className='row';r.style.marginBottom='8px';const u=base+'?s='+S.sid+'&t='+t.id+'&b='+S.broker+(Q.get('bu')?'&bu='+encodeURIComponent(Q.get('bu')):'');
     const nm=document.createElement('input');nm.value=t.name;nm.style.width='150px';nm.onchange=()=>{t.name=nm.value.trim()||t.name;pubCfg()};const lk=document.createElement('span');lk.className='link';lk.textContent=u;const cp=document.createElement('button');cp.textContent='Копировать';cp.onclick=()=>{navigator.clipboard.writeText(u);cp.textContent='Скопировано';setTimeout(()=>cp.textContent='Копировать',1500)};r.append(nm,lk,cp);L.appendChild(r)})}
   if(!$('s-teams').hidden)renderTeams();if(!$('s-res').hidden)renderRes();if(!$('s-hints').hidden)renderHints()}

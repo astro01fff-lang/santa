@@ -3352,6 +3352,8 @@ function teamMembers(t){if(!roster)return[];return Object.entries(roster.players
 const pres={};// pid -> {on,ts}
 function render(){
   if(SPEC){ui.hidden=true;return}
+  if(screen==='ended'){const c=card();c.append(el('h2',null,'Игра окончена'),el('p',null,'Спасибо, что спасали Рождество вместе! Итоги:'));const tb=el('div');tb.style.cssText='display:flex;flex-direction:column;gap:6px';
+    (cfg.final||[]).forEach(r=>{const row=el('div','mem');if(r.id===myTeam)row.style.outline='2px solid #f2c14e';const mm=r.sec!=null?String(r.sec/60|0).padStart(2,'0')+':'+String(r.sec%60).padStart(2,'0'):'не финишировала';row.append(el('b',null,r.place?(r.place+' место'):'—'),el('span',null,r.name+(r.id===myTeam?' (ваша команда)':'')),el('span','tag'+(r.place===1?' ok':''),mm));tb.appendChild(row)});c.appendChild(tb);return}
   if(screen==='connect'){const c=card();c.append(el('h2',null,'Спасти Рождество'),el('p',null,'Подключаемся к игре…'),el('p','muted',C.connected?'Связь есть, ждём ведущую.':'Ищем сервер связи.'));
     if(Date.now()-t0>9000){const p=el('p','muted','Если это надолго: проверьте интернет и что ссылка скопирована целиком. Ведущая должна держать открытой свою панель.');c.append(p)}return}
   if(screen==='closed'){const c=card();c.append(el('h2',null,'Регистрация закрыта'),el('p',null,'Ведущая уже закрыла вход в игру. Напишите ей в чате встречи.'));return}
@@ -3392,7 +3394,7 @@ C.on('message',(topic,str,ret)=>{let m;try{m=JSON.parse(str)}catch(e){return}
 const bootT=Date.now();
 setInterval(()=>{if(screen==='connect'||screen==='count')render();if(!SPEC&&C.connected&&Math.random()<.2)C.publish(B+'/pres/'+PID,J({on:1,cid:CID,t:bootT,loc:people&&people[me]?(people[me].scene||ROOM):'',vis:document.visibilityState==='visible'}),{retain:true})},1000);
 // ---------- конфигурация и состав ----------
-function onCfg(m){cfg=NET.cfg=m;NET.paused=!!(cfg.pause&&(cfg.pause.all||cfg.pause[myTeam]));pz.hidden=!NET.paused||!NET.started;
+function onCfg(m){cfg=NET.cfg=m;if(cfg.ended){showEnded();return}NET.paused=!!(cfg.pause&&(cfg.pause.all||cfg.pause[myTeam]));pz.hidden=!NET.paused||!NET.started;
   if(SPEC){if(cfg.started&&!NET.started)startGame(true);return}
   flow()}
 function onRoster(m){roster=NET.roster=m;
@@ -3421,6 +3423,7 @@ function applyTeam(){if(!myTeam)return;const mem=teamMembers(myTeam);const maxS=
   if(people){while(people.length<OUTFITS.length){const i=people.length;const b=people[0]||{x:120,y:120,scene:ROOM};people.push({i,scene:levelOf(ROOM),x:b.x+((i%3)-1)*14,y:b.y+8,dir:'down',frame:0,ft:0,moving:false,tx:null,ty:null,wait:1,held:null})}
     if(people.length>OUTFITS.length)people.length=OUTFITS.length;people.forEach(p=>{p.gone=!!OUTFITS[p.i].gone;if(SPEC&&p.i===me){p.gone=true}})}
   try{renderSide()}catch(e){}}
+function showEnded(){NET.paused=true;pz.hidden=true;msgBox.hidden=true;try{document.getElementById('prolog').hidden=true;flightBox.hidden=true}catch(e){}if(SPEC){pz.hidden=false;pz.textContent='Игра окончена';return}show('ended')}
 // ---------- старт ----------
 function startGame(fromSpec){NET.started=true;pz.hidden=!NET.paused;takeBase();
   const since=hostNow()-cfg.startAt;
