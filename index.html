@@ -882,7 +882,7 @@ function hits(x,y){const fx=x+4.02,fy=y+18.02,fw=7.96,fh=3.96;const L=ROOM==='ki
 // ---------- ПРЕДМЕТЫ ----------
 // hidden: тайник без подсказки «E», его нужно найти самим
 const ITEMS_L=[
- {x:102,y:126,hit:[95, 130, 15, 8],hidden:true,act(){if(st.pillow)return'Под подушкой больше ничего.';st.pillow=true;return piece('«Код сейфа — время на часах с кукушкой. Сначала часы, потом минуты»')}},
+ {x:102,y:126,hit:[95, 130, 15, 8],hidden:true,act(){if(st.pillow)return'Под подушкой больше ничего.';st.pillow=true;return piece('')}},
  {x:82,y:74,hit:[23, 7, 10, 43],hidden:true,act(){if(st.curtain)return'За шторой только пыль.';st.curtain=true;return piece('')}},
  {x:82,y:78,hit:[59, 7, 14, 43],hidden:true,act(){return ornAt('icicle','За шторой в складках висит стеклянная сосулька! Это ёлочная игрушка.')||'За этой шторой только мишура и паутинка.'}},
  {x:86,y:74,hit:[33, 10, 26, 37],act(){if(st.bucket===1){st.bucket=2;drop('пустое ведро');take('ведро снега');const sn=ornAt('snow',' ');renderSide();return'Вы открыли окно и набрали полное ведро снега. Бр-р!'+(sn?' А к стеклу примерзла снежинка, ёлочная игрушка!':'')}
