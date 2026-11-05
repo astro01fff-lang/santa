@@ -56,6 +56,9 @@ dialog{background:var(--p);color:var(--tx);border:2px solid var(--gold);border-r
  <div class="card"><h2>Подсказка команде</h2>
   <div class="row"><label>Команда <select id="hTeam"></select></label><span class="muted" id="hWhere"></span></div>
   <div id="hList" style="margin:12px 0;display:flex;flex-direction:column;gap:6px"></div>
+  <h2 style="margin-top:18px">Где что лежит <span class="muted" id="wCount" style="font-weight:400;font-size:14px"></span></h2>
+  <p class="muted" style="margin:4px 0 8px">Только то, что команда ещё не нашла: найденное исчезает само по снимкам игры. Нажмите, чтобы вставить в поле подсказки.</p>
+  <div id="wList" style="margin:0 0 12px;display:flex;flex-direction:column;gap:6px"></div>
   <div class="row"><textarea id="hTxt" rows="2" style="flex:1;min-width:260px" placeholder="Своя подсказка"></textarea><button class="go" id="hSend">Отправить команде</button></div></div>
  <div class="card"><h2>Отправленные подсказки</h2><div class="log" id="hLog"></div></div>
 </section>
@@ -75,19 +78,109 @@ const HINTS={living:['Код сейфа — время на часах с кук
   'Обрывок фото: зелёный носок на камине, правый. В красном носке синий шар, а не обрывок.',
   'Обрывок фото: левый нижний угол ковра, между креслом и диваном.',
   'Обрывок фото в камине. Сначала возьмите пустое ведро слева внизу, нажмите на окно, чтобы набрать снега, и потушите камин. Потом ещё раз нажмите на камин: в золе обрывок и ключ от шкафа.',
-  'Обрывок фото в сейфе за картиной: нажмите на картину, код 0940.',
+  'Обрывок фото в сейфе за картиной: нажмите на картину, код 0940 (подходит и 2140).',
   'Обрывок фото в часах с кукушкой: подойдите к ним с золотым ключиком из сейфа и заведите.',
   'Обрывок фото в подарке под ёлкой. Ножницы появятся, если дать коту молоко со столика. Потом подойдите с ножницами к подарку.',
   'Обрывок фото в книжном шкафу справа: нажмите на него с ключом из камина, а потом ещё раз — выпадет книга с обрывком.','Ключ от шкафа лежит в золе. Сначала потушите камин ведром снега.','Ёлку наряжают по собранному фото: каждый вешает свои игрушки на нужные крючки.'],
  work:['Код шкафчика на доске заказов: машинки, куклы, мячи по порядку.','Письма детей видит только тот, кто их нашёл. Прочитайте их вслух команде.','Подарок снимают с ленты, когда он проезжает рядом, и несут к коробке нужного ребёнка.'],
- clock:['Код сундука: сколько гирь, ламп и заснеженных окон.','Шестерёнки разложены по комнате, у каждого свои. Ставьте их так, чтобы стрелки пошли по часовой.'],
+ clock:['Код сундука: сколько гирь, ламп и заснеженных окон (окна целиком, не стёкла).','Шестерёнок 6, у каждого свои. Подойдите к механизму и нажмите на свою шестерёнку внизу: она сама встанет на место.'],
  stable:['Код сундука нарисован на санях под брезентом.','Записки Санты про оленей у разных игроков. Сложите приметы вместе и повесьте таблички.','Хромому оленю нужна новая подкова: горн, наковальня с молотком, бочка с водой. Страницы книги примет на сеновале.'],
  kitchen:['Код жестянки: сколько жёлтых, синих и красных звёзд на рисунке на холодильнике.','Мёд во льду растапливают в кипящей кастрюле, стоя рядом.','Печь: 180 градусов, 8 минут, формочка-звезда. Для верхних полок кладовой нужна стремянка из погреба.'],
  obs:['Код сундука: звёзды в ковше, в букве W и в поясе охотника.','Ручки от зеркал спрятаны в комнате. Кто вставил ручку, тот и поворачивает зеркало.','Путь луча нарисован на карте в тубусе. Мутные зеркала лучше обходить.'],
  boss:['Разбейте лёд вокруг жезлов: по три удара. Каждому по жезлу.','Щит пробивается только залпом: трое стреляют почти одновременно.','Замёрзшего отогревают все остальные, встав вплотную на 3 секунды.']};
+
+// где что лежит: [текст, найдено ли по снимку состояния команды]
+const invOf=s=>(s.inv||[]).map(x=>x[0]==='@'?x.slice(x.indexOf(':')+1):x);
+const hasI=(s,k)=>invOf(s).includes(k);
+const inBowl=(s,k)=>(s.sk.bowl||[]).some(b=>b&&b.k===k);
+const orn=(s,k)=>!!(s.st&&((s.st.orn||{})[k]||(s.st.hung||{})[k]));
+const WHERE={
+ living:[
+  ['Пустое ведро стоит слева внизу, у двери.',s=>s.st.bucket>=1],
+  ['С пустым ведром нажмите на окно: наберёте снега.',s=>s.st.bucket>=2],
+  ['Ведром снега тушат камин.',s=>s.st.fireOut],
+  ['В золе потухшего камина: ключ от шкафа и обрывок фото.',s=>s.st.ash],
+  ['Картина на стене между окном и камином: за ней сейф.',s=>s.st.safeSeen],
+  ['Сейф: код 0940 (или 2140). Внутри золотой ключик, лошадка и обрывок.',s=>s.st.safeOpen],
+  ['Часы с кукушкой справа от камина: завести золотым ключиком, выпадет обрывок.',s=>s.st.clock],
+  ['Обрывок под красной подушкой на зелёном диване, слева у спинки.',s=>s.st.pillow],
+  ['Обрывок за левой шторой, ближе к стене.',s=>s.st.curtain],
+  ['Обрывок в правом зелёном носке на камине.',s=>s.st.stocking],
+  ['Обрывок под левым нижним углом ковра, между креслом и диваном.',s=>s.st.rug],
+  ['Стакан молока на столике с печеньем.',s=>s.st.milk],
+  ['Кот: дайте ему молоко, под ним ножницы.',s=>s.st.catMoved],
+  ['Большой подарок под ёлкой: разрезать ножницами. Внутри звезда и обрывок.',s=>s.st.gift],
+  ['Книжный шкаф справа: открыть ключом из камина.',s=>s.st.shelfOpen],
+  ['В открытом шкафу нажать ещё раз: выпадет книга с обрывком.',s=>s.st.book],
+  ['Под ёлкой коробка: красный шар, золотой шар, колокольчик.',s=>s.st.box],
+  ['Игрушка-снежинка: примёрзла к окну.',s=>orn(s,'snow')],
+  ['Игрушка-сосулька: за правой шторой.',s=>orn(s,'icicle')],
+  ['Игрушка синий шар: в красном носке на камине.',s=>orn(s,'blue')],
+  ['Игрушка-шишка: в пледе на кресле.',s=>orn(s,'cone')],
+  ['Ёлку наряжают по собранному фото: каждый вешает свои игрушки.',s=>s.st.lit]],
+ work:[
+  ['Ключ от почтового ящика: в стружке на верстаке слева.',s=>s.sw.key],
+  ['Письмо Маши: под иголкой швейной машинки.',s=>s.sw.sew],
+  ['Доска заказов: «машинок 4, кукол 7, мячей 2» — это код шкафчика.',s=>s.sw.board],
+  ['Шкафчик мастера: код 472. Внутри рычаг и письмо Тимура.',s=>s.sw.locker],
+  ['Почтовый ящик (открыть ключом из стружки): письма Сони и Миши.',s=>s.sw.mail],
+  ['Стремянка стоит у правой стены.',s=>s.sw.ladder],
+  ['Со стремянкой к высокому стеллажу: табличка «Ева» и письмо Евы.',s=>s.sw.high],
+  ['Табличка «Гоша» застряла в щели справа от стеллажа.',s=>s.sw.behind],
+  ['Письмо Алисы: в мешке справа.',s=>s.sw.sack],
+  ['Письмо Лёвы: под зайцем без уха, в куче игрушек слева внизу.',s=>s.sw.junk],
+  ['Письмо Гоши: под ковриком у входа слева.',s=>s.sw.mat],
+  ['Рычаг вставить в пульт слева у конвейера: лента поедет.',s=>s.sw.running],
+  ['Подарки снимают с ленты и кладут в коробки детей по письмам.',s=>s.sw.done]],
+ clock:[
+  ['Чертёж на стене: приписка про код сундука.',s=>s.sc.bp],
+  ['Шестерёнка в коробках на полке слева.',s=>s.sc.shelf],
+  ['Шестерёнка в банке с винтиками на полке.',s=>s.sc.jar],
+  ['Шестерёнка среди деталей на верстаке.',s=>s.sc.bench],
+  ['Шестерёнка в ящике верстака.',s=>s.sc.drawer],
+  ['Шестерёнка под ковриком у верстака.',s=>s.sc.rug],
+  ['Сундук часовщика: код 231 (2 гири, 3 лампы, 1 заснеженное окно). Внутри шестерёнка.',s=>s.sc.chest],
+  ['Механизм на стене: каждый нажимает на свои шестерёнки внизу, они встают на место сами.',s=>s.sc.done]],
+ stable:[
+  ['Фонарь висит на стене слева.',s=>s.ss.lantern],
+  ['Записка Санты под самым большим колокольчиком на полке.',s=>s.ss.shelf],
+  ['Записка Санты в мешке с ягелем слева.',s=>s.ss.sack],
+  ['Записка Санты во льду ведра: растопить фонарём.',s=>s.ss.bucket],
+  ['Брезент на санях: под ним узор, это код сундука.',s=>!s.ss.tarp],
+  ['Сундук справа внизу: звезда, колокольчик, подкова, снежинка. Внутри упряжь и записка.',s=>s.ss.chest],
+  ['Сеновал (лестница справа): страница книги примет на столе.',s=>s.ss.lp0],
+  ['Сеновал: страница на доске с записками.',s=>s.ss.lp1],
+  ['Сеновал: страница в бочке.',s=>s.ss.lp2],
+  ['Сеновал: страница в ящике со старыми подковами.',s=>s.ss.lp3],
+  ['Кузница (дверь слева): молоток на стене.',s=>s.ss.hammer],
+  ['Кузница: подкову в горн, выпрямить молотком на наковальне, остудить в бочке.',s=>s.ss.horse==='done'],
+  ['Подковать хромого оленя Скакуна новой подковой и молотком.',s=>s.ss.shod],
+  ['Таблички с именами на стойлах по запискам и страницам примет.',s=>s.ss.namesOK]],
+ kitchen:[
+  ['Рецепт «что класть» в холодильнике (нажать на рисунок → открыть холодильник).',s=>s.sk.p1],
+  ['Формочка-звезда: в ящике с формочками слева, рядом с холодильником.',s=>hasI(s,'формочка: звезда')||s.sk.done],
+  ['Кладовая: мука в мешках справа, оттуда же выпадает таблица мер.',s=>s.sk.p3],
+  ['Погреб (люк в кладовой): стремянка среди пустых ящиков.',s=>s.sk.ladder],
+  ['Кладовая, верхняя полка (нужна стремянка): серебряная корица.',s=>hasI(s,'серебряная корица')||inBowl(s,'серебряная корица')||s.sk.done],
+  ['Кладовая, верхняя полка (нужна стремянка): имбирь.',s=>hasI(s,'имбирь')||inBowl(s,'имбирь')||s.sk.done],
+  ['Погреб: мёд вмёрз в ледник справа.',s=>s.sk.honey],
+  ['Мёд во льду растопить в кипящей кастрюле на кухне, стоя рядом.',s=>hasI(s,'мёд')||inBowl(s,'мёд')||s.sk.done],
+  ['Погреб: рецепт «сколько» в ящике с яблоками.',s=>s.sk.p2],
+  ['Погреб: жестяная коробка, код 423. Внутри звёздная пыль.',s=>s.sk.tin],
+  ['Печь: 180 градусов, 8 минут.',s=>s.sk.done]],
+ obs:[
+  ['Журнал астронома на столе слева внизу: подсказка к коду сундука.',s=>s.so.journal],
+  ['Тубус у стола: карта пути луча (видит один).',s=>s.so.tube],
+  ['Ручка от зеркала в ящике стола.',s=>s.so.drawer],
+  ['Ручка от зеркала внутри глобуса.',s=>s.so.globe],
+  ['Ручка от зеркала за шторой справа.',s=>s.so.curtain],
+  ['Сундук астронома: код 753. Шестерёнка для купола и ручка.',s=>s.so.chest],
+  ['Колесо купола слева: вставить шестерёнку из сундука.',s=>s.so.dome],
+  ['Луч: телескоп → Сириус → Вега → Денеб → Полярная → кристалл.',s=>s.so.done]]
+};
 const $=id=>document.getElementById(id);const J=o=>JSON.stringify(o);
 const LSg=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},LSs=(k,v)=>{try{localStorage.setItem(k,J(v))}catch(e){}};
-let S=null,C=null,B='',roster={players:{},rej:{}},cfg=null,pres={},prog={},snaps={},logArr=[],hintLog=[],monOn=false;
+let S=null,C=null,B='',roster={players:{},rej:{}},cfg=null,pres={},prog={},snaps={},live={},logArr=[],hintLog=[],monOn=false;
 const Q=new URLSearchParams(location.search);
 // ---------- навигация ----------
 const TABS=[['dash','Игра'],['teams','Команды'],['mon','Экраны команд'],['hints','Подсказки'],['res','Результаты']];
@@ -123,7 +216,7 @@ function onMsg(topic,str){let m;try{m=JSON.parse(str)}catch(e){return}const rest
   if(rest.startsWith('pres/')){pres[rest.slice(5)]=Object.assign(m,{seen:Date.now()});return}
   if(rest==='host'){if(m.ty==='prog'){prog[m.team]=Object.assign(m,{seen:Date.now()})}if(m.ty==='fin')onFin(m);return}
   const t=rest.split('/');if(t[0]==='t'){const tid=t[1];
-    if(t[2]==='state'&&m.ty==='snap'){const arr=snaps[tid]=snaps[tid]||[];const last=arr[arr.length-1];if(!last||Date.now()-last.at>60000||last.lv!==m.lv){arr.push({at:Date.now(),lv:m.lv,s:m});if(arr.length>15)arr.shift();save()}prog[tid]=Object.assign(prog[tid]||{},{lv:m.lv,seen:Date.now()})}
+    if(t[2]==='state'&&m.ty==='snap'){live[tid]=m;const arr=snaps[tid]=snaps[tid]||[];const last=arr[arr.length-1];if(!last||Date.now()-last.at>60000||last.lv!==m.lv){arr.push({at:Date.now(),lv:m.lv,s:m});if(arr.length>15)arr.shift();save()}prog[tid]=Object.assign(prog[tid]||{},{lv:m.lv,seen:Date.now()})}
     if(t[2]==='ev'&&m.ty==='lvl')log(teamName(tid)+': переход на «'+(LV[m.next]||'полёт к замку')+'»')}}
 function teamName(t){const x=cfg.teams.find(q=>q.id===t);return x?x.name:t}
 function onReq(m){const p=roster.players[m.pid];
@@ -200,7 +293,15 @@ function renderRes(){const T=$('resT');const rows=cfg.teams.map(t=>({t,r:cfg.res
     [x.place?(x.place+(tie?' (ничья)':'')):'—',x.t.name,cfg.startAt?new Date(cfg.startAt).toLocaleTimeString('ru-RU'):'—',x.r?new Date(x.r.finishAt).toLocaleTimeString('ru-RU'):'—',x.r?fmt(x.r.sec):fmt(teamTime(x.t.id))+' идёт',x.r?x.r.pen:(x.pr.pen||0),x.r?'финиш':(LV[x.pr.lv]||'—')].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});tb.appendChild(tr)});T.appendChild(tb)}
 function renderHints(){const sel=$('hTeam');if(!sel.options.length)cfg.teams.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o)});
   const tid=sel.value;const lv=(prog[tid]||{}).lv;$('hWhere').textContent='Сейчас: '+(LV[lv]||'игра не начата');const L=$('hList');if(L.dataset.lv!==tid+lv){L.dataset.lv=tid+lv;L.innerHTML='';(HINTS[lv]||[]).forEach(h=>{const b=document.createElement('button');b.textContent=h;b.style.textAlign='left';b.onclick=()=>{$('hTxt').value=h;$('hTxt').focus()};L.appendChild(b)})}
+  renderWhere(tid,lv);
   const HL=$('hLog');HL.innerHTML='';hintLog.slice().reverse().forEach(h=>{const d=document.createElement('div');d.textContent=h;HL.appendChild(d)})}
+function renderWhere(tid,lv){const W=$('wList');const s=live[tid]||((snaps[tid]||[]).slice(-1)[0]||{}).s;const list=WHERE[lv]||[];
+  let left=list,known=false;if(s&&s.lv===lv){known=true;left=list.filter(([t,f])=>{try{return!f(s)}catch(e){return true}})}
+  const sig=tid+lv+left.map(x=>x[0]).join('|');if(W.dataset.sig===sig)return;W.dataset.sig=sig;W.innerHTML='';
+  $('wCount').textContent=list.length?(known?'· найдено '+(list.length-left.length)+' из '+list.length:'· ждём снимок игры команды'):'';
+  if(!list.length){const p=document.createElement('p');p.className='muted';p.textContent=lv==='boss'?'В финале жезлы видны на полу зала, список не нужен.':'Для этого места списка нет.';W.appendChild(p);return}
+  if(!left.length){const p=document.createElement('p');p.className='muted';p.textContent='Команда нашла всё на этом уровне.';W.appendChild(p);return}
+  left.forEach(([t])=>{const b=document.createElement('button');b.textContent=t;b.style.textAlign='left';b.onclick=()=>{$('hTxt').value=t;$('hTxt').focus()};W.appendChild(b)})}
 $('hTeam').onchange=()=>renderHints();
 $('hSend').onclick=()=>{const t=$('hTxt').value.trim(),tid=$('hTeam').value;if(!t||!tid)return;ctl(tid,{hint:t});hintLog.push(new Date().toLocaleTimeString('ru-RU')+' · '+teamName(tid)+': '+t);save();$('hTxt').value='';log('Подсказка для '+teamName(tid));renderHints()};
 // ---------- экраны команд ----------
