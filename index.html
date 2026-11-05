@@ -3361,8 +3361,8 @@ function render(){
   if(screen==='kicked'){const c=card();c.append(el('h2',null,'Вы не в игре'),el('p',null,'Ведущая убрала вас из команды. Если это ошибка, напишите ей и обновите страницу.'));return}
   if(screen==='dup'){const c=card();c.append(el('h2',null,'Игра открыта в другой вкладке'),el('p',null,'Продолжайте играть там. Эту вкладку можно закрыть.'));return}
   if(screen==='name'){const c=card();c.append(el('h2',null,'Спасти Рождество'),el('p',null,'Как вас зовут? Это имя увидят коллеги над вашим персонажем.'));
-    const i=document.createElement('input');i.maxLength=16;i.value=LS('santa_name')||'';i.setAttribute('aria-label','Ваше имя');const b=el('button','btn go','Дальше');b.type='button';
-    const go=()=>{const n=i.value.trim().slice(0,16);if(!n){i.focus();return}LS('santa_name',n);myName=n;show('char')};b.onclick=go;i.onkeydown=e=>{if(e.key==='Enter')go()};c.append(i,b);setTimeout(()=>i.focus(),30);return}
+    const i=document.createElement('input');i.maxLength=16;i.value=myName||'';i.setAttribute('aria-label','Ваше имя');const b=el('button','btn go','Дальше');b.type='button';
+    const go=()=>{const n=i.value.trim().slice(0,16);if(!n){i.focus();return}LS('santa_name_'+SID,n);myName=n;const mm=me_();if(mm&&!mm.out){req({op:'join',name:n,team:myTeam,char:mm.char});show(mm.char==null?'char':'lobby')}else show('char')};b.onclick=go;i.onkeydown=e=>{if(e.key==='Enter')go()};c.append(i,b);setTimeout(()=>i.focus(),30);return}
   if(screen==='char'){const c=card();const mine=me_();c.append(el('h2',null,'Выберите персонажа'),el('p','muted',teamName(myTeam)+'. Занятые товарищами персонажи серые.'));
     const g=el('div','chars');const taken={};teamMembers(myTeam).forEach(m=>{if(m.pid!==PID&&m.char!=null)taken[m.char]=m.name});
     CHARS.forEach((ch,k)=>{const b=el('button','ch');b.type='button';b.append(charCanvas(k,30,45),el('span',null,taken[k]?('Занят: '+taken[k]):ch.desc));b.disabled=!!taken[k];b.setAttribute('aria-pressed',mine&&mine.char===k?'true':'false');b.setAttribute('aria-label',ch.desc+(taken[k]?', занят':''));
@@ -3372,10 +3372,10 @@ function render(){
     const list=el('div');list.style.cssText='display:flex;flex-direction:column;gap:6px';teamMembers(myTeam).forEach(m=>{const r=el('div','mem');const d=el('span','dot'+(pres[m.pid]&&pres[m.pid].on?' on':''));r.append(d,charCanvas(m.char,16,24),el('span',null,m.name+(m.pid===PID?' (вы)':'')),el('span','tag'+(m.ready?' ok':''),m.ready?'готов(а)':'не готов(а)'));list.appendChild(r)});
     c.appendChild(list);c.appendChild(el('p','muted','Игроков в команде: '+teamMembers(myTeam).length));
     const row=el('div');row.style.cssText='display:flex;gap:10px;flex-wrap:wrap';const rb=el('button','btn go',mine&&mine.ready?'Я не готов(а)':'Я готов(а)');rb.type='button';rb.onclick=()=>req({op:'ready',ready:!(mine&&mine.ready)});
-    const cb=el('button','btn ghost','Сменить персонажа');cb.type='button';cb.onclick=()=>show('char');row.append(rb,cb);c.appendChild(row);return}
+    const cb=el('button','btn ghost','Сменить персонажа');cb.type='button';cb.onclick=()=>show('char');const nb2=el('button','btn ghost','Сменить имя');nb2.type='button';nb2.onclick=()=>{myName=mine?mine.name:myName;show('name')};row.append(rb,cb,nb2);c.appendChild(row);return}
   if(screen==='count'){const c=card();const left=Math.ceil((cfg.startAt-hostNow())/1000);c.append(el('h2',null,'Игра начинается!'),el('div','big',left>0?String(Math.min(3,left)):'0'));return}
 }
-let t0=Date.now(),myName=LS('santa_name')||'',pendingChar=null,charErr='';
+let justPicked=false,t0=Date.now(),myName=LS('santa_name_'+SID)||'',pendingChar=null,charErr='';
 function req(o){C.publish(B+'/req',J({pid:PID,cid:CID,...o}),{qos:1})}
 // ---------- связь ----------
 C.on('connect',()=>{chip.classList.remove('off');document.getElementById('netchipt').textContent='Связь есть';
@@ -3402,7 +3402,7 @@ function onRoster(m){roster=NET.roster=m;
   if(SPEC){applyTeam();return}
   const mine=me_();
   if(mine&&mine.team!==myTeam){myTeam=mine.team;subTeam(myTeam)}
-  if(pendingChar!=null){if(mine&&mine.char===pendingChar){pendingChar=null;charErr=''}else if(m.rej&&m.rej[PID]){charErr=m.rej[PID];pendingChar=null}}
+  if(pendingChar!=null){if(mine&&mine.char===pendingChar){pendingChar=null;charErr='';justPicked=true}else if(m.rej&&m.rej[PID]){charErr=m.rej[PID];pendingChar=null}}
   applyTeam();flow()}
 function flow(){if(SPEC||!cfg)return;
   const mine=me_();
@@ -3414,6 +3414,7 @@ function flow(){if(SPEC||!cfg)return;
   mySlot=NET.slot=mine.slot;
   if(mine.char==null){if(screen!=='char'&&screen!=='name')show('char');return}
   if(cfg.started){if(!NET.started)startGame(false);else if(screen!=='game'&&screen!=='count')hideUI();return}
+  if(screen==='name')return;if(screen==='char'&&!justPicked){render();return}justPicked=false;
   if(screen!=='lobby')show('lobby');else render()}
 // команда -> персонажи игры
 function applyTeam(){if(!myTeam)return;const mem=teamMembers(myTeam);const maxS=Math.max(-1,...mem.map(m=>m.slot));const n=Math.max(maxS+1,1);
