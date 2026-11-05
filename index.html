@@ -242,16 +242,13 @@ aside{display:flex;flex-direction:column;gap:14px;min-width:0}
       </div>
       <div class="modal" id="gearbox" hidden>
         <div class="sheet treesheet">
-          <h3>Соберите механизм: обе стрелки должны идти по часовой</h3>
+          <h3>Механизм часов: вставьте найденные шестерёнки</h3>
           <div class="gearhelp" id="gearhelp" hidden>
-            <b>Как устроен механизм</b>
+            <b>Как починить часы</b>
             <ol>
-              <li><b>Гиря</b> (большая тёмная шестерёнка слева) сама крутится <b>по часовой ↻</b>. От неё движение передаётся дальше.</li>
-              <li>Шестерёнки крутят друг друга, только если <b>касаются зубцами</b>. Соседняя всегда крутится <b>в обратную сторону</b>: по часовой → против → по часовой…</li>
-              <li>Нужно соединить цепочку от гири до <b>часовой</b> (справа вверху) и <b>минутной</b> (справа внизу) так, чтобы обе крутились <b>по часовой ↻</b>.</li>
-              <li>Шестерёнка ставится на <b>цветной штырёк</b>. Выберите свою шестерёнку внизу: штырьки, куда она помещается, подсветятся кругом её размера. <b>Зелёный круг</b> — встанет и зацепится за соседа, <b>белый пунктир</b> — встанет, но ни за что не зацепится.</li>
-              <li>Шестерёнки разные по размеру и есть у разных игроков: каждый видит только свои. Договоритесь, кто что ставит.</li>
-              <li>Если стрелка пойдёт против часовой или шестерёнки упрутся, механизм заклинит: +30 секунд. Поставленную шестерёнку можно снять — нажмите на неё, ничего не выбирая внизу.</li>
+              <li>По башне спрятаны <b>6 шестерёнок</b>. Каждую видит только тот, кто её нашёл.</li>
+              <li>Подойдите к механизму и <b>нажмите на свою шестерёнку внизу</b>: она сама встанет на своё место.</li>
+              <li>Когда встанут все шестерёнки, стрелки пойдут и откроется дверь к конюшне.</li>
             </ol>
             <button class="btn go" type="button" id="gearhelpok">Понятно</button>
           </div>
@@ -1257,7 +1254,7 @@ function renderSide(){
   else if(levelOf(ROOM)==='kitchen'&&sk){document.getElementById('pcl').textContent='Пряники';document.getElementById('pc').textContent=sk.done?'готовы':'в миске '+sk.bowl.length+'/5'}
   else if(ROOM==='loft'||ROOM==='forge'){document.getElementById('pcl').textContent='Упряжка';document.getElementById('pc').textContent=(ss?Object.keys(ss.slot).length:0)+'/8'}
   else if(ROOM==='boss'&&sb){document.getElementById('pcl').textContent=sb.phase==='win'?'Королева':'Жезлы';document.getElementById('pc').textContent=sb.phase==='win'?'побеждена':sb.wands.filter(w=>w.owner!==null).length+'/6'}
-  else if(ROOM==='clock'&&sc){document.getElementById('pcl').textContent=sc.done?'Часы':'Шестерёнки';document.getElementById('pc').textContent=sc.done?'идут':sc.g.filter(o=>o.owner!==null).length+'/8'}
+  else if(ROOM==='clock'&&sc){document.getElementById('pcl').textContent=sc.done?'Часы':'Шестерёнки';document.getElementById('pc').textContent=sc.done?'идут':GUSED.filter(i=>sc.g[i].peg).length+'/6'}
   else if(ROOM==='obs'){document.getElementById('pcl').textContent='Луч';document.getElementById('pc').textContent=(so?so.passed:0)+'/4'}
   else if(ROOM==='stable'){document.getElementById('pcl').textContent='Упряжка';document.getElementById('pc').textContent=(ss?Object.keys(ss.slot).length:0)+'/8'}
   else if(ROOM==='work'){document.getElementById('pcl').textContent='Подарки';document.getElementById('pc').textContent=(sw?sw.boxes.filter(b=>b.done).length:0)+'/8'}
@@ -2458,7 +2455,7 @@ const INTRO={
  stable:{n:4,t:'Конюшня',d:'Санте нужны сани. Узнайте, какой олень в каком стойле, подкуйте хромого и запрягите всех восьмерых по правилам Санты.',l:[]},
  kitchen:{n:5,t:'Пряничная кухня',d:'Олени запряжены, но до дворца Королевы им не долететь. Помогут только волшебные пряники миссис Клаус. Королева заморозила книгу рецептов, уцелели лишь отдельные страницы. Испеките пряники по рецепту. Кухня, кладовая и погреб связаны дверью и люком.',l:[]},
  obs:{n:6,t:'Обсерватория',d:'Сани готовы, олени сыты. Но где замок Снежной Королевы? Дорогу к нему покажет только северное сияние. Откройте купол и направьте луч звезды через зеркала в кристалл.',l:[]},
- clock:{n:3,t:'Часовая башня',d:'Королева остановила главные часы Северного полюса: пока они стоят, полночь не наступит. Найдите шестерёнки и соберите механизм так, чтобы обе стрелки пошли по часовой.',l:[]},
+ clock:{n:3,t:'Часовая башня',d:'Королева остановила главные часы Северного полюса: пока они стоят, полночь не наступит. Найдите в башне 6 шестерёнок и вставьте их в механизм на стене.',l:[]},
  boss:{n:7,t:'Ледяной дворец',d:'Санта вморожен в лёд рядом с троном Снежной Королевы. Обычным оружием её не победить. Найдите световые жезлы, вмёрзшие в лёд по всему залу, и все вместе сразитесь с Королевой. У каждого три жизни. Кто попал под ледяные колья, теряет жизнь, а без жизней замерзает. Замёрзшего отогревают только всей командой: встаньте вокруг него и держитесь рядом, пока лёд не растает.',l:[]}
 };
 const introBox=document.getElementById('introbox');
@@ -2481,6 +2478,8 @@ const GSIZE=['S','S','M','M','L','L','XL','XL'];
 // штырьки и закреплённые шестерёнки, координаты панели 1536x1024
 const PEGS={a:[666,424],b:[833,363],c:[1033,363],d:[682,652],e:[851,681],f:[1000,668],u:[850,850],w:[1300,530],x:[784,530],y:[1036,522],z:[1270,180]};
 const PEGCOL={a:'#c8333a',b:'#3a6fc4',c:'#2f8a4e',d:'#d9b45a',e:'#8a4ec4',f:'#e8ecf2',u:'#2f8a4e',w:'#c8333a',x:'#e07a2a',y:'#3a6fc4',z:'#d9b45a'};
+// упрощённая версия: у каждой нужной шестерёнки своё место, она встаёт туда сама (шестерёнки 5 и 7 не используются)
+const GTARGET={0:'a',1:'f',2:'d',3:'c',4:'e',6:'b'};const GUSED=Object.keys(GTARGET).map(Number);
 const GFIX={D:{c:[560,530],s:'L',img:5},H:{c:[1167,301],s:'M',img:3},N:{c:[1141,720],s:'L',img:4}};
 let sc;
 function freshC(){return{pen:0,g:GSIZE.map(()=>({owner:null,peg:null})),chest:false,rug:false,loft:false,shelf:false,jar:false,bench:false,drawer:false,bp:false,done:false,doneT:0,ang:{}}}
@@ -2494,9 +2493,6 @@ function gearSim(){
   const d={D:1},q=['D'];let jam=false;
   while(q.length){const k=q.pop();for(const n of adj[k]){if(d[n]===undefined){d[n]=-d[k];q.push(n)}else if(d[n]===d[k])jam=true}}
   return{d,jam,G}}
-function gearFits(i,peg){const c=PEGS[peg],r=GR[GSIZE[i]];
-  for(const k in GFIX){const f=GFIX[k];if(Math.hypot(c[0]-f.c[0],c[1]-f.c[1])<r+GR[f.s]-8)return false}
-  return sc.g.every((o,j)=>!o.peg||j===i||Math.hypot(c[0]-PEGS[o.peg][0],c[1]-PEGS[o.peg][1])>=r+GR[GSIZE[j]]-8)}
 
 const SOLID_C=[[0,0,W,104],[0,0,24,124],[218,0,38,126],[0,172,W,4]];
 const ITEMS_C=[
@@ -2512,11 +2508,11 @@ const ITEMS_C=[
    return'Чертёж часового механизма. В углу приписка про сундук, она теперь в «Записках».'}},
  {x:130,y:114,hit:[103,104,57,8],hidden:true,act(){if(sc.rug)return'Под ковриком больше ничего.';sc.rug=true;return'Под ковриком лежала '+gotGear(3)+'! Её видите только вы.'}},
  {x:188,y:108,hit:[177,88,22,15],act(){if(sc.chest)return'Сундук пуст.';
-   openCode('Сундук часовщика','3 цифры',3,'231',()=>{sc.chest=true;const a=gotGear(5),b=gotGear(6);say(people[me],'Сундук открылся! Внутри '+a+' и '+b+'. Их видите только вы.')});return null}},
+   openCode('Сундук часовщика','3 цифры',3,'231',()=>{sc.chest=true;const a=gotGear(6);say(people[me],'Сундук открылся! Внутри '+a+'. Её видите только вы.')});return null}},
  {x:205,y:108,hit:[197,41,20,28],act(){return'Две тяжёлые гири на цепях. Они должны крутить механизм.'}},
  {x:184,y:108,hit:[168,46,22,28],act(){return sc.done?'Маятник качается. Тик-так.':'Маятник висит неподвижно.'}},
  {x:128,y:106,hit:[90,0,78,60],act(){openGears();return null}},
- {x:214,y:118,hit:[220,40,22,84],act(){if(sc.loft)return'На антресоли пустые ящики.';sc.loft=true;return'Вы забрались на антресоль. В ящике '+gotGear(7)+'! Её видите только вы.'}}
+ {x:214,y:118,hit:[220,40,22,84],act(){return'На антресоли пустые ящики и старые часы без стрелок.'}}
 ];
 function hdClockImg(t){
   if(IMG_C_OK){g.imageSmoothingEnabled=true;g.drawImage(IMG_C,0,0,HW,HH);g.imageSmoothingEnabled=false}else{g.fillStyle='#2a1a10';g.fillRect(0,0,HW,HH)}
@@ -2535,26 +2531,28 @@ function hdClockLight(t){
 // ---------- механизм крупным планом ----------
 const gearBox=document.getElementById('gearbox'),gcv=document.getElementById('gearcv'),gmsg=document.getElementById('gearmsg');
 let gearSel=null,gearRaf=0,gearLast=0;
-let gearHelpSeen=false,gearHover=null;
+let gearHelpSeen=false;
 function gearHelp(on){document.getElementById('gearhelp').hidden=!on;if(on){gearHelpSeen=true;setTimeout(()=>document.getElementById('gearhelpok').focus(),30)}}
 document.getElementById('gearhelpok').addEventListener('click',()=>{gearHelp(false);document.getElementById('gearclose').focus()});
 document.getElementById('gearhelpbtn').addEventListener('click',()=>gearHelp(document.getElementById('gearhelp').hidden));
-// касается ли шестерёнка i на штырьке peg хоть одной другой (тогда она зацепится)
-function gearMeshes(i,peg){const c=PEGS[peg],r=GR[GSIZE[i]];const near=(cc,rr)=>Math.abs(Math.hypot(c[0]-cc[0],c[1]-cc[1])-(r+rr))<=8;
-  for(const k in GFIX)if(near(GFIX[k].c,GR[GFIX[k].s]))return true;
-  return sc.g.some((o,j)=>o.peg&&j!==i&&near(PEGS[o.peg],GR[GSIZE[j]]))}
-function openGears(){gearSel=null;gearHover=null;gearBox.hidden=false;const fh=!gearHelpSeen&&!sc.done;gearHelp(fh);keys.clear();gmsg.textContent=sc.done?'Часы идут!':'Выберите свою шестерёнку внизу и нажмите на подсвеченный штырёк.';renderGearTray();gearLast=performance.now();cancelAnimationFrame(gearRaf);gearRaf=requestAnimationFrame(drawGears);if(!fh)setTimeout(()=>document.getElementById('gearclose').focus(),30)}
+function openGears(){gearSel=null;gearBox.hidden=false;const fh=!gearHelpSeen&&!sc.done;gearHelp(fh);keys.clear();gmsg.textContent=sc.done?'Часы идут!':'Нажмите на свою шестерёнку внизу: она сама встанет на место.';renderGearTray();gearLast=performance.now();cancelAnimationFrame(gearRaf);gearRaf=requestAnimationFrame(drawGears);if(!fh)setTimeout(()=>document.getElementById('gearclose').focus(),30)}
 function closeGears(){gearBox.hidden=true;cancelAnimationFrame(gearRaf);cv.focus()}
 document.getElementById('gearclose').addEventListener('click',closeGears);
+function placeGear(i){if(sc.done||!(i in GTARGET))return;const o=sc.g[i];if(o.peg)return;o.peg=GTARGET[i];sfx('gear');
+  const left=GUSED.filter(k=>!sc.g[k].peg).length;
+  if(!left){sc.done=true;sfx('level');setTimeout(()=>{for(let k=0;k<3;k++)setTimeout(()=>sfx('bells'),k*500)},400);sc.doneT=performance.now();gmsg.textContent='Все шестерёнки на месте! Часы снова идут к полуночи. Дверь во двор открыта.';
+    setTimeout(()=>{closeGears();say(people[me],'Часы пошли! Дверь во двор, к конюшне, открылась.')},2600)}
+  else gmsg.textContent='Шестерёнка встала на место! Осталось '+left+' из 6.';
+  renderGearTray();renderSide()}
 function renderGearTray(){const tr=document.getElementById('geartray');tr.innerHTML='';
-  const mine=sc.g.map((o,i)=>({o,i})).filter(x=>x.o.owner===me&&!x.o.peg);
+  const mine=sc.g.map((o,i)=>({o,i})).filter(x=>x.o.owner===me&&!x.o.peg&&(x.i in GTARGET));
   if(!mine.length){const s2=document.createElement('span');s2.className='empty';s2.textContent='У вас нет свободных шестерёнок. Ищите их в башне или спросите у команды.';tr.appendChild(s2)}
-  mine.forEach(({i})=>{const b=document.createElement('button');b.type='button';const nm=GNAME[GSIZE[i]];b.title=nm;b.setAttribute('aria-label',nm+' шестерёнка');b.setAttribute('aria-pressed',gearSel===i?'true':'false');
+  mine.forEach(({i})=>{const b=document.createElement('button');b.type='button';const nm=GNAME[GSIZE[i]];b.title='Вставить: '+nm+' шестерёнка';b.setAttribute('aria-label','Вставить: '+nm+' шестерёнка');b.setAttribute('aria-pressed',gearSel===i?'true':'false');
     const im=document.createElement('img');im.src=GIMG[i].src;im.alt='';const sz={S:24,M:32,L:40,XL:48}[GSIZE[i]];im.style.width=sz+'px';im.style.height=sz+'px';b.appendChild(im);
-    b.addEventListener('click',()=>{gearSel=gearSel===i?null:i;gmsg.textContent=gearSel!==null?'Выбрана '+nm+' шестерёнка. Подсвечены штырьки, куда она помещается: зелёный круг — зацепится за соседа.':'Выберите свою шестерёнку внизу и нажмите на подсвеченный штырёк.';renderGearTray()});tr.appendChild(b)});
+    b.addEventListener('click',()=>placeGear(i));tr.appendChild(b)});
   const others={};sc.g.forEach(o=>{if(o.owner!==null&&o.owner!==me&&!o.peg)others[o.owner]=(others[o.owner]||0)+1});
   const os=document.getElementById('gearothers');const parts=Object.keys(others).map(k=>OUTFITS[k].name+': '+others[k]);
-  os.textContent=parts.length?'Шестерёнки у других: '+parts.join(', ')+'. Переключитесь на персонажа или попросите поставить.':''}
+  os.textContent=parts.length?'Шестерёнки у других: '+parts.join(', ')+'. Попросите их подойти к механизму и вставить.':''}
 function drawGearAt(x,i,c,ang,tint){const im=GIMG[i];if(!im.complete||!im.naturalWidth)return;const r=GR[GSIZE[i]]/0.95;
   x.save();x.translate(c[0],c[1]);x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.arc(8,10,r*.97,0,Math.PI*2);x.fill();x.rotate(ang);
   if(tint)x.filter='brightness(.62) saturate(.5)';x.drawImage(im,-r,-r,r*2,r*2);x.filter='none';x.restore()}
@@ -2564,7 +2562,7 @@ function drawGears(now){
   if(PLATE.complete)x.drawImage(PLATE,0,0,1536,1024);
   const S2=gearSim();const sp=sc.done?1.6:.9;
   for(const id in S2.G){const dd=S2.d[id];if(dd&&!S2.jam)sc.ang[id]=(sc.ang[id]||0)+dd*sp*dt*100/GR[S2.G[id].s]}
-  for(const p in PEGS){const [px,py]=PEGS[p];x.fillStyle='#2a1a10';x.beginPath();x.arc(px,py,13,0,Math.PI*2);x.fill();x.fillStyle=PEGCOL[p];x.beginPath();x.arc(px,py,8,0,Math.PI*2);x.fill()}
+  const TP=new Set(Object.values(GTARGET));for(const p in PEGS){if(!TP.has(p))continue;const [px,py]=PEGS[p];x.fillStyle='#2a1a10';x.beginPath();x.arc(px,py,13,0,Math.PI*2);x.fill();x.fillStyle=PEGCOL[p];x.beginPath();x.arc(px,py,8,0,Math.PI*2);x.fill()}
   for(const kf in GFIX){const f=GFIX[kf];const r=GR[f.s]/0.95,im=GIMG[f.img];
     x.save();x.translate(f.c[0],f.c[1]);x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.arc(8,10,r*.97,0,Math.PI*2);x.fill();x.rotate(sc.ang[kf]||0);x.filter='brightness(.6) saturate(.45)';if(im.complete)x.drawImage(im,-r,-r,r*2,r*2);x.filter='none';
     if(kf!=='D'){x.strokeStyle='#1a1410';x.lineCap='round';x.lineWidth=kf==='H'?16:10;x.beginPath();x.moveTo(0,0);x.lineTo(0,-(kf==='H'?r*.65:r*.95));x.stroke();x.strokeStyle='#e8d8b0';x.lineWidth=kf==='H'?8:4;x.stroke()}
@@ -2575,34 +2573,12 @@ function drawGears(now){
   // стрелка у гири: она ведёт механизм по часовой
   if(!sc.done){const f=GFIX.D,r=GR[f.s]+22;x.save();x.strokeStyle='rgba(242,193,78,.9)';x.lineWidth=7;x.lineCap='round';x.beginPath();x.arc(f.c[0],f.c[1],r,-Math.PI*.95,-Math.PI*.35);x.stroke();
     const ea=-Math.PI*.35,ex=f.c[0]+Math.cos(ea)*r,ey=f.c[1]+Math.sin(ea)*r;x.fillStyle='rgba(242,193,78,.9)';x.beginPath();x.moveTo(ex+14,ey+2);x.lineTo(ex-10,ey-12);x.lineTo(ex-6,ey+16);x.closePath();x.fill();x.restore()}
-  // подсказка: куда помещается выбранная шестерёнка
-  if(gearSel!==null&&!sc.done){const i=gearSel,r=GR[GSIZE[i]],pul=.5+.5*Math.sin(now/260);
-    for(const p in PEGS){if(sc.g.some(o=>o.peg===p))continue;const c=PEGS[p];
-      if(!gearFits(i,p)){x.save();x.globalAlpha=.75;x.fillStyle='#0b0e1e';x.beginPath();x.arc(c[0],c[1],13,0,Math.PI*2);x.fill();x.restore();continue}
-      const mesh=gearMeshes(i,p);x.save();x.lineWidth=5;x.setLineDash(mesh?[]:[14,10]);x.strokeStyle=mesh?`rgba(120,255,150,${.55+.4*pul})`:`rgba(255,255,255,${.4+.3*pul})`;x.beginPath();x.arc(c[0],c[1],r,0,Math.PI*2);x.stroke();
-      x.setLineDash([]);x.strokeStyle=mesh?'#8dffb0':'#ffffff';x.lineWidth=4;x.beginPath();x.arc(c[0],c[1],18+6*pul,0,Math.PI*2);x.stroke();x.restore()}
-    if(gearHover&&!sc.g.some(o=>o.peg===gearHover)&&gearFits(i,gearHover)){x.save();x.globalAlpha=.55;drawGearAt(x,i,PEGS[gearHover],now/1500,false);x.restore()}}
+  // пустые места: пунктир размера нужной шестерёнки
+  if(!sc.done){const pul=.5+.5*Math.sin(now/260);for(const i of GUSED){if(sc.g[i].peg)continue;const c=PEGS[GTARGET[i]],r=GR[GSIZE[i]];x.save();x.lineWidth=5;x.setLineDash([14,10]);x.strokeStyle=`rgba(255,240,200,${.35+.3*pul})`;x.beginPath();x.arc(c[0],c[1],r,0,Math.PI*2);x.stroke();x.restore()}}
   if(sc.done){x.globalCompositeOperation='screen';const gr=x.createRadialGradient(768,512,0,768,512,700);gr.addColorStop(0,'rgba(255,220,140,.25)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,1536,1024);x.globalCompositeOperation='source-over'}
   if(!gearBox.hidden)gearRaf=requestAnimationFrame(drawGears);
 }
-gcv.addEventListener('pointermove',e=>{const r=gcv.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*1536,py=(e.clientY-r.top)/r.height*1024;let peg=null,bd=46;for(const p in PEGS){const d=Math.hypot(px-PEGS[p][0],py-PEGS[p][1]);if(d<bd){bd=d;peg=p}}gearHover=peg});
-gcv.addEventListener('pointerleave',()=>{gearHover=null});
-gcv.addEventListener('pointerdown',e=>{if(sc.done)return;const r=gcv.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*1536,py=(e.clientY-r.top)/r.height*1024;
-  let peg=null,bd=46;for(const p in PEGS){const d=Math.hypot(px-PEGS[p][0],py-PEGS[p][1]);if(d<bd){bd=d;peg=p}}
-  if(gearSel===null){ // снять шестерёнку
-    let hit=-1;sc.g.forEach((o,i)=>{if(o.peg&&Math.hypot(px-PEGS[o.peg][0],py-PEGS[o.peg][1])<GR[GSIZE[i]])hit=i});
-    if(hit>=0){const o=sc.g[hit];o.peg=null;gmsg.textContent=o.owner===me?'Шестерёнку сняли, она снова у вас.':'Шестерёнку сняли и вернули владельцу: '+OUTFITS[o.owner].name+'.';renderGearTray();renderSide();return}
-    gmsg.textContent=peg?'Сначала выберите шестерёнку внизу.':'';return}
-  if(!peg){gmsg.textContent='Нажмите на цветной штырёк: подсвечены те, куда шестерёнка помещается.';return}
-  if(sc.g.some(o=>o.peg===peg)){gmsg.textContent='На этом штырьке уже стоит шестерёнка.';return}
-  const i=gearSel;if(!gearFits(i,peg)){gmsg.textContent='Не помещается: задевает соседнюю шестерёнку. Выберите подсвеченный штырёк или другую шестерёнку.';return}
-  sc.g[i].peg=peg;gearSel=null;const S2=gearSim();sfx('gear');
-  if(S2.jam||S2.d.H===-1||S2.d.N===-1){sfx('jam');sc.g[i].peg=null;sc.pen+=30;
-    gmsg.textContent=(S2.jam?'Шестерёнки упёрлись друг в друга':'Стрелка пошла против часовой')+'! Механизм заклинило, шестерёнка выскочила. +30 секунд.'}
-  else if(S2.d.H===1&&S2.d.N===1){sc.done=true;sfx('level');setTimeout(()=>{for(let k=0;k<3;k++)setTimeout(()=>sfx('bells'),k*500)},400);sc.doneT=performance.now();gmsg.textContent='Обе стрелки пошли! Часы снова идут к полуночи. Дверь во двор открыта.';renderSide();
-    setTimeout(()=>{closeGears();say(people[me],'Часы пошли! Дверь во двор, к конюшне, открылась.')},2600)}
-  else gmsg.textContent=S2.d['g'+i]?('Шестерёнка зацепилась и крутится '+(S2.d['g'+i]===1?'по часовой ↻':'против часовой ↺')+'.'+(S2.d.H===1||S2.d.N===1?' Одна стрелка уже идёт, теперь вторая.':' Ведите цепочку дальше, к стрелкам.')):(gearMeshes(i,sc.g[i].peg)?'Шестерёнка зацепилась за соседнюю, но эта цепочка пока не связана с гирей, поэтому стоит.':'Шестерёнка встала, но ни к чему не прикасается зубцами, поэтому не крутится. Цепочка должна идти от гири.');
-  renderGearTray();renderSide()});
+gcv.addEventListener('pointerdown',()=>{if(!sc.done)gmsg.textContent='Нажмите на свою шестерёнку внизу: она сама встанет на место.'});
 
 // ================= ПОЛЁТ И БИТВА С КОРОЛЕВОЙ =================
 const BIMG={};for(const k of ['hall','sky','sleigh','fx0','fx1','fx2','fx3','block','q0','q1','q2','q3','q4']){const im=new Image();im.src='rooms/boss/'+k+'.webp';BIMG[k]=im}
