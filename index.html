@@ -2003,7 +2003,7 @@ const IMG_L=new Image();let IMG_L_OK=false;IMG_L.onload=()=>{IMG_L_OK=true};IMG_
 const IX=x=>x/3,IY=y=>y*0.34375;               // пиксели картинки 1536x1024 -> HD 512x352
 const OPEN={};for(const k of ['gift','obs','stable','clock','globe']){const im=new Image();im.src='rooms/open_'+k+'.webp';OPEN[k]=im}
 const drawOpen=(k,x,y,w,h)=>{const im=OPEN[k];if(im.complete&&im.naturalWidth){g.imageSmoothingEnabled=true;g.drawImage(im,IX(x),IY(y),IX(w),IY(h));g.imageSmoothingEnabled=false}};
-const GPP={l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[1,586,488,338],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
+const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[1,586,488,338],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
 function gp(k,al){const im=GP[k],r=GPP[k];if(!okI(im))return;g.save();if(al!==undefined)g.globalAlpha=al;g.imageSmoothingEnabled=true;g.drawImage(im,IX(r[0]),IY(r[1]),IX(r[2]),IY(r[3]));g.restore()}
 const TARP=new Image();TARP.src='rooms/tarp.webp';const NOMILK=new Image();NOMILK.src='rooms/nomilk.webp';const NOBUCKET=new Image();NOBUCKET.src='rooms/nobucket.webp';
 function patchL(sx,sy,sw,sh,dx,dy){g.drawImage(IMG_L,sx,sy,sw,sh,IX(dx),IY(dy),IX(sw),IY(sh))}
@@ -2034,11 +2034,11 @@ function hdLiving(t,dt,lit){
   // угол ковра
   if(st.rug){g.fillStyle='#6b4428';g.beginPath();g.moveTo(159,256);g.lineTo(178,256);g.lineTo(159,240);g.fill();g.fillStyle='#8a2a2a';g.beginPath();g.moveTo(178,256);g.lineTo(159,240);g.lineTo(172,240);g.fill();QQ(g,166,242,3,2,'#efd9b4')}
   // открытый подарок
-  if(st.gift)drawOpen('gift',1327,665,75,83);
+  if(st.gift)gp('l_gift');
   // кот
   if(!st.catMoved)hdCat(t,316,226);else hdCat(t,214,266);
   // ёлка: игрушки, гирлянда, звезда
-  if(lit){gp('l_tree');if(st.gift)drawOpen('gift',1327,665,75,83)}
+  if(lit){gp('l_tree');if(st.gift)gp('l_gift')}
   // открытая дверь
   if(lit)gp('l_door');
 }
