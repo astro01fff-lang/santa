@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Спасти Рождество</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,11 +20,11 @@
 html{background:var(--night)}
 body{margin:0;background:var(--night);color:var(--cream);font:15px/1.5 var(--f-body);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
-.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.wrap{max-width:none;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 20px}
 h1{font:400 clamp(15px,2.4vw,22px)/1.4 var(--f-pixel);margin:0;color:var(--gold);text-shadow:3px 3px 0 #7a1f1b;letter-spacing:.02em;text-wrap:balance}
 header p{margin:0;color:var(--muted);font-size:14px}
-.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}aside{display:none!important}.stage>.frame{margin:0 auto!important;width:fit-content;max-width:100%}
 @media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
 .stage{min-width:0;display:flex;flex-direction:column;gap:12px}
 .frame{background:#0b0e1e;padding:6px;border:4px solid #3a2418;box-shadow:0 0 0 4px #6b4128,0 0 0 8px #0b0e1e,0 18px 40px rgba(0,0,0,.6);margin:8px;min-width:0}
@@ -129,13 +134,13 @@ aside{display:flex;flex-direction:column;gap:14px;min-width:0}
 @media(max-width:520px){.slot{width:52px;height:52px}.slot canvas{width:24px;height:24px}.slot span{font-size:10px}.slots{gap:4px}}
 @keyframes pop{0%{transform:scale(1.25)}100%{transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){.slot.pop{animation:none}}
-.hb-right{display:flex;gap:10px;align-items:flex-end}
+.hb-right{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
 .hb-count{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .hb-count b{font:400 16px var(--f-pixel);color:var(--gold);font-weight:400}
 .notesbtn{font-size:10px;padding:12px 12px}
 .notesbtn span{display:inline-block;min-width:18px;padding:3px 4px;margin-left:4px;background:#0b0e1e;font-size:9px}
-.notesbtn.new{background:#7a5a12;animation:blink 1s steps(2) infinite}
-@keyframes blink{50%{background:var(--panel2)}}
+.notesbtn.new{animation:blink .5s steps(2) 3}
+@keyframes blink{0%{background:#7a5a12}50%{background:var(--panel2)}}
 @media(prefers-reduced-motion:reduce){.notesbtn.new{animation:none}}
 .sheet{background:var(--panel);box-shadow:0 0 0 3px var(--gold),6px 6px 0 3px #0b0e1e;padding:18px;display:flex;flex-direction:column;gap:12px;width:min(460px,100%);max-height:100%}
 .sheet h3{font:400 12px/1.5 var(--f-pixel);color:var(--gold);margin:0}
@@ -178,6 +183,7 @@ aside{display:flex;flex-direction:column;gap:14px;min-width:0}
             <button class="btn notesbtn" id="taskbtn">Задание</button>
             <button class="btn notesbtn" id="photobtn" hidden>Фото ёлки</button>
             <button class="btn notesbtn" id="invbtn">Инвентарь</button>
+            <button class="btn notesbtn" id="helpbtn" type="button">Как играть</button>
             <button class="btn notesbtn" id="notesbtn">Записки <span id="nc">0</span></button>
           </div>
         </div>
@@ -189,6 +195,21 @@ aside{display:flex;flex-direction:column;gap:14px;min-width:0}
           <input id="codein" inputmode="numeric" autocomplete="off" aria-label="Код">
           <div class="row2"><button class="btn go" type="submit">Открыть</button><button class="btn ghost" type="button" id="codecancel">Отмена</button></div>
         </form>
+      </div>
+      <div class="modal" id="helpbox" hidden>
+        <div class="sheet">
+          <h3>Как играть</h3>
+          <ul class="help">
+          <li>Записки: кнопка внизу поля или <kbd>Q</kbd>.</li>
+          <li>Ходить: нажмите мышкой или пальцем на место в комнате. Еще можно стрелками и <kbd>W A S D</kbd>.</li>
+          <li>Нажмите на место, чтобы подойти. Стоя рядом с предметом, нажмите на него, чтобы осмотреть. Подсветки нет: тайником может оказаться что угодно.</li>
+          <li>Найденные вещи применяются сами, если подойти с ними к нужному месту.</li>
+          <li>Все найденное видно всей команде внизу поля. Обороты обрывков читайте в «Записках»: там подсказки и коды.</li>
+          <li>Письма, записки и некоторые находки видит только тот, кто их нашёл. Читайте их вслух команде.</li>
+          <li>Подарок снимают с ленты, когда он проезжает рядом: нажмите на конвейер. Потом нажмите на коробку.</li>
+        </ul>
+          <button class="btn ghost" type="button" id="helpclose">Закрыть</button>
+        </div>
       </div>
       <div class="modal" id="notesbox" hidden>
         <div class="sheet">
@@ -850,7 +871,7 @@ function fresh(){return{pen:0,lit:false,box:false,orn:{},hung:{},inv:[],notes:[]
 const has=k=>TEAM.inv.includes(k);
 const take=k=>{if(!has(k)){TEAM.inv.push(k);try{renderSide()}catch(e){};try{sfx('pickup');floatIcon(k);if(people)people[me].hopT=performance.now()}catch(e){}}};
 const drop=k=>{TEAM.inv=TEAM.inv.filter(x=>x!==k);try{renderSide()}catch(e){}};
-function piece(back){st.pieces++;try{sfx('important');floatIcon('обрывок')}catch(e){}TEAM.notes.push({t:'Обрывок '+st.pieces+' из 9',b:back});renderSide();
+function piece(back){st.pieces++;try{sfx('important');floatIcon('обрывок')}catch(e){}if(back)TEAM.notes.push({t:'Обрывок '+st.pieces+' из 9',b:back});renderSide();
   return st.pieces>=9?'Это последний, девятый обрывок! Фото собрано целиком: кнопка «Фото ёлки» внизу. Теперь нарядите ёлку.':'Обрывок фото! ('+st.pieces+' из 9). Он встал на место на фото: кнопка «Фото ёлки» внизу.'+(back?' На обороте что-то написано.':'')}
 
 // ---------- СТОЛКНОВЕНИЯ ----------
@@ -1178,6 +1199,7 @@ function openNotes(){notesBox.hidden=false;keys.clear();seenNotes=TEAM.notes.fil
 function closeNotes(){notesBox.hidden=true;cv.focus()}
 document.getElementById('notesbtn').addEventListener('click',openNotes);
 document.getElementById('notesclose').addEventListener('click',closeNotes);
+function blinkOnce(el){el.classList.remove('new');void el.offsetWidth;el.classList.add('new');el.addEventListener('animationend',()=>el.classList.remove('new'),{once:true})}
 function renderSide(){
   if(!st)return;
   if(ROOM==='gates'&&sg&&people){document.getElementById('pcl').textContent='У дверей';document.getElementById('pc').textContent=people.filter(p=>p.x+8>=188).length+'/'+people.length}
@@ -1191,7 +1213,7 @@ function renderSide(){
   else if(ROOM==='work'){document.getElementById('pcl').textContent='Подарки';document.getElementById('pc').textContent=(sw?sw.boxes.filter(b=>b.done).length:0)+'/8'}
   else if(st.pieces>=9){document.getElementById('pcl').textContent='На ёлке';document.getElementById('pc').textContent=Object.keys(st.hung).length+'/9'}
   else{document.getElementById('pcl').textContent='Обрывки';document.getElementById('pc').textContent=st.pieces+'/9'}
-  drawPhoto(document.getElementById('photocv'));document.getElementById('photowrap').hidden=!(ROOM==='living'&&st.pieces>0);{const pb=document.getElementById('photobtn');if(pb){const sh=ROOM==='living'&&st.pieces>0;if(sh&&pb.hidden)pb.classList.add('new');pb.hidden=!sh}}
+  drawPhoto(document.getElementById('photocv'));document.getElementById('photowrap').hidden=!(ROOM==='living'&&st.pieces>0);{const pb=document.getElementById('photobtn');if(pb){const sh=ROOM==='living'&&st.pieces>0;pb.hidden=!sh;if(sh&&st.pieces>(window.__lastPc||0))blinkOnce(pb);window.__lastPc=st.pieces}}
   const inv=document.getElementById('inv');inv.innerHTML='';
   const SHORT={'ключ от шкафа':'Ключ от шкафа','серебряная корица':'Корица (серебр.)','корица':'Корица','звёздная пыль':'Звёздная пыль','мёд во льду':'Мёд во льду','формочка: звезда':'Форма «звезда»','формочка: ёлка':'Форма «ёлка»','формочка: колокольчик':'Форма «колокол»','формочка: олень':'Форма «олень»','новая подкова':'Новая подкова','молоток':'Молоток','пустое ведро':'Ведро','ведро снега':'Ведро снега','золотой ключик':'Ключик','стакан молока':'Молоко','ножницы':'Ножницы','рычаг':'Рычаг','ключ от ящика':'Ключ','стремянка':'Стремянка','табличка «Ева»':'«Ева»','табличка «Гоша»':'«Гоша»','подкова':'Подкова','молоток':'Молоток','фонарь':'Фонарь','упряжь':'Упряжь','шестеренка':'Шестеренка','лопата':'Лопата','ручка №1':'Ручка','ручка №2':'Ручка','ручка №3':'Ручка','ручка №4':'Ручка'};
   for(let i=0;i<Math.max(6,TEAM.inv.length);i++){const it=TEAM.inv[i];const d=document.createElement('div');d.className='slot'+(it?' full':'');
@@ -1201,7 +1223,7 @@ function renderSide(){
   prevInv=TEAM.inv.slice();
   const VIS=TEAM.notes.filter(n=>n.owner===undefined||n.owner===me);
   const nb=document.getElementById('notesbtn');document.getElementById('nc').textContent=VIS.length;
-  nb.classList.toggle('new',VIS.length>seenNotes&&notesBox.hidden);
+  if(VIS.length>(window.__lastVis||0)&&notesBox.hidden)blinkOnce(nb);window.__lastVis=VIS.length;
   const nl=document.getElementById('notes');nl.innerHTML='';
   if(!VIS.length){const li=document.createElement('li');li.className='empty';li.textContent='Найденные обрывки и записки появятся здесь.';nl.appendChild(li)}
   VIS.slice().reverse().forEach(n=>{const li=document.createElement('li');const b=document.createElement('b');b.textContent=n.t+(n.owner!==undefined?' · видит только '+OUTFITS[n.owner].name:'');li.appendChild(b);
@@ -2959,12 +2981,13 @@ function auUI(){const box=document.getElementById('audioui');if(!box)return;
 let S=3,DPR=1,ZM=1,ZX=0,ZY=0;const ZOOM=1;
 function camSnap(){if(ROOM==='boss'){ZM=1;ZX=0;ZY=0;return}ZM=ZOOM;const p0=people[me];const vw=W/ZM,vh=H/ZM;ZX=Math.max(0,Math.min(W-vw,p0.x+8-vw/2));ZY=Math.max(0,Math.min(H-vh,p0.y+12-vh*.55))}
 function resize(){
-  const box=cv.parentElement.clientWidth-12;
-  S=Math.max(1.2,Math.min(4.2,box/W));DPR=Math.min(2,window.devicePixelRatio||1);
+  const stg=document.querySelector('.stage');const box=(stg?stg.clientWidth:cv.parentElement.clientWidth)-40;const hb=document.querySelector('.hotbar');const top=cv.getBoundingClientRect().top+window.scrollY;const avH=window.innerHeight-Math.max(60,Math.min(top,140))-(hb?hb.offsetHeight:90)-30;
+  S=Math.max(1.2,Math.min(8,box/W,avH/H));DPR=Math.min(2,window.devicePixelRatio||1);
   cv.style.width=(W*S)+'px';cv.style.height=(H*S)+'px';
   cv.width=Math.round(W*S*DPR);cv.height=Math.round(H*S*DPR);
 }
 addEventListener('resize',resize);
+{const hb=document.getElementById('helpbox');document.getElementById('helpbtn').addEventListener('click',()=>{hb.hidden=false;keys.clear();setTimeout(()=>document.getElementById('helpclose').focus(),30)});document.getElementById('helpclose').addEventListener('click',()=>{hb.hidden=true;cv.focus()});addEventListener('keydown',e=>{if(e.key==='Escape'&&!hb.hidden){hb.hidden=true;cv.focus()}})}
 
 let last=performance.now(),T=0;
 function frame(now){try{frame0(now)}catch(e){if(!window.__ferr){window.__ferr=String(e&&e.message||e);console.error(e)}requestAnimationFrame(frame)}}
