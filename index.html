@@ -3416,6 +3416,8 @@ function render(){
   if(SPEC){ui.hidden=true;return}
   if(screen==='ended'){const c=card();c.append(el('h2',null,'Игра окончена'),el('p',null,'Спасибо, что спасали Рождество вместе! Итоги:'));const tb=el('div');tb.style.cssText='display:flex;flex-direction:column;gap:6px';
     (cfg.final||[]).forEach(r=>{const row=el('div','mem');if(r.id===myTeam)row.style.outline='2px solid #f2c14e';const mm=r.sec!=null?String(r.sec/60|0).padStart(2,'0')+':'+String(r.sec%60).padStart(2,'0'):'не финишировала';row.append(el('b',null,r.place?(r.place+' место'):'—'),el('span',null,r.name+(r.id===myTeam?' (ваша команда)':'')),el('span','tag'+(r.place===1?' ok':''),mm));tb.appendChild(row)});c.appendChild(tb);return}
+  if(screen==='finished'){const c=card();
+    c.append(el('h2',null,'Рождество спасено!'),el('p',null,'Ваша команда победила Снежную Королеву. Спасибо за игру!'),el('p','muted','Итоги объявит ведущая, когда закончат все команды. Страницу можно не закрывать.'));return}
   if(screen==='connect'){const c=card();c.append(el('h2',null,'Спасти Рождество'),el('p',null,'Подключаемся к игре…'),el('p','muted',C.connected?'Связь есть, ждём ведущую.':'Ищем сервер связи.'));
     if(Date.now()-t0>9000){const p=el('p','muted','Если это надолго: проверьте интернет и что ссылка скопирована целиком. Ведущая должна держать открытой свою панель.');c.append(p)}return}
   if(screen==='closed'){const c=card();c.append(el('h2',null,'Регистрация закрыта'),el('p',null,'Ведущая уже закрыла вход в игру. Напишите ей в чате встречи.'));return}
@@ -3474,6 +3476,8 @@ function flow(){if(SPEC||!cfg)return;
     if(screen!=='char')show(myName?'char':'name');return}
   mySlot=NET.slot=mine.slot;
   if(mine.char==null){if(screen!=='char'&&screen!=='name')show('char');return}
+  // команда уже победила: после эпилога игра для неё закончена, показываем экран финиша
+  if(cfg.started&&cfg.results&&cfg.results[myTeam]&&(NET.finDone||!(sb&&sb.phase==='win'))){NET.finDone=true;NET.paused=true;show('finished');return}
   if(cfg.started){if(!NET.started)startGame(false);else if(screen!=='game'&&screen!=='count')hideUI();return}
   if(screen==='name')return;if(screen==='char'&&!justPicked){render();return}justPicked=false;
   if(screen!=='lobby')show('lobby');else render()}
@@ -3653,9 +3657,9 @@ const _thawPeople=()=>people;
 // ---------- финиш ----------
 let finSent=false;
 const _showEpilogue=showEpilogue;
-showEpilogue=function(){_showEpilogue();const r=cfg&&cfg.results&&cfg.results[myTeam];const el2=document.getElementById('epitime');
-  if(r&&r.sec!=null){el2.textContent='Время команды: '+String(r.sec/60|0).padStart(2,'0')+':'+String(r.sec%60).padStart(2,'0')+(r.pen?' (из них штрафы: '+r.pen+' сек)':'')}
-  else el2.textContent='Ведущая подводит итоги. Ваше время скоро появится у неё в таблице.'};
+showEpilogue=function(){_showEpilogue();document.getElementById('epitime').textContent='';
+  document.getElementById('epiclose').textContent='Дальше'};
+document.getElementById('epiclose').addEventListener('click',()=>{NET.finDone=true;NET.paused=true;show('finished')});
 // ---------- главный цикл сети ----------
 setInterval(()=>{if(SPEC&&people&&people[me]&&ROOM==='boss'){people[me].x=184;people[me].y=112}if(!NET.started)return;leaderTick();sendPos(false);tickDiff();
   if(NET.leader){const now=performance.now();
