@@ -2826,7 +2826,7 @@ function bowlText(){let g2=0,l=0;sk.bowl.forEach(b=>{if(b.unit==='стакан')
 function pl(n,a,b,c){const m=n%100,d=n%10;if(m>10&&m<20)return c;if(d===1)return a;if(d>1&&d<5)return b;return c}
 function bowlAct(){if(sk.done)return'На столе остывают волшебные пряники!';
   const have=INGR.filter(has);const opts=have.map(k=>({label:'Положить: '+k,fn:()=>measure(k)}));
-  if(sk.bowl.length)opts.push({label:'Вылить всё и начать заново',ghost:true,fn:()=>{sk.bowl=[];say(people[me],'Вы вылили тесто. Миска пустая, а продукты пропали.')}});
+  if(sk.bowl.length)opts.push({label:'Вылить всё и начать заново',ghost:true,fn:()=>{const back=sk.bowl.map(b=>b.k);sk.bowl=[];back.forEach(k=>{if(!anyHas(k))TEAM.inv.push(k)});renderSide();say(people[me],'Вы вылили тесто и начали заново. Продукты вернулись в инвентарь: '+back.join(', ')+'.')}});
   opts.push({label:'Отойти',ghost:true,fn:()=>{}});
   openPick('Миска для теста',bowlText()+(have.length?' Выберите, что положить.':' У команды нет продуктов: соберите их на кухне, в кладовой и в погребе.'),opts);return null}
 function measure(k){let g2=0,l=0;const lab=()=>'Отмерено: '+g2+' '+pl(g2,'стакан','стакана','стаканов')+', '+l+' '+pl(l,'ложка','ложки','ложек');
