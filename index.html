@@ -2846,7 +2846,9 @@ function shelf(high,title,list){if(high&&!has('стремянка'))return'Я в
 function ovenAct(){if(sk.done)return'Печь остывает. Пряники готовы.';
   if(!sk.bowl.length)return'Печь горячая. На дверце табличка: «Пряники — 180°». Сначала замесите тесто в миске.';
   const cut=['звезда','ёлка','колокольчик','олень'].find(c=>has('формочка: '+c));
-  if(!cut)return'Тесто готово, но чем вырезать пряники? Нужна формочка.';
+  if(!cut){const h=people&&people.find(p=>p.i!==me&&(heldBy(p.i)||'').startsWith('формочка'));
+    if(h)return'Формочку держит '+OUTFITS[h.i].name+'. Пусть поставит тесто в печь сам или вернёт формочку команде.';
+    return'Тесто в миске, но чем вырезать пряники? Нужна формочка: она в ящике слева, рядом с холодильником.'}
   const T=[140,160,180,200,220];
   openPick('Печь','На дверце табличка: «Пряники — 180°». Тесто вырезано формочкой «'+cut+'». Выставьте жар и время.',[
    {label:'Жар: '+sk.temp+'°',keep:true,fn:b=>{sk.temp=T[(T.indexOf(sk.temp)+1)%T.length];b.textContent='Жар: '+sk.temp+'°'}},
