@@ -1451,7 +1451,7 @@ const ITEMS_W=[
  {x:18,y:90,hit:[7, 81, 21, 19],act(){if(sw.mat)return'Под ковриком больше ничего.';sw.mat=true;return'Под ковриком у входа конверт… '+letter('Гоша')}},
  {x:42,y:114,hit:[50, 100, 10, 28],act(){if(sw.running)return'Конвейер работает, подарки едут по кругу.';if(!has('рычаг'))return'Конвейер стоит. На пульте пустой паз.';
    sw.running=true;sfx('lever');drop('рычаг');return'Рычаг встал на место. Конвейер загудел и поехал!'}},
- {x:240,y:118,hit:[245, 54, 10, 65],act(){if(sw.done){levelDone('clock');return null}return'Дверь во двор заперта. Сначала разложите все подарки.'}}
+ {x:240,y:118,hit:[245, 54, 10, 65],act(){if(sw.done){levelDone('clock');return null}return'Дверь в часовую башню заперта. Сначала разложите все подарки.'}}
 ].concat(BOXES0.map((_,i)=>({x:BXC[i],y:140,hit:[BXC[i]-11,144,22,21],box:i,act(){return boxAct(i)}})));
 
 function boxAct(i){
@@ -1464,7 +1464,7 @@ function boxAct(i){
   const g0=p.held;p.held=null;
   if(g0.n===WANT[bx.name]){bx.done=true;bx.doneT=performance.now();g0.gone=true;renderSide();
     if(sw.boxes.every(b=>b.done)){sw.done=true;renderSide();
-      return'Все подарки разложены! Дверь во двор открыта!'}
+      return'Все подарки разложены! Дверь в часовую башню открыта!'}
     return'Подходит! Коробку для '+GEN[bx.name]+' перевязали бантом.'}
   g0.s=freeS(loopS(p.x+8,p.y+10),g0);g0.on=true;sw.pen+=30;penFx={t:performance.now(),x:bx.x+9,y:140};
   return'Коробка выплюнула подарок обратно на конвейер. Не то! +30 секунд.'
@@ -1751,7 +1751,7 @@ const ITEMS_S=[
  {x:46,y:90,hit:[40, 92, 11, 17],act(){if(ss.bucket)return'В ведре просто вода.';if(!has('фонарь'))return'Вода в ведре замерзла. Подо льдом белеет бумажка.';
    ss.bucket=true;privNote(...RULES[2]);return'Вы поднесли фонарь, лед растаял. В воде записка Санты! Ее видите только вы.'}},
  {x:126,y:116,hit:[81, 90, 91, 21],act(){return'Длинная кормушка. В ней сено.'}},
- {x:200,y:104,hit:[203, 81, 53, 45],act(){goScene('loft',[72,140]);return null}},
+ {x:206,y:130,hit:[195, 66, 30, 62],act(){goScene('loft',[72,140]);return null}},
  {x:44,y:86,hit:[0,44,14,58],act(){goScene('forge',[36,116]);return null}},
  {x:214,y:142,hit:[220, 126, 27, 30],act(){return chestAct()}},
  {x:84,y:120,hit:[2, 107, 76, 49],act(){return sledAct()}},
@@ -2050,7 +2050,7 @@ const IMG_L=new Image();let IMG_L_OK=false;IMG_L.onload=()=>{IMG_L_OK=true};IMG_
 const IX=x=>x/3,IY=y=>y*0.34375;               // пиксели картинки 1536x1024 -> HD 512x352
 const OPEN={};for(const k of ['gift','obs','stable','clock','globe']){const im=new Image();im.src='rooms/open_'+k+'.webp';OPEN[k]=im}
 const drawOpen=(k,x,y,w,h)=>{const im=OPEN[k];if(im.complete&&im.naturalWidth){g.imageSmoothingEnabled=true;g.drawImage(im,IX(x),IY(y),IX(w),IY(h));g.imageSmoothingEnabled=false}};
-const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[0,560,520,400],s_nosled:[0,560,520,400],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing','s_sled']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
+const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[0,560,520,400],s_nosled:[0,560,520,400],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing','s_sled','s_ladder']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
 function gp(k,al){const im=GP[k],r=GPP[k];if(!okI(im))return;g.save();if(al!==undefined)g.globalAlpha=al;g.imageSmoothingEnabled=true;g.drawImage(im,IX(r[0]),IY(r[1]),IX(r[2]),IY(r[3]));g.restore()}
 const TARP=new Image();TARP.src='rooms/tarp.webp';const NOMILK=new Image();NOMILK.src='rooms/nomilk.webp';const NOBUCKET=new Image();NOBUCKET.src='rooms/nobucket.webp';
 function patchL(sx,sy,sw,sh,dx,dy){g.drawImage(IMG_L,sx,sy,sw,sh,IX(dx),IY(dy),IX(sw),IY(sh))}
@@ -2171,6 +2171,8 @@ function hdStableImg(t,dt){
   if(!ss.bucket){ell(g,IX(272),IY(553),9,3.2,'#cfe8ff');ell(g,IX(268),IY(551),4,1.2,'#ffffff');QQ(g,IX(272)-2,IY(553)-1,5,2,'#f4ecd8')}
   // сундук
   if(ss.chest)gp('s_chest');
+  // лестница на сеновал у стогов сена
+  {const im=GP.s_ladder;if(okI(im)){g.save();g.imageSmoothingEnabled=true;g.drawImage(im,IX(1180),IY(392),IX(150),IY(355));g.restore()}}
   // сани: после взлёта уезжают и поднимаются вместе с упряжкой
   if(!ss.tarp){if(ss.done){gp('s_nosled');const {fx,lift}=sledFly();const im=GP.s_sled;if(okI(im)){g.save();g.imageSmoothingEnabled=true;g.drawImage(im,IX(-12)+fx,IY(614)-lift,IX(520),IY(356));g.restore()}}else gp('s_sleigh')}
   // места упряжки
@@ -2535,8 +2537,8 @@ function closeGears(){gearBox.hidden=true;cancelAnimationFrame(gearRaf);cv.focus
 document.getElementById('gearclose').addEventListener('click',closeGears);
 function placeGear(i,peg){if(sc.done||!(i in GTARGET))return;const o=sc.g[i];if(o.peg)return;o.peg=peg;gearSel=null;sfx('gear');
   const left=Object.keys(TSIZE).filter(p=>!sc.g.some(q=>q.peg===p)).length;
-  if(!left){sc.done=true;sfx('level');setTimeout(()=>{for(let k=0;k<3;k++)setTimeout(()=>sfx('bells'),k*500)},400);sc.doneT=performance.now();gmsg.textContent='Все шестерёнки на месте! Часы снова идут к полуночи. Дверь во двор открыта.';
-    setTimeout(()=>{closeGears();say(people[me],'Часы пошли! Дверь во двор, к конюшне, открылась.')},2600)}
+  if(!left){sc.done=true;sfx('level');setTimeout(()=>{for(let k=0;k<3;k++)setTimeout(()=>sfx('bells'),k*500)},400);sc.doneT=performance.now();gmsg.textContent='Все шестерёнки на месте! Часы снова идут к полуночи. Дверь в конюшню открыта.';
+    setTimeout(()=>{closeGears();say(people[me],'Часы пошли! Дверь в конюшню открылась.')},2600)}
   else gmsg.textContent='Шестерёнка встала на место! Осталось '+left+'.';
   renderGearTray();renderSide()}
 function renderGearTray(){const tr=document.getElementById('geartray');tr.innerHTML='';
@@ -3115,7 +3117,7 @@ function frame0(now){
     if(p.i===me){const ay=y-fs-S*2+Math.sin(T*5)*S;ctx.fillStyle='#f2c14e';ctx.beginPath();ctx.moveTo(x-S*2.5,ay-S*3);ctx.lineTo(x+S*2.5,ay-S*3);ctx.lineTo(x,ay);ctx.fill()}
   });
   // подписи над переходами в соседние помещения
-  {const DL={stable:[[3,40,'Кузница ←','left'],[252,78,'Сеновал →','right']],forge:[[3,22,'← Конюшня','left']],loft:[[32,114,'↓ Конюшня','center']],
+  {const DL={stable:[[3,40,'Кузница ←','left'],[194,96,'Сеновал ↑','right'],[253,30,'На кухню →','right']],forge:[[3,22,'← Конюшня','left']],loft:[[32,114,'↓ Конюшня','center']],
      kitchen:[[253,18,'Кладовая →','right']],pantry:[[3,20,'← Кухня','left'],[212,106,'↓ Погреб','center']],cellar:[[27,10,'↑ Кладовая','center']]}[ROOM];
    if(DL){ctx.save();ctx.font=`600 ${Math.max(10,Math.round(S*2.4))}px 'Golos Text', system-ui, sans-serif`;ctx.textBaseline='middle';
      for(const [lx,ly,t,al] of DL){const tw=ctx.measureText(t).width,ph=S*2.2,bx=al==='left'?(lx-camX)*S:al==='right'?(lx-camX)*S-tw-ph*2:(lx-camX)*S-tw/2-ph,by=(ly-camY)*S;
