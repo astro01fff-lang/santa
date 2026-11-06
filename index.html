@@ -2817,12 +2817,12 @@ function drawFlight(now){
     x.fillStyle='#f2c14e';x.beginPath();x.arc(cx,cy,Math.max(2,SW*.012),0,Math.PI*2);x.fill()}
   deer.filter(d=>!d.back).forEach(drawDeer);
   if(bok('sleigh'))x.drawImage(sl,0,-SH*.5,SW,SH);
-  // команда в санях: сидят на сиденье, низ спрятан за бортом
+  // команда стоит в санях в полный рост, боком по ходу полёта
   {const RIM=[[0,.40],[.12,.44],[.19,.47],[.3,.54],[.38,.58],[.48,.6],[.58,.6],[.68,.53],[.77,.43],[.85,.35],[1,.3]];
     const rim=u=>{for(let k=1;k<RIM.length;k++)if(u<=RIM[k][0]){const [a,b]=RIM[k-1],[c,d]=RIM[k];return b+(d-b)*(u-a)/(c-a)}return .3};
-    x.save();x.beginPath();x.moveTo(0,-SH*3);x.lineTo(SW,-SH*3);for(let k=RIM.length-1;k>=0;k--)x.lineTo(RIM[k][0]*SW,-SH*.5+(RIM[k][1]-.035)*SH);x.closePath();x.clip();
-    if(people){const PP=people.slice(0,6);PP.forEach((p,i)=>{const s2=SPR[p.i].down[0];const h=SH*.6,w=h*s2.width/s2.height;const u=.27+i*(PP.length>1?.42/(PP.length-1):0);
-      const by=-SH*.5+rim(u)*SH;x.drawImage(s2,u*SW-w/2,by-h*.6-Math.abs(Math.sin(e*6+i))*SH*.012,w,h)})}
+    x.save();
+    if(people){const PP=people.slice(0,6);PP.forEach((p,i)=>{const s2=SPR[p.i].right[0];const h=SH*.42,w=h*s2.width/s2.height;const u=.25+i*(PP.length>1?.44/(PP.length-1):0);
+      const by=-SH*.5+rim(u)*SH;x.drawImage(s2,u*SW-w/2,by-h*.95-Math.abs(Math.sin(e*6+i))*SH*.012,w,h)})}
     x.restore()}
   x.restore();
   // снег
