@@ -1671,7 +1671,7 @@ const PAGES=[
  ['Книга примет, страница 3','«Гром: самые большие рога и зеленый ошейник. Танцор: белое пятно и колокольчик»'],
  ['Книга примет, страница 4','«Скакун: синий ошейник, без пятна. Лисичка: рыжеватая шерсть»']];
 const RULES=[
- ['Записка Санты №1','«Рудольф всегда бежит первым: его красный нос светит в метель».'],
+ ['Записка Санты №1','«Рудольф всегда бежит первым, впереди всей упряжки».'],
  ['Записка Санты №2','«Комета — лучшая подруга Рудольфа, ставь их в одну пару». «Гром самый сильный, его место прямо у саней».'],
  ['Записка Санты №3','«Лисичка без Грома нервничает, держи их в одной паре».'],
  ['Записка Санты №4','«Купидон бежит сразу за Молнией». «Танцор бежит сразу перед Лисичкой».']];
@@ -1723,7 +1723,7 @@ function slotAct(si){
   return null;
 }
 function sledAct(){
-  if(ss.tarp){ss.tarp=false;TEAM.notes.push({t:'Узор на санях',b:'Звезда, колокольчик, подкова, снежинка'});renderSide();return'Вы сдернули брезент. На боку саней вырезан узор: звезда, колокольчик, подкова, снежинка.'}
+  if(ss.tarp){ss.tarp=false;renderSide();return'Вы приподняли брезент. На боку саней вырезан узор: звезда, колокольчик, подкова, снежинка.'}
   if(ss.done)return'Сани взлетают!';
   const n=Object.keys(ss.slot).length;
   if(n<8)return'Сани ждут упряжку: поставлено '+n+' из 8 оленей.';
@@ -1745,7 +1745,7 @@ const ITEMS_S=[
  ...STALL.map((_,i)=>({x:STX[i],y:84,hit:[STX[i]-12,34,24,46],act(){return stallAct(i)}})),
  ...SLOTS.map((s,i)=>({x:s.x,y:s.y+2,hit:[s.x-10,s.y-14,20,18],act(){return slotAct(i)}})),
  {x:32,y:84,hit:[23, 12, 19, 20],act(){return'Старое седло. Им давно не пользовались.'}},
- {x:54,y:84,hit:[50, 15, 9, 14],act(){if(ss.lantern)return'Пустой крюк от фонаря.';ss.lantern=true;take('фонарь');return'Вы сняли фонарь со стены. Тёплый!'}},
+ {x:54,y:84,hit:[50, 15, 9, 14],act(){return'Фонарь висит под самым потолком, не достать.'}},
  {x:78,y:84,hit:[65, 15, 28, 13],act(){if(ss.shelf)return'Колокольчики тихо звенят.';ss.shelf=true;privNote(...RULES[3]);return'Под самым большим колокольчиком записка Санты! Ее видите только вы.'}},
  {x:56,y:98,hit:[18,83,21,21],act(){if(ss.sack)return'Мешок с ягелем, оленья еда.';ss.sack=true;privNote(...RULES[1]);return'В ягеле запуталась записка Санты! Ее видите только вы.'}},
  {x:46,y:90,hit:[40, 92, 11, 17],act(){if(ss.bucket)return'В ведре просто вода.';if(!has('фонарь'))return'Вода в ведре замерзла. Подо льдом белеет бумажка.';
@@ -2050,7 +2050,7 @@ const IMG_L=new Image();let IMG_L_OK=false;IMG_L.onload=()=>{IMG_L_OK=true};IMG_
 const IX=x=>x/3,IY=y=>y*0.34375;               // пиксели картинки 1536x1024 -> HD 512x352
 const OPEN={};for(const k of ['gift','obs','stable','clock','globe']){const im=new Image();im.src='rooms/open_'+k+'.webp';OPEN[k]=im}
 const drawOpen=(k,x,y,w,h)=>{const im=OPEN[k];if(im.complete&&im.naturalWidth){g.imageSmoothingEnabled=true;g.drawImage(im,IX(x),IY(y),IX(w),IY(h));g.imageSmoothingEnabled=false}};
-const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[1,586,488,338],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
+const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[1,586,488,338],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
 function gp(k,al){const im=GP[k],r=GPP[k];if(!okI(im))return;g.save();if(al!==undefined)g.globalAlpha=al;g.imageSmoothingEnabled=true;g.drawImage(im,IX(r[0]),IY(r[1]),IX(r[2]),IY(r[3]));g.restore()}
 const TARP=new Image();TARP.src='rooms/tarp.webp';const NOMILK=new Image();NOMILK.src='rooms/nomilk.webp';const NOBUCKET=new Image();NOBUCKET.src='rooms/nobucket.webp';
 function patchL(sx,sy,sw,sh,dx,dy){g.drawImage(IMG_L,sx,sy,sw,sh,IX(dx),IY(dy),IX(sw),IY(sh))}
@@ -2167,7 +2167,6 @@ function hdStableImg(t,dt){
   for(let i=0;i<8;i++){const n=deerAtStall(i);if(n){headImg(STXH[i],t,n,n==='Скакун'&&!ss.shod);patchS(POSTS[i]+8,342,POSTS[i+1]-POSTS[i]-16,128,POSTS[i]+8,342)}
     if(ss.tags[i]){QQ(g,STXH[i]-11,125.5,22,6.5,'#f4e6c4');QQ(g,STXH[i]-11,131.5,22,.8,'#8a6a3a')}}
   // снятый фонарь
-  if(ss.lantern)patchS(680,72,62,98,296,72);
   // лед в ведре
   if(!ss.bucket){ell(g,IX(272),IY(553),9,3.2,'#cfe8ff');ell(g,IX(268),IY(551),4,1.2,'#ffffff');QQ(g,IX(272)-2,IY(553)-1,5,2,'#f4ecd8')}
   // сундук
@@ -2188,9 +2187,9 @@ function hdStableImgLight(t){
   lc.globalCompositeOperation='source-over';lc.fillStyle=ss.done?'#f0e8e0':'#cec4da';lc.fillRect(0,0,HW,HH);
   lc.globalCompositeOperation='lighter';
   for(const [x,y,r2] of [[207,40,140],[383,40,140],[35,129,70]])glow(lc,x,y,r2,'rgba(255,200,130,.42)');
-  if(!ss.lantern)glow(lc,108,43,70,'rgba(255,190,110,.4)');
+  glow(lc,108,43,70,'rgba(255,190,110,.4)');
   g.save();g.globalCompositeOperation='multiply';g.drawImage(LC,0,0);g.restore();
-  g.save();g.globalCompositeOperation='screen';for(const [x,y] of [[207,40],[383,40]])glow(g,x,y,14,'rgba(255,215,140,.45)');if(!ss.lantern)glow(g,108,43,10,'rgba(255,210,130,.5)');g.restore();
+  g.save();g.globalCompositeOperation='screen';for(const [x,y] of [[207,40],[383,40]])glow(g,x,y,14,'rgba(255,215,140,.45)');glow(g,108,43,10,'rgba(255,210,130,.5)');g.restore();
 }
 
 // ================= ОБСЕРВАТОРИЯ НА ФОНЕ ИЗ НЕЙРОСЕТИ =================
@@ -2911,6 +2910,7 @@ const ITEMS_CL=[
 ];
 // --- сеновал и кузница
 const ITEMS_LF=[
+ {x:104,y:104,hit:[96,38,13,24],act(){if(ss.lantern)return'Тут стоял фонарь.';ss.lantern=true;take('фонарь');return'Вы взяли со стола фонарь. Тёплый!'}},
  {x:70,y:142,hit:[0,118,64,42],act(){goScene('stable',[176,106]);return null}},
  {x:118,y:104,hit:[97,48,40,32],act(){if(ss.lp0)return'Книга примет. Остальные страницы пустые.';ss.lp0=true;privNote(...PAGES[0]);return'На столе книга примет оленей! Вы прочитали страницу. Её видите только вы.'}},
  {x:166,y:104,hit:[157,22,36,30],act(){if(ss.lp1)return'Доска с записками. Больше ничего полезного.';ss.lp1=true;privNote(...PAGES[1]);return'На доске приколот вырванный лист из книги примет! Его видите только вы.'}},
@@ -2936,10 +2936,11 @@ function hdScene(k,t){const im=SIMG[k];if(im.complete&&im.naturalWidth){g.imageS
     if(sk.melt){const e=(performance.now()-sk.melt.t)/6000;g.save();g.globalCompositeOperation='screen';glow(g,IX(1275),IY(310),10+e*8,'rgba(255,190,90,.5)');g.restore()}}
   if(k==='cellar'&&!sk.ladder&&okI(ICOIMG['стремянка'])){g.imageSmoothingEnabled=true;g.drawImage(ICOIMG['стремянка'],IX(560),IY(330),48,56);g.imageSmoothingEnabled=false}
   if(k==='cellar'&&sk.tin)gp('k_tin');
+  if(k==='loft'&&ss.lantern)gp('f_nolamp');
   if(k==='forge'){const hs=(x,y,w,rot,sy=1)=>{const im=GP.shoe_hot_s;if(!okI(im))return;const h=w*im.naturalHeight/im.naturalWidth;g.save();g.translate(x,y);g.rotate(rot);g.scale(1,sy);g.imageSmoothingEnabled=true;g.drawImage(im,-w/2,-h/2,w,h);g.restore();g.save();g.globalCompositeOperation='screen';glow(g,x,y,w*.9,`rgba(255,120,40,${.5+.2*Math.sin(t*5)})`);g.restore()};
     if(ss.horse==='hot')hs(IX(795),IY(375),14,.3);
     if(ss.horse==='bent')hs(IX(752),IY(532),15,0,.45)}}
-function hdSceneLight(k,t){const L={kitchen:[[1010,330,90],[1390,230,60],[160,200,60]],pantry:[[230,250,70],[640,300,120]],cellar:[[1200,200,90],[140,140,90]],loft:[[640,330,80],[1260,230,80],[300,180,60]],forge:[[800,370,140],[220,250,70]]}[k]||[];
+function hdSceneLight(k,t){const L={kitchen:[[1010,330,90],[1390,230,60],[160,200,60]],pantry:[[230,250,70],[640,300,120]],cellar:[[1200,200,90],[140,140,90]],loft:[...(ss.lantern?[]:[[640,330,80]]),[1260,230,80],[300,180,60]],forge:[[800,370,140],[220,250,70]]}[k]||[];
   lc.globalCompositeOperation='source-over';lc.fillStyle=k==='cellar'?'#b4bcd8':'#d8ccd6';lc.fillRect(0,0,HW,HH);lc.globalCompositeOperation='lighter';
   const fl=.9+.1*Math.sin(t*7);L.forEach(([x,y,r])=>glow(lc,IX(x),IY(y),r,`rgba(255,195,120,${.42*fl})`));
   g.save();g.globalCompositeOperation='multiply';g.drawImage(LC,0,0);g.restore();
@@ -3111,6 +3112,13 @@ function frame0(now){
       ctx.save();ctx.globalAlpha=p.off?.5:1;ctx.fillStyle='rgba(16,20,42,.75)';ctx.beginPath();ctx.arc(ix+sz/2,iy+sz/2,sz*.62,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#8dffb0';ctx.lineWidth=Math.max(1.5,S*.5);ctx.stroke();ctx.imageSmoothingEnabled=true;ctx.drawImage(im,ix,iy,sz,sz);ctx.restore()}}
     if(p.i===me){const ay=y-fs-S*2+Math.sin(T*5)*S;ctx.fillStyle='#f2c14e';ctx.beginPath();ctx.moveTo(x-S*2.5,ay-S*3);ctx.lineTo(x+S*2.5,ay-S*3);ctx.lineTo(x,ay);ctx.fill()}
   });
+  // подписи над переходами в соседние помещения
+  {const DL={stable:[[3,40,'Кузница ←','left'],[252,78,'Сеновал →','right']],forge:[[3,22,'← Конюшня','left']],loft:[[32,114,'↓ Конюшня','center']],
+     kitchen:[[253,18,'Кладовая →','right']],pantry:[[3,20,'← Кухня','left'],[212,106,'↓ Погреб','center']],cellar:[[27,10,'↑ Кладовая','center']]}[ROOM];
+   if(DL){ctx.save();ctx.font=`600 ${Math.max(10,Math.round(S*2.4))}px 'Golos Text', system-ui, sans-serif`;ctx.textBaseline='middle';
+     for(const [lx,ly,t,al] of DL){const tw=ctx.measureText(t).width,ph=S*2.2,bx=al==='left'?(lx-camX)*S:al==='right'?(lx-camX)*S-tw-ph*2:(lx-camX)*S-tw/2-ph,by=(ly-camY)*S;
+       ctx.fillStyle='rgba(16,20,42,.78)';ctx.fillRect(bx,by-S*2.4,tw+ph*2,S*4.8);ctx.strokeStyle='rgba(242,193,78,.55)';ctx.lineWidth=Math.max(1,S*.3);ctx.strokeRect(bx,by-S*2.4,tw+ph*2,S*4.8);
+       ctx.fillStyle='#f4ecd8';ctx.textAlign='left';ctx.fillText(t,bx+ph,by)}ctx.restore()}}
 
   if(W2){ctx.font=`${Math.max(8,Math.round(S*2.6))}px 'Press Start 2P', monospace`;ctx.textAlign='center';ctx.textBaseline='middle';
     sw.boxes.forEach(bx=>{const x=(bx.x+9)*S,y=167.5*S;ctx.fillStyle='rgba(16,20,42,.8)';const tw=ctx.measureText(bx.name||'???').width+S*3;ctx.fillRect(x-tw/2,y-S*2.6,tw,S*5.2);
