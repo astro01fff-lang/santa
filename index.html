@@ -209,7 +209,7 @@ html.fs body{padding:0}html.fs .wrap{gap:0}html.fs .wrap>header,html.fs #netbar{
           <li>Записки: кнопка внизу поля или <kbd>Q</kbd>.</li>
           <li>Ходить: нажмите мышкой или пальцем на место в комнате. Еще можно стрелками и <kbd>W A S D</kbd>.</li>
           <li>Нажмите на место, чтобы подойти. Стоя рядом с предметом, нажмите на него, чтобы осмотреть. Подсветки нет: тайником может оказаться что угодно.</li>
-          <li>Найденные вещи применяются сами, если подойти с ними к нужному месту.</li>
+          <li>Чтобы применить вещь, сначала возьмите её в руки: нажмите на неё в инвентаре внизу. Потом нажмите на нужное место в комнате.</li>
           <li>Все найденное видно всей команде внизу поля. Обороты обрывков читайте в «Записках»: там подсказки и коды.</li>
           <li>Вещь из общего инвентаря можно взять в руки: нажмите на неё внизу поля. Она появится над вашим персонажем, и пользоваться ею сможете только вы. Нажмите «В руках», чтобы вернуть её команде.</li>
           <li>Письма, записки и некоторые находки видит только тот, кто их нашёл. Читайте их вслух команде.</li>
@@ -335,7 +335,7 @@ html.fs body{padding:0}html.fs .wrap{gap:0}html.fs .wrap>header,html.fs #netbar{
           <li>Записки: кнопка внизу поля или <kbd>Q</kbd>.</li>
           <li>Ходить: нажмите мышкой или пальцем на место в комнате. Еще можно стрелками и <kbd>W A S D</kbd>.</li>
           <li>Нажмите на место, чтобы подойти. Стоя рядом с предметом, нажмите на него, чтобы осмотреть. Подсветки нет: тайником может оказаться что угодно.</li>
-          <li>Найденные вещи применяются сами, если подойти с ними к нужному месту.</li>
+          <li>Чтобы применить вещь, сначала возьмите её в руки: нажмите на неё в инвентаре внизу. Потом нажмите на нужное место в комнате.</li>
           <li>Все найденное видно всей команде внизу поля. Обороты обрывков читайте в «Записках»: там подсказки и коды.</li>
           <li>В мастерской письмо видит только тот, кто его нашел. Переключите персонажа, и записки станут другими.</li>
           <li>Подарок снимают с ленты, когда он проезжает рядом: нажмите на конвейер. Потом нажмите на коробку.</li>
@@ -776,7 +776,11 @@ const TOYIMG=SPRIMG('toys',['воздушный змей','самокат','ги
 const KITIMG=SPRIMG('kit',['мука','мёд','мёд во льду','имбирь','перец','корица серебряная','корица обычная','звёздная пыль','кружка','ложка','формочка звезда','формочка ёлка','формочка колокольчик','формочка олень','миска','пряники']);
 const CATIMG=SPRIMG('cat',['sleep1','sleep2','milk','happy']);
 const okI=im=>im&&im.complete&&im.naturalWidth;
-const icoFor=it=>(it==='ключ от шкафа'&&ICOIMG['ключ от ящика'])||(KITICON&&KITICON[it]&&KITIMG[KITICON[it]])||(it==='новая подкова'&&(okI(GP.shoe_cold_s)?GP.shoe_cold_s:ICOIMG['подкова']))||ICOIMG[it]||ICOIMG[it.replace(/ «.*»$/,'').replace(/ №\d$/,'')]||KITIMG[it];
+const TONGS=(()=>{const c=document.createElement('canvas');c.width=c.height=48;const x=c.getContext('2d');x.lineCap='round';
+  x.strokeStyle='#2a2a30';x.lineWidth=7;x.beginPath();x.moveTo(8,44);x.lineTo(26,18);x.lineTo(30,6);x.moveTo(20,44);x.lineTo(24,18);x.lineTo(38,6);x.stroke();
+  x.strokeStyle='#9aa6b8';x.lineWidth=3;x.beginPath();x.moveTo(8,44);x.lineTo(26,18);x.lineTo(30,6);x.moveTo(20,44);x.lineTo(24,18);x.lineTo(38,6);x.stroke();
+  x.fillStyle='#d9b45a';x.beginPath();x.arc(25,19,3.5,0,Math.PI*2);x.fill();const im=new Image();im.src=c.toDataURL();return im})();
+const icoFor=it=>(it==='клещи'&&TONGS)||(it==='клещи с подковой'&&okI(GP.shoe_hot_s)&&GP.shoe_hot_s)||(it==='ключ от шкафа'&&ICOIMG['ключ от ящика'])||(KITICON&&KITICON[it]&&KITIMG[KITICON[it]])||(it==='новая подкова'&&(okI(GP.shoe_cold_s)?GP.shoe_cold_s:ICOIMG['подкова']))||ICOIMG[it]||ICOIMG[it.replace(/ «.*»$/,'').replace(/ №\d$/,'')]||KITIMG[it];
 function drawToy(n,cx,by,w){const im=TOYIMG[n];if(!okI(im))return false;const h=w*im.naturalHeight/im.naturalWidth;g.imageSmoothingEnabled=true;g.drawImage(im,cx-w/2,by-h,w,h);g.imageSmoothingEnabled=false;return true}
 function hdCat(t,cx,cy){
   {const moved=st.catMoved;const k=moved?((performance.now()-(st.catT||0))<2600?'milk':'happy'):(Math.floor(t/1.4)%2?'sleep2':'sleep1');const im=CATIMG[k];
@@ -883,6 +887,11 @@ const sharedInv=()=>TEAM.inv.filter(x=>x[0]!=='@');
 const myInv=()=>{const h=heldBy(me);return h?[h,...sharedInv()]:sharedInv()};
 const has=k=>TEAM.inv.includes(k)||TEAM.inv.includes('@'+me+':'+k);
 const anyHas=k=>TEAM.inv.some(x=>baseIt(x)===k);
+// вещь применяется только из рук: holds — держит ли её этот игрок; handMsg — подсказка, если вещь есть у команды, но не в руках
+const holds=k=>heldBy(me)===k;
+function handMsg(k,orig){if(holds(k))return orig;const who=people&&people.find(p=>p.i!==me&&heldBy(p.i)===k);
+  if(who)return '«'+k[0].toUpperCase()+k.slice(1)+'» в руках у '+(OUTFITS[who.i]?OUTFITS[who.i].name:'товарища')+'. Пусть применит сам или вернёт команде.';
+  if(anyHas(k))return orig+' Возьмите в руки «'+k+'»: нажмите на неё в инвентаре внизу.';return orig}
 function holdIt(k){const i=TEAM.inv.indexOf(k);if(i<0)return;const h=heldBy(me);if(h)TEAM.inv=TEAM.inv.map(x=>x==='@'+me+':'+h?h:x);
   const j=TEAM.inv.indexOf(k);TEAM.inv.splice(j,1,'@'+me+':'+k);try{sfx('pickup');if(people)people[me].hopT=performance.now()}catch(e){}renderSide()}
 function unholdIt(){const h=heldBy(me);if(!h)return;TEAM.inv=TEAM.inv.map(x=>x==='@'+me+':'+h?h:x);try{sfx('pickup')}catch(e){}renderSide()}
@@ -902,35 +911,46 @@ const ITEMS_L=[
  {x:102,y:126,hit:[95, 130, 15, 8],hidden:true,act(){if(st.pillow)return'Под подушкой больше ничего.';st.pillow=true;return piece('')}},
  {x:82,y:74,hit:[23, 7, 10, 43],hidden:true,act(){if(st.curtain)return'За шторой только пыль.';st.curtain=true;return piece('')}},
  {x:82,y:78,hit:[59, 7, 14, 43],hidden:true,act(){return ornAt('icicle','За шторой в складках висит стеклянная сосулька! Это ёлочная игрушка.')||'За этой шторой только мишура и паутинка.'}},
- {x:86,y:74,hit:[33, 10, 26, 37],act(){if(st.bucket===1){st.bucket=2;drop('пустое ведро');take('ведро снега');const sn=ornAt('snow',' ');renderSide();return'Вы открыли окно и набрали полное ведро снега. Бр-р!'+(sn?' А к стеклу примерзла снежинка, ёлочная игрушка!':'')}
+ {x:86,y:74,hit:[33, 10, 26, 37],act(){if(st.bucket===1&&holds('пустое ведро')){st.bucket=2;drop('пустое ведро');take('ведро снега');const sn=ornAt('snow',' ');renderSide();return'Вы открыли окно и набрали полное ведро снега. Бр-р!'+(sn?' А к стеклу примерзла снежинка, ёлочная игрушка!':'')}
    return ornAt('snow','К стеклу примерзла белая снежинка. Да это же ёлочная игрушка!')||'За окном метель. На подоконнике снаружи намело гору снега.'}},
  {x:28,y:150,hit:[6, 143, 16, 20],act(){if(st.bucket===0){st.bucket=1;take('пустое ведро');renderSide();return'Пустое ведро для угля. Может пригодиться.'}return'Тут стояло ведро.'}},
  {x:94,y:74,hit:[78, 15, 20, 20],act(){if(!st.safeSeen){st.safeSeen=true;return'Картина висела криво. За ней сейф! Замок на 4 цифры.'}
    if(st.safeOpen)return ornAt('horse')||'Сейф пуст.';openCode('Сейф Санты','4 цифры',4,['0940','2140'],()=>{st.safeOpen=true;take('золотой ключик');const m=piece('');gotOrn('horse');say(people[me],'Сейф открылся! Внутри золотой ключик, деревянная лошадка-игрушка и… '+m)});return null}},
  {x:182,y:74,hit:[173, 7, 17, 35],act(){if(st.clock){openClock(false);clockMsg('Часы идут. Кукушка довольно выглядывает.');return null}
-   if(!has('золотой ключик')){openClock(false);clockMsg('Часы стоят, стрелки замерли. Сбоку маленькая замочная скважина.');return null}
+   if(!holds('золотой ключик')){openClock(false);clockMsg(handMsg('золотой ключик','Часы стоят, стрелки замерли. Сбоку маленькая замочная скважина.'));return null}
    st.clock=true;st.clockT=performance.now()+600;drop('золотой ключик');renderSide();openClock(true);return null}},
  {x:114,y:74,hit:[112, 34, 10, 18],act(){return ornAt('blue','В красном носке синий стеклянный шар! Игрушка с ёлки.')||'Красный носок. Пусто, даже угля нет.'}},
  {x:154,y:74,hit:[142, 34, 10, 18],act(){if(st.stocking)return'Зеленый носок пуст.';st.stocking=true;return'В зеленом носке что-то шуршит… '+piece('')}},
  {x:134,y:74,hit:[119, 48, 28, 20],act(){
-   if(!st.fireOut){if(has('ведро снега')){st.fireOut=true;drop('ведро снега');renderSide();return'Пш-ш-ш! Огонь погас. В золе что-то белеет…'}
-     return'Огонь горит жарко. В глубине, в золе, что-то белеет, но руку не сунешь.'}
+   if(!st.fireOut){if(holds('ведро снега')){st.fireOut=true;drop('ведро снега');renderSide();return'Пш-ш-ш! Огонь погас. В золе что-то белеет…'}
+     return handMsg('ведро снега','Огонь горит жарко. В глубине, в золе, что-то белеет, но руку не сунешь.')}
    if(st.ash)return'В камине только зола.';st.ash=true;take('ключ от шкафа');return'В золе маленький медный ключ и обгоревший уголок… '+piece('')}},
  {x:204,y:74,hit:[199, 7, 49, 57],act(){if(st.shelfOpen){if(st.book)return'Остальные книги просто книги.';st.book=true;return'«Рождественская песнь» сама выпала с полки. Внутри… '+piece('')}
-   if(!has('ключ от шкафа'))return'Стеклянная дверца шкафа заперта. Нужен ключ.';st.shelfOpen=true;drop('ключ от шкафа');renderSide();return'Ключ подошёл! Стеклянная дверца шкафа открылась.'}},
- {x:58,y:110,hit:[37, 58, 40, 50],act(){if(st.plaid)return ornAt('cone','В складках пледа запуталась шишка-игрушка.')||'Плед больше ничего не прячет.';gotOrn('cone');st.plaid=true;renderSide();return'В складках пледа запуталась шишка, ёлочная игрушка!'}},
- {x:130,y:122,hit:[108, 90, 46, 28],act(){if(!st.milk){st.milk=true;take('стакан молока');renderSide();return'Вы взяли молоко Санты. Он поймет.'}return'Печенье. Санта их пересчитал, лучше не трогать.'}},
+   if(!holds('ключ от шкафа'))return handMsg('ключ от шкафа','Стеклянная дверца шкафа заперта. Нужен ключ.');st.shelfOpen=true;drop('ключ от шкафа');renderSide();return'Ключ подошёл! Стеклянная дверца шкафа открылась.'}},
+ {x:58,y:110,hit:[45,58,19,21],act(){if(st.plaid)return ornAt('cone','В складках пледа запуталась шишка-игрушка.')||'Плед больше ничего не прячет.';gotOrn('cone');st.plaid=true;renderSide();return'В складках пледа запуталась шишка, ёлочная игрушка!'}},
+ {x:58,y:112,hit:[47,75,14,12],act(){return'Подушка в кресле. Под ней пусто.'}},
+ {x:58,y:112,hit:[37,58,40,50],act(){return'Мягкое кресло у камина. Санта любит тут читать.'}},
+ {x:142,y:122,hit:[137,89,8,12],act(){if(!st.milk){st.milk=true;take('стакан молока');renderSide();return'Вы взяли стакан молока для Санты. Он поймёт.'}return'Тут стоял стакан молока.'}},
+ {x:128,y:122,hit:[121,92,15,10],act(){return'Печенье для Санты. Он их пересчитал, лучше не трогать.'}},
+ {x:130,y:122,hit:[108,90,46,28],act(){return'Журнальный столик. На нём печенье и молоко для Санты.'}},
  {x:166,y:126,hit:[155, 108, 18, 12],act(){if(st.catMoved)return'Кот лежит на диване и мурлычет.';
-   if(has('стакан молока')){st.catMoved=true;st.catT=performance.now();drop('стакан молока');take('ножницы');renderSide();return'Кот выпил молоко и перебрался на диван. Под ним лежали ножницы!'}
-   return'Кот спит и не двигается. Кажется, он что-то прячет под лапой.'}},
+   if(holds('стакан молока')){st.catMoved=true;st.catT=performance.now();drop('стакан молока');take('ножницы');renderSide();return'Кот выпил молоко и перебрался на диван. Под ним лежали ножницы!'}
+   return handMsg('стакан молока','Кот спит и не двигается. Кажется, он что-то прячет под лапой.')}},
  {x:82,y:126,hit:[79, 117, 14, 11],hidden:true,act(){if(st.rug)return'Под ковром больше ничего.';st.rug=true;return'Вы подняли угол ковра… '+piece('')}},
- {x:206,y:130,hit:[211, 117, 42, 22],act(){if(st.gift)return ornAt('star','На дне открытого подарка снова лежит звезда.')||'Подарок открыт.';if(!has('ножницы'))return'Самый большой подарок туго перевязан лентой. Руками не развязать.';
+ {x:206,y:130,hit:[211, 117, 42, 22],act(){if(st.gift)return ornAt('star','На дне открытого подарка снова лежит звезда.')||'Подарок открыт.';if(!holds('ножницы'))return handMsg('ножницы','Самый большой подарок туго перевязан лентой. Руками не развязать.');
    st.gift=true;drop('ножницы');gotOrn('star');renderSide();return'Вы разрезали ленту. В подарке золотая звезда для макушки и… '+piece('')}},
  {x:206,y:100,hit:[209, 56, 41, 62],act(){if(st.lit)return'Ёлка горит! Дверь открылась.';
    {const back=Object.keys(ORNN).find(k=>st.ornBack&&st.ornBack[k]);if(back){gotOrn(back);st.ornBack[back]=0;renderSide();return'Под ёлкой лежала укатившаяся игрушка: '+ORNN[back]+'. Подобрали.'}}
    if(!st.box){st.box=true;['red','gold','bell'].forEach(gotOrn);renderSide();return'Под ёлкой коробка со старыми игрушками: красный шар, золотой шар и колокольчик. Остальных не хватает.'}
    if(st.pieces<9)return'Ёлка не наряжена. Как её наряжали раньше? Нужно собрать всё старое фото.';
    openTree();return null}},
+ {x:154,y:126,hit:[147,130,16,8],act(){return'Ещё одна подушка на диване. Под ней ничего нет.'}},
+ {x:114,y:126,hit:[102,135,25,21],act(){return'Вязаный плед на диване. Тёплый и мягкий.'}},
+ {x:128,y:126,hit:[84,129,89,38],act(){return'Зелёный диван. Удобный, но сейчас не до отдыха.'}},
+ {x:96,y:78,hit:[88,50,17,18],act(){return'Корзина с дровами для камина.'}},
+ {x:36,y:104,hit:[22,52,22,44],act(){return'Торшер. Светит уютно.'}},
+ {x:24,y:80,hit:[7,30,13,18],act(){return'Бра на стене. Горит ровным светом.'}},
+ {x:163,y:78,hit:[158,45,11,23],act(){return'Кочерга и совок для камина.'}},
  {x:24,y:110,hit:[2, 51, 15, 80],act(){if(st.lit){levelDone('work');return null}return'Дверь заперта. Она откроется, когда загорится ёлка.'}}
 ];
 
@@ -1091,7 +1111,7 @@ function goRoom(r){
   renderSide();
   setTimeout(()=>showIntro(r),60);
   if(false)setTimeout(()=>say(people[me],'Мастерская эльфов! Конвейер стоит, а подарки не разложены.'),50);
-  if(r==='stable'&&!ss.shod&&!has('подкова'))take('подкова');
+  if(r==='stable'&&!ss.shod&&!anyHas('подкова')&&!anyHas('новая подкова')&&!ss.horse)take('подкова');
   if(false)setTimeout(()=>say(people[me],'Трое ледяных ворот. Они открываются, только пока кто-то стоит на плите.'),50);
   if(false)setTimeout(()=>say(people[me],'Ледяной дворец! Санта вморожен в лед, а на стене табличка с загадкой королевы.'),50);
   if(false)setTimeout(()=>say(people[me],'Обсерватория! Купол закрыт, а зеркала без ручек.'),50);
@@ -1180,7 +1200,7 @@ cv.addEventListener('pointerdown',e=>{
   if(ROOM==='boss'&&(sb.phase==='fight'||sb.phase==='shield')){const [qx,qy,qw,qh]=bossQueenRect();if(lx>=qx&&lx<=qx+qw&&ly>=qy&&ly<=qy+qh){bossShoot();return}}
   // клик по предмету: идем к нему и осматриваем
   // попали внутрь зоны — берём самый маленький предмет под курсором; промахнулись — ближайший в пределах допуска
-  let it=null,ba=1e9;for(const x of curItems()){if(x.hit){const [hx,hy,hw,hh]=x.hit;if(lx>=hx&&lx<=hx+hw&&ly>=hy&&ly<=hy+hh&&hw*hh<ba){ba=hw*hh;it=x}}}
+  let it=null,ba=1e9;for(const x of curItems()){if(x.hit){const [hx,hy,hw,hh]=x.hit;if(lx>=hx&&lx<=hx+hw&&ly>=hy&&ly<=hy+hh&&(x.prio?0:hw*hh)<ba){ba=x.prio?0:hw*hh;it=x}}}
   if(!it){let bdd=12;for(const x of curItems()){if(!x.hit)continue;const [hx,hy,hw,hh]=x.hit;const dx=Math.max(hx-lx,0,lx-hx-hw),dy=Math.max(hy-ly,0,ly-hy-hh),d=Math.hypot(dx,dy);if(d<bdd){bdd=d;it=x}}}
   if(ROOM==='work'&&!it&&lx>=52&&lx<=200&&ly>=68&&ly<=130){it=CONV}
   const me_=people[me];
@@ -1258,7 +1278,7 @@ function renderSide(){
   else{document.getElementById('pcl').textContent='Обрывки';document.getElementById('pc').textContent=st.pieces+'/9'}
   drawPhoto(document.getElementById('photocv'));document.getElementById('photowrap').hidden=!(ROOM==='living'&&st.pieces>0);{const pb=document.getElementById('photobtn');if(pb){const sh=ROOM==='living'&&st.pieces>0;pb.hidden=!sh;if(sh&&st.pieces>(window.__lastPc||0))blinkOnce(pb);window.__lastPc=st.pieces}}
   const inv=document.getElementById('inv');inv.innerHTML='';
-  const SHORT={'ключ от шкафа':'Ключ от шкафа','серебряная корица':'Корица (серебр.)','корица':'Корица','звёздная пыль':'Звёздная пыль','мёд во льду':'Мёд во льду','формочка: звезда':'Форма «звезда»','формочка: ёлка':'Форма «ёлка»','формочка: колокольчик':'Форма «колокол»','формочка: олень':'Форма «олень»','новая подкова':'Новая подкова','молоток':'Молоток','пустое ведро':'Ведро','ведро снега':'Ведро снега','золотой ключик':'Ключик','стакан молока':'Молоко','ножницы':'Ножницы','рычаг':'Рычаг','ключ от ящика':'Ключ','стремянка':'Стремянка','табличка «Ева»':'«Ева»','табличка «Гоша»':'«Гоша»','подкова':'Подкова','молоток':'Молоток','фонарь':'Фонарь','упряжь':'Упряжь','шестеренка':'Шестеренка','лопата':'Лопата','ручка №1':'Ручка','ручка №2':'Ручка','ручка №3':'Ручка','ручка №4':'Ручка'};
+  const SHORT={'ключ от шкафа':'Ключ от шкафа','серебряная корица':'Корица (серебр.)','корица':'Корица','звёздная пыль':'Звёздная пыль','мёд во льду':'Мёд во льду','формочка: звезда':'Форма «звезда»','формочка: ёлка':'Форма «ёлка»','формочка: колокольчик':'Форма «колокол»','формочка: олень':'Форма «олень»','новая подкова':'Новая подкова','молоток':'Молоток','пустое ведро':'Ведро','ведро снега':'Ведро снега','золотой ключик':'Ключик','стакан молока':'Молоко','ножницы':'Ножницы','рычаг':'Рычаг','ключ от ящика':'Ключ','стремянка':'Стремянка','табличка «Ева»':'«Ева»','табличка «Гоша»':'«Гоша»','подкова':'Подкова','молоток':'Молоток','фонарь':'Фонарь','упряжь':'Упряжь','шестеренка':'Шестеренка','лопата':'Лопата','клещи':'Клещи','клещи с подковой':'Клещи с подковой','ручка №1':'Ручка','ручка №2':'Ручка','ручка №3':'Ручка','ручка №4':'Ручка'};
   const SH=sharedInv(),MH=heldBy(me);
   if(MH){const d=document.createElement('div');d.className='slot full held';d.title=MH+' — в руках. Нажмите, чтобы вернуть в общий инвентарь';d.setAttribute('role','button');d.tabIndex=0;let c;const ii=icoFor(MH);if(ii){c=document.createElement('img');c.src=ii.src;c.alt='';c.className='ico'}else{c=document.createElement('canvas');c.width=12;c.height=12;(ICON[MH]||(()=>{}))(c.getContext('2d'))}const sp=document.createElement('span');sp.textContent='В руках';d.append(c,sp);
     const f=e=>{e.preventDefault();unholdIt();cv.focus()};d.addEventListener('click',f);d.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')f(e)});inv.appendChild(d)}
@@ -1440,24 +1460,24 @@ const ITEMS_W=[
  {x:112,y:66,hit:[105, 20, 15, 45],act(){if(sw.locker)return'Шкафчик пуст: рычаг и письмо уже забрали.';
    openCode('Шкафчик мастера','код из 3 цифр',3,'472',()=>{sw.locker=true;take('рычаг');say(people[me],'Шкафчик открылся! Внутри рычаг и… '+letter('Тимур'))});return null}},
  {x:140,y:66,hit:[125, 23, 31, 23],act(){if(!sw.board){sw.board=true;TEAM.notes.push({t:'Доска заказов',b:'«Готово к Рождеству: машинок 4, кукол 7, мячей 2»'});renderSide()}return'На доске приколот листок: «Готово к Рождеству: машинок 4, кукол 7, мячей 2».'}},
- {x:166,y:66,hit:[160, 27, 12, 17],act(){if(sw.mail)return'Почтовый ящик пуст.';if(!has('ключ от ящика'))return'Почтовый ящик эльфов заперт на маленький замок.';
+ {x:166,y:66,hit:[160, 27, 12, 17],act(){if(sw.mail)return'Почтовый ящик пуст.';if(!holds('ключ от ящика'))return handMsg('ключ от ящика','Почтовый ящик эльфов заперт на маленький замок.');
    sw.mail=true;drop('ключ от ящика');TEAM.notes.push({t:'Письмо '+GEN['Соня'],b:LETTER['Соня'],owner:me});letter('Миша');return'Ключ подошел! В ящике два письма: от Сони и от Миши. Их видите только вы.'}},
- {x:205,y:66,hit:[176, 3, 53, 40],act(){if(sw.high)return'На стеллаже игрушки на следующий год.';if(!has('стремянка'))return'На верхней полке стеллажа что-то белеет! Но слишком высоко, мне не достать. Нужна стремянка.';
+ {x:205,y:66,hit:[176, 3, 53, 40],act(){if(sw.high)return'На стеллаже игрушки на следующий год.';if(!holds('стремянка'))return handMsg('стремянка','На верхней полке стеллажа что-то белеет! Но слишком высоко, мне не достать. Нужна стремянка.');
    sw.high=true;drop('стремянка');take('табличка «Ева»');return'Со стремянки достали табличку «Ева» и… '+letter('Ева')}},
  {x:226,y:66,hit:[229, 40, 8, 25],act(){if(sw.behind)return'За стеллажом только пыль.';sw.behind=true;take('табличка «Гоша»');return'За стеллажом застряла табличка «Гоша»!'}},
  {x:236,y:80,hit:[229, 50, 23, 25],act(){if(sw.ladder)return'Тут стояла стремянка. Её уже взяли.';sw.ladder=true;take('стремянка');return'Вы взяли стремянку.'}},
  {x:210,y:98,hit:[215, 76, 30, 35],act(){if(sw.sack)return'Пусто. Подарки уже на конвейере.';sw.sack=true;return'Сверху в мешке лежит конверт… '+letter('Алиса')}},
  {x:36,y:132,hit:[1, 112, 30, 28],act(){if(sw.junk)return'Заяц без уха, мяч без воздуха и грустный робот.';sw.junk=true;return'Под зайцем без уха лежит конверт… '+letter('Лёва')}},
  {x:18,y:90,hit:[7, 81, 21, 19],act(){if(sw.mat)return'Под ковриком больше ничего.';sw.mat=true;return'Под ковриком у входа конверт… '+letter('Гоша')}},
- {x:42,y:114,hit:[50, 100, 10, 28],act(){if(sw.running)return'Конвейер работает, подарки едут по кругу.';if(!has('рычаг'))return'Конвейер стоит. На пульте пустой паз.';
+ {x:42,y:114,hit:[50, 100, 10, 28],act(){if(sw.running)return'Конвейер работает, подарки едут по кругу.';if(!holds('рычаг'))return handMsg('рычаг','Конвейер стоит. На пульте пустой паз.');
    sw.running=true;sfx('lever');drop('рычаг');return'Рычаг встал на место. Конвейер загудел и поехал!'}},
  {x:240,y:118,hit:[245, 54, 10, 65],act(){if(sw.done){levelDone('clock');return null}return'Дверь в часовую башню заперта. Сначала разложите все подарки.'}}
 ].concat(BOXES0.map((_,i)=>({x:BXC[i],y:140,hit:[BXC[i]-11,144,22,21],box:i,act(){return boxAct(i)}})));
 
 function boxAct(i){
   const bx=sw.boxes[i],p=people[me];
-  if(!bx.name){const lab=myInv().find(x=>x.startsWith('табличка'));
-    if(!lab)return'Табличка оторвалась. Чья это коробка?';
+  if(!bx.name){const lab=(heldBy(me)||'').startsWith('табличка')?heldBy(me):null;
+    if(!lab){const any=TEAM.inv.map(baseIt).find(x=>x.startsWith('табличка'));return any?handMsg(any,'Табличка оторвалась. Чья это коробка?'):'Табличка оторвалась. Чья это коробка?'}
     bx.name=lab.match(/«(.+)»/)[1];drop(lab);return'Вы прикрепили табличку. Это коробка для '+GEN[bx.name]+'.'}
   if(bx.done)return'Коробка для '+GEN[bx.name]+' уже закрыта.';
   if(!p.held)return'Коробка для '+GEN[bx.name]+'. Пока пустая.';
@@ -1671,7 +1691,7 @@ const PAGES=[
  ['Книга примет, страница 3','«Гром: самые большие рога и зеленый ошейник. Танцор: белое пятно и колокольчик»'],
  ['Книга примет, страница 4','«Скакун: синий ошейник, без пятна. Лисичка: рыжеватая шерсть»']];
 const RULES=[
- ['Записка Санты №1','«Рудольф всегда бежит первым, впереди всей упряжки».'],
+ ['Записка Санты №1','«Рудольф всегда бежит в первой паре: его место впереди».'],
  ['Записка Санты №2','«Комета — лучшая подруга Рудольфа, ставь их в одну пару». «Гром самый сильный, его место прямо у саней».'],
  ['Записка Санты №3','«Лисичка без Грома нервничает, держи их в одной паре».'],
  ['Записка Санты №4','«Купидон бежит сразу за Молнией». «Танцор бежит сразу перед Лисичкой».']];
@@ -1697,7 +1717,11 @@ document.getElementById('pickclose').addEventListener('click',closePick);
 function stallAct(i){
   const name=STALL[i];
   if(!deerAtStall(i))return'Стойло пустое: этот олень уже в упряжке.';
-  if(name==='Скакун'&&!ss.shod&&has('новая подкова')&&has('молоток')){ss.shod=true;drop('новая подкова');drop('молоток');return'Тук-тук! Вы подковали оленя. Он больше не хромает.'}
+  if(name==='Скакун'&&!ss.shod){
+    if(!ss.shoeOn&&holds('новая подкова')){ss.shoeOn=true;drop('новая подкова');return'Вы приложили новую подкову к копыту Скакуна. Теперь её надо прибить молотком.'}
+    if(ss.shoeOn&&holds('молоток')){ss.shod=true;return'Тук-тук! Вы подковали оленя. Он больше не хромает.'}
+    if(ss.shoeOn&&ss.namesOK)return handMsg('молоток','Подкова приложена к копыту. Чем её прибить?');
+    if(ss.namesOK&&anyHas('новая подкова'))return handMsg('новая подкова','Скакун поджимает ногу: не хватает подковы.')}
   if(ss.namesOK)return'Это '+name+'. '+(name==='Скакун'&&!ss.shod?'Он хромает: не хватает подковы.':'Олень довольно жует ягель.');
   const cur=ss.tags[i];
   const opts=DNAMES.map(n=>({label:n+(ss.tags.includes(n)&&ss.tags[i]!==n?' (висит на другом)':''),fn:()=>{const j=ss.tags.indexOf(n);if(j>=0)ss.tags[j]=null;ss.tags[i]=n;checkTags()}}));
@@ -1714,7 +1738,7 @@ function checkTags(){renderSide();
 function slotAct(si){
   const sl=SLOTS[si],key=sl.k+sl.side;
   if(ss.done)return'Упряжка готова.';
-  if(!has('упряжь'))return'Здесь место для оленя в упряжке.';
+  if(!holds('упряжь'))return handMsg('упряжь','Здесь место для оленя в упряжке.'+(anyHas('упряжь')?'':' Нужна упряжь.'));
   if(!ss.namesOK)return'Сначала разберитесь, кто есть кто: на стойлах нет табличек.';
   const placed=Object.values(ss.slot);
   const opts=DNAMES.filter(n=>!placed.includes(n)).map(n=>({label:n,fn:()=>{ss.slot[key]=n;renderSide();say(people[me],n+' теперь в паре '+sl.k+'.')}}));
@@ -1748,10 +1772,10 @@ const ITEMS_S=[
  {x:54,y:84,hit:[50, 15, 9, 14],act(){return'Фонарь висит под самым потолком, не достать.'}},
  {x:78,y:84,hit:[65, 15, 28, 13],act(){return'Колокольчики на полке тихо звенят.'}},
  {x:56,y:98,hit:[18,83,21,21],act(){if(ss.sack)return'Мешок с ягелем, оленья еда.';ss.sack=true;privNote(...RULES[1]);return'В ягеле запуталась записка Санты! Ее видите только вы.'}},
- {x:46,y:90,hit:[40, 92, 11, 17],act(){if(ss.bucket)return'В ведре просто вода.';if(!has('фонарь'))return'Вода в ведре замёрзла. Подо льдом белеет бумажка! Нужно что-то тёплое, чтобы растопить лёд.';
+ {x:46,y:90,hit:[40, 92, 11, 17],act(){if(ss.bucket)return'В ведре просто вода.';if(!holds('фонарь'))return handMsg('фонарь','Вода в ведре замёрзла. Подо льдом белеет бумажка! Нужно что-то тёплое, чтобы растопить лёд.');
    ss.bucket=true;privNote(...RULES[2]);return'Вы поднесли фонарь, лед растаял. В воде записка Санты! Ее видите только вы.'}},
  {x:126,y:116,hit:[81, 90, 91, 21],act(){return'Длинная кормушка. В ней сено.'}},
- {x:206,y:130,hit:[195, 66, 30, 62],act(){goScene('loft',[72,140]);return null}},
+ {x:127,y:90,hit:[119,0,16,90],prio:true,act(){goScene('loft',[72,140]);return'Вы забрались по верёвочной лестнице на сеновал.'}},
  {x:44,y:86,hit:[0,44,14,58],act(){goScene('forge',[36,116]);return null}},
  {x:214,y:142,hit:[220, 126, 27, 30],act(){return chestAct()}},
  {x:84,y:120,hit:[2, 107, 76, 49],act(){return sledAct()}},
@@ -1866,7 +1890,7 @@ function hdStable(t,dt){
     g.strokeStyle='#4a2c1c';g.lineWidth=3;g.beginPath();g.moveTo(x0+3,146);g.lineTo(x0+41,120);g.stroke();
     if(ss.tags[i]){QQ(g,cx-16,124,32,11,'#e8d8b0');QQ(g,cx-16,134,32,1,'#8a7a5a')}}
   // следы мест упряжки
-  if(has('упряжь')&&!ss.done)SLOTS.forEach(s=>{if(!ss.slot[s.k+s.side]){g.strokeStyle='rgba(242,193,78,.35)';g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(s.x*2-14,s.y*2-8,28,10);g.setLineDash([])}});
+  if((anyHas('упряжь')||Object.keys(ss.slot).length)&&!ss.done)SLOTS.forEach(s=>{if(!ss.slot[s.k+s.side]){g.strokeStyle='rgba(242,193,78,.35)';g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(s.x*2-14,s.y*2-8,28,10);g.setLineDash([])}});
 }
 function stableEnts(t){
   const out=[];let fx=0,fy=0;
@@ -1924,7 +1948,7 @@ function mirAct(o){
   const m=so.mir[o.n];
   if(o.decoy)return m.frost?'Зеркало «'+o.n+'» покрыто инеем. Луч на нем гаснет.':'Зеркало «'+o.n+'». Ручки у него нет, и оно какое-то мутное.';
   if(so.done)return'Луч уже горит в кристалле.';
-  if(!m.owner&&m.owner!==0){const h=myInv().find(x=>x.startsWith('ручка'));if(!h)return'Зеркало «'+o.n+'» на подставке. Повернуть его не за что: ручка снята.';
+  if(!m.owner&&m.owner!==0){const h=(heldBy(me)||'').startsWith('ручка')?heldBy(me):null;if(!h){const any=TEAM.inv.map(baseIt).find(x=>x.startsWith('ручка'));const t='Зеркало «'+o.n+'» на подставке. Повернуть его не за что: ручка снята.';return any?handMsg(any,t):t}
     drop(h);m.owner=me;renderSide();return'Вы вставили ручку в зеркало «'+o.n+'». Теперь поворачивать его можете только вы.'}
   if(m.owner!==me)return'Это зеркало поворачивает '+OUTFITS[m.owner].name+'.';
   m.st=(m.st+1)%4;m.rotT=performance.now();sfx('mirror');traceBeam();renderSide();
@@ -1936,7 +1960,7 @@ function mirAct(o){
 }
 const ITEMS_O=[
  ...MIR.map(o=>({x:o.x,y:o.y<100?o.y+13:o.y-12,hit:[o.x-7,o.y-14,14,20],act(){return mirAct(o)}})),
- {x:54,y:86,hit:[35, 36, 37, 45],act(){if(so.dome)return'Купол открыт. Видно звездное небо.';if(!has('шестеренка'))return'Колесо, которым открывают купол. Не крутится: в механизме не хватает шестеренки.';
+ {x:54,y:86,hit:[35, 36, 37, 45],act(){if(so.dome)return'Купол открыт. Видно звездное небо.';if(!holds('шестеренка'))return handMsg('шестеренка','Колесо, которым открывают купол. Не крутится: в механизме не хватает шестеренки.');
    so.dome=true;drop('шестеренка');traceBeam();renderSide();return'Вы вставили шестеренку и крутите колесо… Купол открылся! Свет звезды упал в телескоп, и из него вышел луч.'}},
  {x:128,y:112,hit:[107, 50, 38, 57],act(){return so.dome?'В телескоп светит звезда. Луч выходит слева.':'Телескоп смотрит в закрытый купол.'}},
  {x:28,y:108,hit:[1, 134, 40, 20],act(){if(!so.journal){so.journal=true;TEAM.notes.push({t:'Журнал астронома',b:'«Код сундука: сколько звезд в ковше, в букве W и в поясе охотника»'});renderSide()}return'Журнал астронома. Последняя запись: «Код сундука: сколько звёзд в ковше, в букве W и в поясе охотника». Запись сохранена в «Записках».'}},
@@ -2050,7 +2074,7 @@ const IMG_L=new Image();let IMG_L_OK=false;IMG_L.onload=()=>{IMG_L_OK=true};IMG_
 const IX=x=>x/3,IY=y=>y*0.34375;               // пиксели картинки 1536x1024 -> HD 512x352
 const OPEN={};for(const k of ['gift','obs','stable','clock','globe']){const im=new Image();im.src='rooms/open_'+k+'.webp';OPEN[k]=im}
 const drawOpen=(k,x,y,w,h)=>{const im=OPEN[k];if(im.complete&&im.naturalWidth){g.imageSmoothingEnabled=true;g.drawImage(im,IX(x),IY(y),IX(w),IY(h));g.imageSmoothingEnabled=false}};
-const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[0,560,520,400],s_nosled:[0,560,520,400],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],c_nopend:[990,140,170,305],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing','s_sled','s_ladder','c_pend']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
+const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[0,560,520,400],s_nosled:[0,560,520,400],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing','s_sled','s_ladder']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
 function gp(k,al){const im=GP[k],r=GPP[k];if(!okI(im))return;g.save();if(al!==undefined)g.globalAlpha=al;g.imageSmoothingEnabled=true;g.drawImage(im,IX(r[0]),IY(r[1]),IX(r[2]),IY(r[3]));g.restore()}
 const TARP=new Image();TARP.src='rooms/tarp.webp';const NOMILK=new Image();NOMILK.src='rooms/nomilk.webp';const NOBUCKET=new Image();NOBUCKET.src='rooms/nobucket.webp';
 function patchL(sx,sy,sw,sh,dx,dy){g.drawImage(IMG_L,sx,sy,sw,sh,IX(dx),IY(dy),IX(sw),IY(sh))}
@@ -2166,17 +2190,23 @@ function hdStableImg(t,dt){
   // олени в стойлах, дверцы поверх
   for(let i=0;i<8;i++){const n=deerAtStall(i);if(n){headImg(STXH[i],t,n,n==='Скакун'&&!ss.shod);patchS(POSTS[i]+8,342,POSTS[i+1]-POSTS[i]-16,128,POSTS[i]+8,342)}
     if(ss.tags[i]){QQ(g,STXH[i]-11,125.5,22,6.5,'#f4e6c4');QQ(g,STXH[i]-11,131.5,22,.8,'#8a6a3a')}}
+  // люк в потолке и верёвочная лестница на сеновал (по центру, над кормушкой)
+  {const cx=254,top=2,bot=176,w=22;g.save();
+    g.fillStyle='#1a0f08';g.fillRect(cx-20,top-2,40,12);g.strokeStyle='#8a5a30';g.lineWidth=2.5;g.strokeRect(cx-20,top-2,40,12);g.fillStyle='rgba(255,200,120,.25)';g.fillRect(cx-17,top+1,34,6);
+    const sway=Math.sin(t*1.3)*1.2;g.strokeStyle='#6b4423';g.lineWidth=2;g.lineCap='round';
+    g.beginPath();g.moveTo(cx-w/2,top+8);g.quadraticCurveTo(cx-w/2+sway,(top+bot)/2,cx-w/2+sway*1.6,bot);g.moveTo(cx+w/2,top+8);g.quadraticCurveTo(cx+w/2+sway,(top+bot)/2,cx+w/2+sway*1.6,bot);g.stroke();
+    g.strokeStyle='#a0703c';g.lineWidth=3;for(let y=top+18;y<bot;y+=15){const k=(y-top)/(bot-top),sx=sway*k*1.6;g.beginPath();g.moveTo(cx-w/2+sx,y);g.lineTo(cx+w/2+sx,y);g.stroke()}
+    g.strokeStyle='#c99a5c';g.lineWidth=1;for(let y=top+18;y<bot;y+=15){const k=(y-top)/(bot-top),sx=sway*k*1.6;g.beginPath();g.moveTo(cx-w/2+sx,y-1);g.lineTo(cx+w/2+sx,y-1);g.stroke()}
+    g.restore()}
   // снятый фонарь
   // лед в ведре
   if(!ss.bucket){ell(g,IX(272),IY(553),9,3.2,'#cfe8ff');ell(g,IX(268),IY(551),4,1.2,'#ffffff');QQ(g,IX(272)-2,IY(553)-1,5,2,'#f4ecd8')}
   // сундук
   if(ss.chest)gp('s_chest');
-  // лестница на сеновал у стогов сена
-  {const im=GP.s_ladder;if(okI(im)){g.save();g.imageSmoothingEnabled=true;g.drawImage(im,IX(1180),IY(392),IX(150),IY(355));g.restore()}}
   // сани: после взлёта уезжают и поднимаются вместе с упряжкой
   if(!ss.tarp){if(ss.done){gp('s_nosled');const {fx,lift}=sledFly();const im=GP.s_sled;if(okI(im)){g.save();g.imageSmoothingEnabled=true;g.drawImage(im,IX(-12)+fx,IY(614)-lift,IX(520),IY(356));g.restore()}}else gp('s_sleigh')}
   // места упряжки
-  if(has('упряжь')&&!ss.done)SLOTS.forEach(s=>{if(!ss.slot[s.k+s.side]){g.strokeStyle='rgba(242,193,78,.5)';g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(s.x*2-24,s.y*2-6,48,14);g.setLineDash([])}});
+  if((anyHas('упряжь')||Object.keys(ss.slot).length)&&!ss.done)SLOTS.forEach(s=>{if(!ss.slot[s.k+s.side]){g.strokeStyle='rgba(242,193,78,.5)';g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(s.x*2-24,s.y*2-6,48,14);g.setLineDash([])}});
   if(ss.done){const e=(performance.now()-ss.flyT)/1000;for(let i=0;i<14;i++){const a=(i*47+e*90)%360*Math.PI/180;g.fillStyle=`rgba(255,230,140,${Math.max(0,.9-e*.15)})`;g.fillRect(IX(240)+Math.cos(a)*(40+i*3),IY(760)+Math.sin(a)*(18+i),2,2)}}
 }
 function sledFly(){if(!ss.done)return{fx:0,lift:0};const e=(performance.now()-ss.flyT)/1000;return{fx:Math.max(0,e-.5)*e*60,lift:Math.max(0,e-1.2)*e*14}}
@@ -2483,7 +2513,7 @@ const PEGCOL={a:'#c8333a',b:'#3a6fc4',c:'#2f8a4e',d:'#d9b45a',e:'#8a4ec4',f:'#e8
 const GTARGET={0:'a',1:'f',2:'d',3:'c',4:'e',6:'b'};const TSIZE={};for(const i in GTARGET)TSIZE[GTARGET[i]]=GSIZE[i];const GUSED=Object.keys(GTARGET).map(Number);
 const GFIX={D:{c:[560,530],s:'L',img:5},H:{c:[1167,301],s:'M',img:3},N:{c:[1141,720],s:'L',img:4}};
 let sc;
-function freshC(){return{pen:0,g:GSIZE.map(()=>({owner:null,peg:null})),chest:false,rug:false,loft:false,shelf:false,jar:false,bench:false,drawer:false,bp:false,done:false,doneT:0,ang:{}}}
+function freshC(){return{pen:0,g:GSIZE.map(()=>({owner:null,peg:null})),chest:false,rug:false,loft:false,loftLamp:false,pendKey:false,jar2:false,shelf:false,jar:false,bench:false,drawer:false,bp:false,done:false,doneT:0,ang:{}}}
 function gotGear(i){sc.g[i].owner=me;renderSide();return GNAME[GSIZE[i]]+' шестерёнка'}
 function gearSim(){
   const G={};for(const k in GFIX)G[k]={c:GFIX[k].c,s:GFIX[k].s};
@@ -2495,15 +2525,24 @@ function gearSim(){
   while(q.length){const k=q.pop();for(const n of adj[k]){if(d[n]===undefined){d[n]=-d[k];q.push(n)}else if(d[n]===d[k])jam=true}}
   return{d,jam,G}}
 
+// антресоль: по лестнице справа залезают наверх и осматривают её
+function loftClock(){const opts=[
+  {label:'Осмотреть коробки',fn:()=>{say(people[me],'В коробках пыльные часовые стрелки и сломанные кукушки. Шестерёнок нет.')}},
+  {label:'Заглянуть за фонарь',fn:()=>{if(sc.loft){say(people[me],'За фонарём пусто.');return}if(!sc.loftLamp){sc.loftLamp=true;say(people[me],'За фонарём стоит запертая шкатулка. На крышке выцарапано: «Ключ там, где время тикает».');return}say(people[me],'Запертая шкатулка за фонарём. «Ключ там, где время тикает».')}},
+  {label:'Открыть шкатулку',fn:()=>{if(sc.loft){say(people[me],'Шкатулка пуста.');return}if(!sc.loftLamp){say(people[me],'Какую шкатулку? Сначала осмотритесь.');return}if(!holds('ключик от шкатулки')){say(people[me],handMsg('ключик от шкатулки','Шкатулка заперта. Нужен ключик.'));return}sc.loft=true;drop('ключик от шкатулки');say(people[me],'Ключик подошёл! В шкатулке '+gotGear(2)+'! Её видите только вы.')}},
+  {label:'Спуститься',ghost:true,fn:()=>{}}];
+  openPick('Антресоль','Вы забрались по лестнице на антресоль. Тут коробки, фонарь и пыль.',opts);return null}
 const SOLID_C=[[0,0,W,104],[0,0,24,124],[218,0,38,126],[0,172,W,4]];
 const ITEMS_C=[
  {x:30,y:116,hit:[3,40,22,82],act(){if(sc.done){levelDone('stable');return null}return'Дверь заперта. Она откроется, когда часы пойдут.'}},
  {x:46,y:108,hit:[30,18,22,16],act(){return'За окном метель. Ни одной звезды.'}},
- {x:76,y:108,hit:[69,71,14,10],act(){if(sc.jar)return'Банка с винтиками и пружинками.';sc.jar=true;return'В банке среди винтиков… '+gotGear(1)+'! Её видите только вы.'}},
+ {x:76,y:108,hit:[69,71,14,10],act(){if(sc.jar)return'Банка с винтиками и пружинками.';sc.jar=true;take('ключик от верстака');return'В банке среди винтиков маленький ключик! На бирке: «Верстак».'}},
  {x:56,y:108,hit:[48,85,15,11],act(){return'Свёрнутые старые чертежи. Все про другие часы.'}},
  {x:68,y:108,hit:[48,55,39,48],act(){if(sc.shelf)return'Коробки с ненужными деталями.';sc.shelf=true;return'Вы перебрали коробки на полке. В одной '+gotGear(0)+'! Её видите только вы.'}},
- {x:122,y:108,hit:[108,78,30,10],act(){if(sc.bench)return'На верстаке гайки и винтики.';sc.bench=true;return'Среди деталей на верстаке '+gotGear(2)+'! Её видите только вы.'}},
- {x:99,y:108,hit:[90,88,18,17],act(){if(sc.drawer)return'Ящик пуст.';sc.drawer=true;return'В ящике верстака '+gotGear(4)+'! Её видите только вы.'}},
+ {x:122,y:108,hit:[108,78,30,10],act(){return'На верстаке гайки, винтики и пружинки. Шестерёнок нет.'}},
+ {x:166,y:108,hit:[162,73,10,12],act(){if(sc.jar2)return'Банка с винтиками. Пустая.';sc.jar2=true;return'Вы высыпали банку на стол. Среди винтиков '+gotGear(1)+'! Её видите только вы.'}},
+ {x:145,y:108,hit:[143,95,10,9],act(){return'Ящичек под столом. Внутри только опилки.'}},
+ {x:99,y:108,hit:[90,88,18,17],act(){if(sc.drawer)return'Ящик пуст.';if(!holds('ключик от верстака'))return handMsg('ключик от верстака','Ящик верстака заперт на маленький замок.');sc.drawer=true;drop('ключик от верстака');return'Ключик подошёл! В ящике верстака '+gotGear(4)+'! Её видите только вы.'}},
  {x:164,y:108,hit:[155,88,18,17],act(){return'Отвёртки, пинцеты и пружины.'}},
  {x:152,y:108,hit:[142,60,23,16],act(){if(!sc.bp){sc.bp=true;TEAM.notes.push({t:'Записка на чертеже',b:'«Сундук часовщика: сколько гирь висит в башне, сколько ламп горит, сколько маятников»'});renderSide()}
    return'Чертёж часового механизма. В углу приписка про сундук, она теперь в «Записках».'}},
@@ -2511,17 +2550,19 @@ const ITEMS_C=[
  {x:188,y:108,hit:[177,88,22,15],act(){if(sc.chest)return'Сундук пуст.';
    openCode('Сундук часовщика','3 цифры',3,'231',()=>{sc.chest=true;const a=gotGear(6);say(people[me],'Сундук открылся! Внутри '+a+'. Её видите только вы.')});return null}},
  {x:205,y:108,hit:[197,41,20,28],act(){return'Две тяжёлые гири на цепях. Они должны крутить механизм.'}},
- {x:184,y:108,hit:[168,46,22,28],act(){return sc.done?'Маятник качается. Тик-так.':'Маятник висит неподвижно.'}},
+ {x:184,y:108,hit:[168,46,22,28],act(){if(!sc.pendKey){sc.pendKey=true;take('ключик от шкатулки');return'Вы заглянули за диск маятника. Там на крючке висит крошечный ключик!'}return sc.done?'Маятник ожил: тик-так, тик-так.':'Маятник висит неподвижно.'}},
  {x:128,y:106,hit:[90,0,78,60],act(){openGears();return null}},
- {x:214,y:118,hit:[220,40,22,84],act(){return'На антресоли пустые ящики и старые часы без стрелок.'}}
+ {x:214,y:118,hit:[220,40,22,84],act(){return loftClock()}}
 ];
 function hdClockImg(t){
   if(IMG_C_OK){g.imageSmoothingEnabled=true;g.drawImage(IMG_C,0,0,HW,HH);g.imageSmoothingEnabled=false}else{g.fillStyle='#2a1a10';g.fillRect(0,0,HW,HH)}
   if(sc.chest)gp('c_chest');
   if(sc.rug)gp('c_rug');
   if(sc.done){gp('c_door');
-    // маятник качается: под ним чистая стена, сам маятник поворачивается вокруг оси (1073,142)
-    gp('c_nopend');const im=GP.c_pend;if(okI(im)){const a=Math.sin(t*2.6)*.06;g.save();g.translate(IX(1073),IY(142));g.rotate(a);g.imageSmoothingEnabled=true;g.drawImage(im,IX(990-1073),IY(140-142),IX(170),IY(305));g.restore()}}
+    // маятник ожил: по диску бегает блик, рядом «тик-так» (картинку не двигаем — без артефактов на стене)
+    {const ph=(t*1.6)%2,u=ph<1?ph:2-ph,cx=IX(1073),cy=IY(355);g.save();g.beginPath();g.ellipse(cx,cy,IX(68),IY(67),0,0,Math.PI*2);g.clip();g.globalCompositeOperation='screen';
+      const gx=cx+(u-.5)*IX(110),gr=g.createLinearGradient(gx-10,cy-12,gx+10,cy+12);gr.addColorStop(0,'rgba(255,240,200,0)');gr.addColorStop(.5,'rgba(255,240,200,.55)');gr.addColorStop(1,'rgba(255,240,200,0)');g.fillStyle=gr;g.fillRect(cx-IX(80),cy-IY(80),IX(160),IY(160));g.restore();
+      if(Math.floor(t*1.6)%2===0){g.save();g.font='bold 7px sans-serif';g.fillStyle='rgba(255,230,170,.85)';g.fillText(Math.floor(t*1.6)%4===0?'тик':'так',cx+IX(80),cy-IY(40));g.restore()}}}
 }
 function hdClockLight(t){
   lc.globalCompositeOperation='source-over';lc.fillStyle=sc.done?'#efe6dc':'#cfc4d8';lc.fillRect(0,0,HW,HH);
@@ -2781,7 +2822,7 @@ function drawFlight(now){
     const rim=u=>{for(let k=1;k<RIM.length;k++)if(u<=RIM[k][0]){const [a,b]=RIM[k-1],[c,d]=RIM[k];return b+(d-b)*(u-a)/(c-a)}return .3};
     x.save();x.beginPath();x.moveTo(0,-SH*3);x.lineTo(SW,-SH*3);for(let k=RIM.length-1;k>=0;k--)x.lineTo(RIM[k][0]*SW,-SH*.5+(RIM[k][1]-.035)*SH);x.closePath();x.clip();
     if(people){const PP=people.slice(0,6);PP.forEach((p,i)=>{const s2=SPR[p.i].right[0];const h=SH*.7,w=h*s2.width/s2.height;const u=.27+i*(PP.length>1?.42/(PP.length-1):0);
-      const by=-SH*.5+rim(u)*SH;x.drawImage(s2,u*SW-w/2,by-h*.8-Math.abs(Math.sin(e*6+i))*SH*.03,w,h)})}
+      const by=-SH*.5+rim(u)*SH;x.drawImage(s2,u*SW-w/2,by-h*.42-Math.abs(Math.sin(e*6+i))*SH*.015,w,h)})}
     x.restore()}
   x.restore();
   // снег
@@ -2800,7 +2841,7 @@ const LEVEL_OF={pantry:'kitchen',cellar:'kitchen',loft:'stable',forge:'stable'};
 const levelOf=r=>LEVEL_OF[r]||r;
 const vis=p=>!p.scene||p.scene===ROOM;
 let sk;
-function freshK(){return{pen:0,bowl:[],cutter:null,honey:false,tin:false,drawer:false,p1:false,p2:false,p3:false,melt:null,done:false,doneT:0,temp:160,mins:5,bakes:0}}
+function freshK(){return{ladderAt:null,pen:0,bowl:[],cutter:null,honey:false,tin:false,drawer:false,p1:false,p2:false,p3:false,melt:null,done:false,doneT:0,temp:160,mins:5,bakes:0}}
 const RECIPE=[['мука',6,'стакан'],['мёд',6,'ложка'],['имбирь',3,'ложка'],['серебряная корица',1,'ложка'],['звёздная пыль',2,'ложка']];
 const INGR=['мука','мёд','имбирь','серебряная корица','корица','звёздная пыль','соль','сахар','мускат','гвоздика','перец','ваниль'];
 const KITICON={'мука':'мука','мёд':'мёд','мёд во льду':'мёд во льду','имбирь':'имбирь','соль':'перец','сахар':'перец','мускат':'перец','гвоздика':'перец','перец':'перец','ваниль':'перец','серебряная корица':'корица серебряная','корица':'корица обычная','звёздная пыль':'звёздная пыль',
@@ -2819,7 +2860,8 @@ const SOLID_CL=[[0,0,256,103],[0,0,55,110],[0,100,17,76],[184,50,66,92],[235,98,
 const SOLID_LF=[[0,0,256,98],[0,0,60,104],[5,122,52,34],[176,0,80,106],[220,104,36,16],[0,173,256,3]];
 const SOLID_FG=[[0,0,256,95],[0,0,20,125],[80,82,18,18],[37,72,26,27],[108,100,38,36],[206,88,32,34],[238,100,18,22],[0,173,256,3]];
 // --- детский рисунок
-function showDrawing(){openPick('Детский рисунок на холодильнике','Подпись внизу: «Олень Рудольф ест мой пряник!»',[{label:'Открыть холодильник',fn:()=>{const r=ITEMS_K[2].act();if(r)say(people[me],r)}},{label:'Закрыть',ghost:true,fn:()=>{}}]);
+function showDrawing(back){openPick('Детский рисунок на холодильнике',back?'На обороте детским почерком: «Олень Рудольф ест мой пряник!»':'Рисунок прикреплён магнитом. Может, на обороте что-то написано?',[back?{label:'Перевернуть обратно',fn:()=>showDrawing(false)}:{label:'Перевернуть рисунок',fn:()=>showDrawing(true)},{label:'Открыть холодильник',fn:()=>{const r=ITEMS_K[2].act();if(r)say(people[me],r)}},{label:'Закрыть',ghost:true,fn:()=>{}}]);
+  if(back)return;
   const c=document.createElement('img');c.src=GP.drawing.src;c.alt='Детский рисунок: олень с пряником, ёлка, домик и звёзды на небе';c.style.cssText='grid-column:1/-1;width:100%;max-width:520px;display:block;margin:0 auto 6px';
   document.getElementById('pickopts').prepend(c)}
 // --- миска
@@ -2839,16 +2881,22 @@ function measure(k){let g2=0,l=0;const lab=()=>'Отмерено: '+g2+' '+pl(g2
    {label:'Отмена',ghost:true,fn:()=>{}}]);
   const cnt=document.createElement('p');cnt.className='cnt picktext';cnt.textContent=lab();document.getElementById('pickopts').prepend(cnt)}
 // --- полки кладовой
-function shelf(high,title,list){if(high&&!has('стремянка'))return'Я вижу там то, что нам нужно! Но слишком высоко, мне не достать. Нужна стремянка.';
+function shelf(high,title,list){
+  if(high){const side=list[0][0]==='соль'?'left':'right';
+    if(sk.ladderAt!==side){
+      if(holds('стремянка')){drop('стремянка');sk.ladderAt=side;sfx('pickup');return'Вы поставили стремянку у этой полки. Теперь можно залезть и посмотреть, что наверху.'}
+      if(sk.ladderAt){const t='Стремянка стоит у другой полки.';openPick(title,t+' Переставить её сюда?',[{label:'Переставить стремянку',fn:()=>{sk.ladderAt=side;say(people[me],'Вы переставили стремянку к этой полке.')}},{label:'Отмена',ghost:true,fn:()=>{}}]);return null}
+      return handMsg('стремянка','Я вижу там то, что нам нужно! Но слишком высоко, мне не достать. Нужна стремянка.')}}
   const opts=list.filter(([k])=>!has(k)).map(([k,nm])=>({label:'Взять: '+nm,fn:()=>{take(k);say(people[me],'Вы взяли: '+nm+'.')}}));
   if(!opts.length)return'Всё нужное с этой полки уже у команды.';
   openPick(title,'На полке стоят банки. Что взять?',opts.concat([{label:'Ничего',ghost:true,fn:()=>{}}]));return null}
 // --- печь
 function ovenAct(){if(sk.done)return'Печь остывает. Пряники готовы.';
   if(!sk.bowl.length)return'Печь горячая. На дверце табличка: «Пряники — 180°». Сначала замесите тесто в миске.';
-  const cut=['звезда','ёлка','колокольчик','олень'].find(c=>has('формочка: '+c));
+  const cut=['звезда','ёлка','колокольчик','олень'].find(c=>holds('формочка: '+c));
   if(!cut){const h=people&&people.find(p=>p.i!==me&&(heldBy(p.i)||'').startsWith('формочка'));
     if(h)return'Формочку держит '+OUTFITS[h.i].name+'. Пусть поставит тесто в печь сам или вернёт формочку команде.';
+    {const f=TEAM.inv.map(baseIt).find(x=>x.startsWith('формочка'));if(f)return handMsg(f,'Тесто в миске, но чем вырезать пряники?')}
     return'Тесто в миске, но чем вырезать пряники? Нужна формочка: она в ящике слева, рядом с холодильником.'}
   const T=[140,160,180,200,220];
   openPick('Печь','На дверце табличка: «Пряники — 180°». Тесто вырезано формочкой «'+cut+'». Выставьте жар и время.',[
@@ -2879,13 +2927,13 @@ const ITEMS_K=[
  {x:120,y:132,hit:[78,84,100,40],act(){return sk.done?'Противень с пряниками-звёздами. Тёплые!':'Большой кухонный стол со скатертью в клетку.'}},
  {x:184,y:102,hit:[112,38,22,24],act(){return'Медные сковородки. Начищены до блеска.'}},
  {x:212,y:104,hit:[202,50,22,19],act(){if(sk.melt)return'Банка с мёдом греется в горячей воде. Не отходите!';
-   if(has('мёд во льду')){sk.melt={t:performance.now(),who:me};return'Вы опустили банку с замёрзшим мёдом в кастрюлю с кипятком. Побудьте рядом, пока лёд не растает.'}
-   return'Большая кастрюля. В ней кипит вода.'}}
+   if(holds('мёд во льду')){sk.melt={t:performance.now(),who:me};return'Вы опустили банку с замёрзшим мёдом в кастрюлю с кипятком. Побудьте рядом, пока лёд не растает.'}
+   return handMsg('мёд во льду','Большая кастрюля. В ней кипит вода.')}}
 ];
 const ITEMS_PN=[
  {x:30,y:116,hit:[0,24,22,100],act(){goScene('kitchen',[218,112]);return null}},
  {x:205,y:132,hit:[186,110,52,36],act(){goScene('cellar',[66,112]);return null}},
- {x:190,y:110,hit:[196,48,60,52],act(){let t='Мешки с мукой. ';if(!has('мука')){take('мука');t+='Вы набрали муки. '}else t+='Мука у команды уже есть. ';
+ {x:190,y:110,hit:[196,48,60,52],act(){let t='Мешки с мукой. ';if(!anyHas('мука')){take('мука');t+='Вы набрали муки. '}else t+='Мука у команды уже есть. ';
    if(!sk.p3){sk.p3=true;privNote('Таблица мер','«1 кружка великана = 3 стакана. 1 напёрсток гнома = 2 ложки. 1 ложка великана = 3 ложки. 1 щепотка феи = половина ложки».');t+='Из мешка выпал листок с таблицей мер! Его видите только вы.'}return t}},
  {x:90,y:104,hit:[67,27,47,15],act(){return shelf(true,'Верхняя полка',[['соль','банка соли'],['сахар','банка сахара'],['серебряная корица','корица с серебряной крышкой']])}},
  {x:143,y:104,hit:[120,24,46,18],act(){return shelf(true,'Верхняя полка',[['имбирь','банка «Имбирь»'],['мускат','банка «Мускатный орех»'],['гвоздика','банка «Гвоздика»']])}},
@@ -2908,7 +2956,7 @@ const ITEMS_PN=[
 const ITEMS_CL=[
  {x:64,y:114,hit:[0,5,55,100],act(){goScene('pantry',[176,138]);return null}},
  {x:176,y:146,hit:[184,50,66,90],act(){if(anyHas('мёд во льду')||anyHas('мёд')||sk.melt||sk.bowl.some(b=>b.k==='мёд'))return'Ледник полон льда. Мёд уже у команды.';sk.honey=true;take('мёд во льду');return'Во льду ледника вмёрзла банка мёда! Вы выломали её вместе с куском льда.'}},
- {x:132,y:108,hit:[118,42,26,15],act(){if(sk.tin){if(has('звёздная пыль'))return'Жестяная коробка пуста.';take('звёздная пыль');return'Вы зачерпнули ещё звёздной пыли из коробки.'}
+ {x:132,y:108,hit:[118,42,26,15],act(){if(sk.tin){if(anyHas('звёздная пыль'))return'Жестяная коробка пуста.';take('звёздная пыль');return'Вы зачерпнули ещё звёздной пыли из коробки.'}
    openCode('Жестяная коробка','3 цифры. На крышке нарисованы три звезды: жёлтая, синяя и красная. Под каждой окошко для цифры',3,'423',()=>{sk.tin=true;take('звёздная пыль');say(people[me],'Замок щёлкнул! В коробке мерцает звёздная пыль.')});return null}},
  {x:160,y:108,hit:[146,70,32,32],act(){if(sk.p2)return'Ящик с яблоками.';sk.p2=true;privNote('Рецепт: сколько','«Первое — 2 кружки великана. Второе — 3 напёрстка гнома. Третье — 1 ложка великана. Четвёртое — 2 щепотки феи. Пятое — 1 напёрсток гнома».');return'Под яблоками лежит лист рецепта! Его видите только вы.'}},
  {x:124,y:108,hit:[117,65,15,35],act(){return'Мешок с картошкой. Холодный.'}},
@@ -2918,8 +2966,8 @@ const ITEMS_CL=[
 // --- сеновал и кузница
 const ITEMS_LF=[
  {x:104,y:104,hit:[96,38,13,24],act(){if(ss.lantern)return'Тут стоял фонарь.';ss.lantern=true;take('фонарь');return'Вы взяли со стола фонарь. Тёплый!'}},
- {x:70,y:142,hit:[0,118,64,42],act(){goScene('stable',[176,106]);return null}},
- {x:118,y:104,hit:[97,48,40,32],act(){if(ss.lp0)return'Книга примет. Остальные страницы пустые.';ss.lp0=true;privNote(...PAGES[0]);return'На столе книга примет оленей! Вы прочитали страницу. Её видите только вы.'}},
+ {x:70,y:142,hit:[0,118,64,42],act(){goScene('stable',[120,92]);return null}},
+ {x:118,y:104,hit:[110,48,23,14],act(){if(ss.lp0)return'Книга примет. Остальные страницы пустые.';ss.lp0=true;privNote(...PAGES[0]);return'На столе книга примет оленей! Вы прочитали страницу. Её видите только вы.'}},
  {x:166,y:104,hit:[157,22,36,30],act(){if(ss.lp1)return'Доска с записками. Больше ничего полезного.';ss.lp1=true;privNote(...PAGES[1]);return'На доске приколот вырванный лист из книги примет! Его видите только вы.'}},
  {x:66,y:108,hit:[52,65,22,24],act(){if(ss.lp2)return'Пустая бочка.';ss.lp2=true;privNote(...PAGES[2]);return'В бочке лежит страница из книги примет! Её видите только вы.'}},
  {x:196,y:108,hit:[202,72,28,30],act(){if(ss.lp3)return'В ящике старые подковы.';ss.lp3=true;privNote(...PAGES[3]);ss.shelf=true;privNote(...RULES[3]);return'В ящике под подковами страница из книги примет и записка Санты! Их видите только вы.'}},
@@ -2928,14 +2976,86 @@ const ITEMS_LF=[
 ];
 const ITEMS_FG=[
  {x:34,y:114,hit:[0,26,26,84],act(){goScene('stable',[36,66]);return null}},
- {x:72,y:100,hit:[50,28,45,24],act(){if(ss.hammer||has('молоток'))return'Клещи и молотки. Один молоток уже у команды.';ss.hammer=true;take('молоток');return'Вы взяли со стены один из кузнечных молотков.'}},
- {x:130,y:98,hit:[100,36,62,34],act(){if(ss.horse==='hot')return'Подкова раскалена докрасна.';if(!has('подкова'))return'Горн пылает. Тут куют подковы.';ss.horse='hot';return'Вы положили подкову в горн. Через минуту она раскалилась докрасна!'}},
- {x:127,y:140,hit:[104,86,46,34],act(){if(ss.horse!=='hot'&&ss.horse!=='bent')return'Наковальня. Холодный металл не гнётся.';if(ss.horse==='bent')return'Подкова выпрямлена, но ещё раскалена. Горячо!';
-   if(!has('молоток'))return'Голыми руками раскалённую подкову не выпрямить.';ss.horse='bent';sfx('gear');return'Тук-тук-тук! Вы выпрямили подкову на наковальне. Она ещё горячая.'}},
- {x:200,y:126,hit:[205,74,34,40],act(){if(ss.horse!=='bent')return'Бочка с ледяной водой.';ss.horse='done';drop('подкова');take('новая подкова');return'Пш-ш-ш! Подкова остыла в воде. Готова новая подкова!'}},
+ {x:72,y:100,hit:[50,28,46,24],act(){if(anyHas('молоток'))return'Кузнечные молотки. Один уже у команды.';take('молоток');return'Вы взяли со стены кузнечный молоток.'}},
+ {x:72,y:100,hit:[51,55,45,24],act(){if(anyHas('клещи')||anyHas('клещи с подковой'))return'Кузнечные клещи. Одни уже у команды.';take('клещи');return'Вы взяли со стены кузнечные клещи. Ими берут раскалённое железо.'}},
+ {x:130,y:98,hit:[100,36,62,34],act(){return forgeAct()}},
+ {x:127,y:140,hit:[104,86,46,34],act(){return anvilAct()}},
+ {x:200,y:126,hit:[205,74,34,40],act(){return barrelAct()}},
  {x:200,y:100,hit:[224,32,24,42],act(){return'Старые подковы. Все погнутые, не годятся.'}},
  {x:88,y:104,hit:[80,81,18,20],act(){return'Ведро с углём.'}}
 ];
+// --- отдельные зоны для предметов обстановки: у каждой вещи своя жёлтая рамка и свой ответ
+const DECO=(x,y,hit,t)=>({x,y,hit,act(){return t}});
+ITEMS_W.push(
+ DECO(46,66,[24,20,44,21],'Инструменты эльфов: молотки, пилы и гаечные ключи.'),
+ DECO(58,66,[52,43,15,11],'Тиски. Крепко держат заготовку.'),
+ DECO(93,66,[87,50,15,14],'Рулоны ткани и корзинка с лентами для подарков.'),
+ DECO(203,66,[179,53,48,10],'В ящиках стеллажа ленты и банты.'),
+ DECO(16,84,[3,43,12,36],'Дверь обратно в гостиную. Возвращаться некогда: Рождество ждёт!'));
+ITEMS_C.push(
+ DECO(70,108,[65,38,12,14],'Старая астрономическая сфера.'),
+ DECO(94,108,[90,74,9,10],'Книги о часовых механизмах.'),
+ DECO(102,108,[98,62,9,16],'Масляная лампа на столе. Горит.'),
+ DECO(118,108,[108,63,20,13],'Отвёртки и пинцеты на стене.'),
+ DECO(138,108,[134,69,9,9],'Лупа часовщика.'),
+ DECO(132,120,[125,93,15,18],'Табурет часовщика.'),
+ DECO(30,110,[10,36,14,15],'Фонарь на стене у двери. Горит.'));
+ITEMS_S.push(
+ DECO(100,84,[95,26,10,10],'Подкова на счастье прибита над стойлами.'),
+ DECO(148,84,[125,3,46,25],'Окно с рождественским венком. Снаружи метель.'),
+ DECO(104,84,[98,5,11,19],'Фонарь под потолком.'),
+ DECO(192,84,[186,5,12,20],'Фонарь под потолком.'),
+ DECO(222,84,[219,18,8,10],'Моток верёвки на крюке.'));
+ITEMS_LF.push(
+ DECO(130,104,[97,60,70,28],'Письменный стол в сеновале.'),
+ DECO(142,104,[138,44,9,17],'Чернильница с пером.'),
+ DECO(156,104,[149,52,14,10],'Стопка старых книг.'),
+ DECO(62,104,[41,22,43,13],'Банки и жестянки на полке.'),
+ DECO(72,104,[55,46,33,36],'Старое тележное колесо.'),
+ DECO(36,108,[13,54,39,40],'Тюки сена.'),
+ DECO(210,104,[178,46,24,26],'Тюки сена.'),
+ DECO(208,96,[203,15,12,26],'Фонарь высоко на столбе.'),
+ DECO(230,96,[227,19,12,24],'Старая порванная упряжь. Не годится.'));
+ITEMS_FG.push(
+ DECO(184,110,[167,24,37,35],'Кузнечные мехи. Раздувают огонь в горне.'),
+ DECO(168,110,[151,77,37,20],'Дрова для горна.'),
+ DECO(50,110,[37,66,22,34],'Ящик с железными прутьями.'),
+ DECO(244,128,[239,102,17,23],'Деревянный чурбак.'),
+ DECO(36,112,[28,26,13,22],'Фонарь на стене.'));
+ITEMS_K.push(
+ DECO(132,104,[115,5,33,31],'Банки с вареньем на полке.'),
+ DECO(157,104,[149,8,17,20],'Медный чайник.'),
+ DECO(202,104,[185,5,35,35],'Кастрюли миссис Клаус.'),
+ DECO(18,104,[4,18,27,18],'Горшок с плющом на холодильнике.'),
+ DECO(90,104,[84,52,12,12],'Кувшин с веточками рябины.'),
+ DECO(228,104,[223,26,12,20],'Фонарь на стене.'));
+ITEMS_PN.push(DECO(91,108,[69,84,44,17],'Пустые деревянные ящики.'));
+ITEMS_CL.push(
+ DECO(130,112,[87,17,87,19],'Банки и коробки на верхней полке. Всё замёрзло.'),
+ DECO(100,112,[84,42,33,18],'Коробки с печеньем. Покрыты инеем.'),
+ DECO(162,112,[148,43,28,17],'Банки с вареньем. Замёрзли.'),
+ DECO(140,112,[134,80,12,23],'Маленький бочонок.'),
+ DECO(196,112,[191,17,15,30],'Фонарь на стене. Тут холодно и тускло.'));
+ITEMS_O.push(
+ DECO(16,128,[0,112,24,21],'Старые книги по астрономии.'),
+ DECO(38,128,[32,118,11,17],'Свеча. Почти догорела.'));
+// --- кузница: подкова → горн → клещами на наковальню → молотком выпрямить → клещами в бочку
+// ss.horse: undefined | 'hot' (в горне) | 'tongs' (в клещах, кривая) | 'anvil' (на наковальне, кривая) | 'bent' (на наковальне, выпрямлена) | 'tongs2' (в клещах, ровная) | 'done'
+function swapHeld(a,b){TEAM.inv=TEAM.inv.map(x=>x==='@'+me+':'+a?'@'+me+':'+b:x);renderSide()}
+function forgeAct(){
+  if(!ss.horse){if(!holds('подкова'))return handMsg('подкова','Горн пылает. Тут куют подковы.');drop('подкова');ss.horse='hot';return'Вы положили старую подкову в горн. Она раскалилась докрасна! Голыми руками её не достать.'}
+  if(ss.horse==='hot'){if(!holds('клещи'))return handMsg('клещи','Подкова в горне раскалена докрасна. Голыми руками не взять: нужны клещи.');ss.horse='tongs';swapHeld('клещи','клещи с подковой');return'Вы достали раскалённую подкову клещами. Теперь на наковальню!'}
+  return'Горн пылает.'}
+function anvilAct(){
+  if(ss.horse==='tongs'||ss.horse==='tongs2'){if(!holds('клещи с подковой'))return'Подкова в клещах у товарища.';
+    if(ss.horse==='tongs2')return'Подкова уже ровная. Остудите её в бочке с водой.';ss.horse='anvil';swapHeld('клещи с подковой','клещи');return'Вы положили раскалённую подкову на наковальню. Теперь выпрямите её молотком.'}
+  if(ss.horse==='anvil'){if(!holds('молоток'))return handMsg('молоток','Раскалённая подкова лежит на наковальне. Чем её выпрямить?');ss.horse='bent';sfx('gear');return'Тук-тук-тук! Подкова выпрямлена. Она ещё раскалена: возьмите её клещами и остудите.'}
+  if(ss.horse==='bent'){if(!holds('клещи'))return handMsg('клещи','Подкова выпрямлена, но ещё раскалена. Голыми руками не взять: нужны клещи.');ss.horse='tongs2';swapHeld('клещи','клещи с подковой');return'Вы взяли ровную раскалённую подкову клещами. Остудите её в бочке.'}
+  return'Наковальня. Холодный металл не гнётся.'}
+function barrelAct(){
+  if(ss.horse==='tongs'){return'Подкова ещё кривая. Сначала выпрямите её на наковальне.'}
+  if(ss.horse==='tongs2'){if(!holds('клещи с подковой'))return'Подкова в клещах у товарища.';ss.horse='done';swapHeld('клещи с подковой','клещи');take('новая подкова');return'Пш-ш-ш! Подкова остыла в воде. Готова новая подкова!'}
+  return'Бочка с ледяной водой.'}
 // --- отрисовка комнат
 function hdScene(k,t){const im=SIMG[k];if(im.complete&&im.naturalWidth){g.imageSmoothingEnabled=true;g.drawImage(im,0,0,HW,HH);g.imageSmoothingEnabled=false}else{g.fillStyle='#2a1a10';g.fillRect(0,0,HW,HH)}
   if(k==='kitchen'){if(sk.bowl.length&&!sk.done)gp('k_dough');
@@ -2943,9 +3063,11 @@ function hdScene(k,t){const im=SIMG[k];if(im.complete&&im.naturalWidth){g.imageS
     if(sk.melt){const e=(performance.now()-sk.melt.t)/6000;g.save();g.globalCompositeOperation='screen';glow(g,IX(1275),IY(310),10+e*8,'rgba(255,190,90,.5)');g.restore()}}
   if(k==='cellar'&&!sk.ladder&&okI(ICOIMG['стремянка'])){g.imageSmoothingEnabled=true;g.drawImage(ICOIMG['стремянка'],IX(560),IY(330),48,56);g.imageSmoothingEnabled=false}
   if(k==='cellar'&&sk.tin)gp('k_tin');
+  if(k==='pantry'&&sk.ladderAt&&okI(ICOIMG['стремянка'])){const lx=sk.ladderAt==='left'?180:286;g.save();g.imageSmoothingEnabled=true;g.drawImage(ICOIMG['стремянка'],lx-20,150,40,58);g.restore()}
   if(k==='loft'&&ss.lantern)gp('f_nolamp');
   if(k==='forge'){const hs=(x,y,w,rot,sy=1)=>{const im=GP.shoe_hot_s;if(!okI(im))return;const h=w*im.naturalHeight/im.naturalWidth;g.save();g.translate(x,y);g.rotate(rot);g.scale(1,sy);g.imageSmoothingEnabled=true;g.drawImage(im,-w/2,-h/2,w,h);g.restore();g.save();g.globalCompositeOperation='screen';glow(g,x,y,w*.9,`rgba(255,120,40,${.5+.2*Math.sin(t*5)})`);g.restore()};
     if(ss.horse==='hot')hs(IX(795),IY(375),14,.3);
+    if(ss.horse==='anvil')hs(IX(752),IY(532),15,.4,.45);
     if(ss.horse==='bent')hs(IX(752),IY(532),15,0,.45)}}
 function hdSceneLight(k,t){const L={kitchen:[[1010,330,90],[1390,230,60],[160,200,60]],pantry:[[230,250,70],[640,300,120]],cellar:[[1200,200,90],[140,140,90]],loft:[...(ss.lantern?[]:[[640,330,80]]),[1260,230,80],[300,180,60]],forge:[[800,370,140],[220,250,70]]}[k]||[];
   lc.globalCompositeOperation='source-over';lc.fillStyle=k==='cellar'?'#b4bcd8':'#d8ccd6';lc.fillRect(0,0,HW,HH);lc.globalCompositeOperation='lighter';
@@ -3120,7 +3242,7 @@ function frame0(now){
     if(p.i===me){const ay=y-fs-S*2+Math.sin(T*5)*S;ctx.fillStyle='#f2c14e';ctx.beginPath();ctx.moveTo(x-S*2.5,ay-S*3);ctx.lineTo(x+S*2.5,ay-S*3);ctx.lineTo(x,ay);ctx.fill()}
   });
   // подписи над переходами в соседние помещения
-  {const DL={stable:[[3,40,'Кузница ←','left'],[194,96,'Сеновал ↑','right'],[253,30,'На кухню →','right']],forge:[[3,22,'← Конюшня','left']],loft:[[32,114,'↓ Конюшня','center']],
+  {const DL={stable:[[3,40,'Кузница ←','left'],[127,8,'↑ Сеновал','center'],[253,30,'На кухню →','right']],forge:[[3,22,'← Конюшня','left']],loft:[[32,114,'↓ Конюшня','center']],
      kitchen:[[253,18,'Кладовая →','right']],pantry:[[3,20,'← Кухня','left'],[212,106,'↓ Погреб','center']],cellar:[[27,10,'↑ Кладовая','center']]}[ROOM];
    if(DL){ctx.save();ctx.font=`600 ${Math.max(10,Math.round(S*2.4))}px 'Golos Text', system-ui, sans-serif`;ctx.textBaseline='middle';
      for(const [lx,ly,t,al] of DL){const tw=ctx.measureText(t).width,ph=S*2.2,bx=al==='left'?(lx-camX)*S:al==='right'?(lx-camX)*S-tw-ph*2:(lx-camX)*S-tw/2-ph,by=(ly-camY)*S;
@@ -3153,7 +3275,7 @@ function frame0(now){
     ctx.textBaseline='bottom'}
   if(ST){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`${Math.max(8,Math.round(S*2.4))}px 'Press Start 2P', monospace`;
     for(let i=0;i<8;i++){const x=STX[i]*S,y=64.5*S,tx=ss.tags[i]||'???';const tw=ctx.measureText(tx).width+S*3;ctx.fillStyle='rgba(16,20,42,.82)';ctx.fillRect(x-tw/2,y-S*2.6,tw,S*5.2);ctx.fillStyle=ss.tags[i]?(ss.namesOK?'#7cd39a':'#f4ecd8'):'#f2c14e';ctx.fillText(tx,x,y+1)}
-    if(has('упряжь')&&!ss.done){ctx.font=`${Math.max(7,Math.round(S*2))}px 'Press Start 2P', monospace`;ctx.fillStyle='rgba(244,236,216,.85)';
+    if((anyHas('упряжь')||Object.keys(ss.slot).length)&&!ss.done){ctx.font=`${Math.max(7,Math.round(S*2))}px 'Press Start 2P', monospace`;ctx.fillStyle='rgba(244,236,216,.85)';
       for(let k=1;k<=4;k++)ctx.fillText('пара '+k,(190-(k-1)*30)*S,171*S);ctx.textAlign='left';ctx.fillText('вперёд →',204*S,119*S);ctx.textAlign='center'}
     if(penFx){const a=1-(now-penFx.t)/1400;if(a<=0)penFx=null;else{ctx.font=`${Math.round(S*3.4)}px 'Press Start 2P', monospace`;ctx.fillStyle=`rgba(255,110,90,${a})`;ctx.fillText('+30 сек',penFx.x*S,(penFx.y-12-(1-a)*10)*S)}}
     ctx.textBaseline='bottom'}
