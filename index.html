@@ -1179,20 +1179,20 @@ cv.addEventListener('pointerdown',e=>{
   if(palacePointerDown(lx,ly))return;
   if(ROOM==='boss'&&(sb.phase==='fight'||sb.phase==='shield')){const [qx,qy,qw,qh]=bossQueenRect();if(lx>=qx&&lx<=qx+qw&&ly>=qy&&ly<=qy+qh){bossShoot();return}}
   // клик по предмету: идем к нему и осматриваем
-  let it=null,bd=16,ba=1e9;for(const x of curItems()){if(x.hit){const [hx,hy,hw,hh]=x.hit;if(lx>=hx&&lx<=hx+hw&&ly>=hy&&ly<=hy+hh&&hw*hh<ba){ba=hw*hh;it=x}}}
-  // допуск вокруг зоны: если промахнулись на несколько пикселей, берём ближайший предмет
-  if(!it){let bdd=7;for(const x of curItems()){if(!x.hit||x.hidden)continue;const [hx,hy,hw,hh]=x.hit;const dx=Math.max(hx-lx,0,lx-hx-hw),dy=Math.max(hy-ly,0,ly-hy-hh),d=Math.hypot(dx,dy);if(d<bdd){bdd=d;it=x}}}
+  // попали внутрь зоны — берём самый маленький предмет под курсором; промахнулись — ближайший в пределах допуска
+  let it=null,ba=1e9;for(const x of curItems()){if(x.hit){const [hx,hy,hw,hh]=x.hit;if(lx>=hx&&lx<=hx+hw&&ly>=hy&&ly<=hy+hh&&hw*hh<ba){ba=hw*hh;it=x}}}
+  if(!it){let bdd=12;for(const x of curItems()){if(!x.hit)continue;const [hx,hy,hw,hh]=x.hit;const dx=Math.max(hx-lx,0,lx-hx-hw),dy=Math.max(hy-ly,0,ly-hy-hh),d=Math.hypot(dx,dy);if(d<bdd){bdd=d;it=x}}}
   if(ROOM==='work'&&!it&&lx>=52&&lx<=200&&ly>=68&&ly<=130){it=CONV}
   const me_=people[me];
   const tg=it===CONV?nearestFree(lx,Math.max(ly+10,134),40):it?nearestFree(it.x,it.y,16):nearestFree(lx,ly+8,14);
   if(!tg){say(me_,'Туда не пройти.');return}
   const pth=findPath(me_.x+8,me_.y+20,tg);
-  clickMark={x:lx,y:ly,t:performance.now()};
+  clickMark=it&&it.hit?{rect:it.hit,t:performance.now()}:{x:lx,y:ly,t:performance.now()};
   if(pth===null){say(me_,'Туда не пройти.');return}
-  // предмет срабатывает только по клику, когда персонаж уже стоит рядом
+  // предмет: если персонаж рядом, срабатывает сразу; иначе он подходит и осматривает сам
   if(it){const fx=me_.x+8,fy=me_.y+20,sx=tg[0]*GS+2,sy=tg[1]*GS+2;
-    if(Math.hypot(fx-sx,fy-sy)<=12||(it!==CONV&&Math.hypot(fx-it.x,fy-it.y)<=14)){path=null;pendingLook=false;pendingItem=null;actOn(it);return}}
-  path=pth.length?pth:null;pendingLook=false;pendingItem=null;pathStuck=0;
+    if(!pth.length||Math.hypot(fx-sx,fy-sy)<=12||(it!==CONV&&Math.hypot(fx-it.x,fy-it.y)<=14)){path=null;pendingLook=false;pendingItem=null;actOn(it);return}}
+  path=pth.length?pth:null;pendingLook=!!it;pendingItem=it||null;pathStuck=0;
 });
 
 // ---------- БЛЁСТКИ: летят из банки в мастерской на персонажа ----------
@@ -3097,8 +3097,10 @@ function frame0(now){
     if(now-roomT0<60||now-sceneFadeT<60){ZX=tx;ZY=ty}else{const k=Math.min(1,dt*5);ZX+=(tx-ZX)*k;ZY+=(ty-ZY)*k}}
   ctx.setTransform(DPR*ZM,0,0,DPR*ZM,-ZX*S*ZM*DPR,-ZY*S*ZM*DPR);ctx.imageSmoothingEnabled=true;g.imageSmoothingEnabled=false;
   ctx.drawImage(low,0,0,W*S,H*S);
-  if(clickMark){const a=1-(now-clickMark.t)/600;if(a<=0)clickMark=null;else{ctx.strokeStyle=`rgba(242,193,78,${a})`;ctx.lineWidth=Math.max(2,S*.8);
-    const rr=S*(3+(1-a)*4);ctx.strokeRect((clickMark.x-camX)*S-rr,(clickMark.y-camY)*S-rr*.6,rr*2,rr*1.2)}}
+  if(clickMark){if(clickMark.rect){const a=1-(now-clickMark.t)/1100;if(a<=0)clickMark=null;else{const [hx,hy,hw,hh]=clickMark.rect,pad=S*(2+(1-a)*2);ctx.save();ctx.strokeStyle=`rgba(242,193,78,${Math.min(1,a*1.6)})`;ctx.lineWidth=Math.max(3,S*1.1);ctx.shadowColor='rgba(0,0,0,.6)';ctx.shadowBlur=S*2;
+      ctx.strokeRect((hx-camX)*S-pad,(hy-camY)*S-pad,hw*S+pad*2,hh*S+pad*2);ctx.restore()}}
+    else{const a=1-(now-clickMark.t)/600;if(a<=0)clickMark=null;else{ctx.strokeStyle=`rgba(242,193,78,${a})`;ctx.lineWidth=Math.max(2,S*.8);
+    const rr=S*(4+(1-a)*5);ctx.strokeRect((clickMark.x-camX)*S-rr,(clickMark.y-camY)*S-rr*.6,rr*2,rr*1.2)}}}
 
   const fs=Math.max(8,Math.round(S*2.8/ZM));
   ctx.font=`${fs}px 'Press Start 2P', monospace`;ctx.textAlign='center';ctx.textBaseline='bottom';
