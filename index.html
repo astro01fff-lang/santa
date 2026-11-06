@@ -2050,7 +2050,7 @@ const IMG_L=new Image();let IMG_L_OK=false;IMG_L.onload=()=>{IMG_L_OK=true};IMG_
 const IX=x=>x/3,IY=y=>y*0.34375;               // пиксели картинки 1536x1024 -> HD 512x352
 const OPEN={};for(const k of ['gift','obs','stable','clock','globe']){const im=new Image();im.src='rooms/open_'+k+'.webp';OPEN[k]=im}
 const drawOpen=(k,x,y,w,h)=>{const im=OPEN[k];if(im.complete&&im.naturalWidth){g.imageSmoothingEnabled=true;g.drawImage(im,IX(x),IY(y),IX(w),IY(h));g.imageSmoothingEnabled=false}};
-const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[0,560,520,400],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
+const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[0,560,520,400],s_nosled:[0,560,520,400],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing','s_sled']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
 function gp(k,al){const im=GP[k],r=GPP[k];if(!okI(im))return;g.save();if(al!==undefined)g.globalAlpha=al;g.imageSmoothingEnabled=true;g.drawImage(im,IX(r[0]),IY(r[1]),IX(r[2]),IY(r[3]));g.restore()}
 const TARP=new Image();TARP.src='rooms/tarp.webp';const NOMILK=new Image();NOMILK.src='rooms/nomilk.webp';const NOBUCKET=new Image();NOBUCKET.src='rooms/nobucket.webp';
 function patchL(sx,sy,sw,sh,dx,dy){g.drawImage(IMG_L,sx,sy,sw,sh,IX(dx),IY(dy),IX(sw),IY(sh))}
@@ -2171,16 +2171,18 @@ function hdStableImg(t,dt){
   if(!ss.bucket){ell(g,IX(272),IY(553),9,3.2,'#cfe8ff');ell(g,IX(268),IY(551),4,1.2,'#ffffff');QQ(g,IX(272)-2,IY(553)-1,5,2,'#f4ecd8')}
   // сундук
   if(ss.chest)gp('s_chest');
-  if(!ss.tarp)gp('s_sleigh');
+  // сани: после взлёта уезжают и поднимаются вместе с упряжкой
+  if(!ss.tarp){if(ss.done){gp('s_nosled');const {fx,lift}=sledFly();const im=GP.s_sled;if(okI(im)){g.save();g.imageSmoothingEnabled=true;g.drawImage(im,IX(-12)+fx,IY(614)-lift,IX(520),IY(356));g.restore()}}else gp('s_sleigh')}
   // места упряжки
   if(has('упряжь')&&!ss.done)SLOTS.forEach(s=>{if(!ss.slot[s.k+s.side]){g.strokeStyle='rgba(242,193,78,.5)';g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(s.x*2-24,s.y*2-6,48,14);g.setLineDash([])}});
   if(ss.done){const e=(performance.now()-ss.flyT)/1000;for(let i=0;i<14;i++){const a=(i*47+e*90)%360*Math.PI/180;g.fillStyle=`rgba(255,230,140,${Math.max(0,.9-e*.15)})`;g.fillRect(IX(240)+Math.cos(a)*(40+i*3),IY(760)+Math.sin(a)*(18+i),2,2)}}
 }
+function sledFly(){if(!ss.done)return{fx:0,lift:0};const e=(performance.now()-ss.flyT)/1000;return{fx:Math.max(0,e-.5)*e*60,lift:Math.max(0,e-1.2)*e*14}}
 function stableEnts2(t){
-  const out=[];let fx=0;if(ss.done){const e=(performance.now()-ss.flyT)/1000;fx=Math.max(0,e-.5)*e*60}
+  const out=[];const {fx,lift}=sledFly();
   const all=Object.keys(ss.slot).length===8;
-  SLOTS.forEach(s=>{const n=ss.slot[s.k+s.side];if(!n)return;out.push({y:s.y+4,draw:()=>{sideImg(s.x*2+fx,s.y*2+8,n,t,ss.done);
-    if(all&&!ss.done){g.strokeStyle='rgba(90,52,32,.9)';g.lineWidth=1;g.beginPath();g.moveTo(IX(455),IY(770));g.lineTo(s.x*2+8,s.y*2-16);g.stroke()}}})});
+  SLOTS.forEach(s=>{const n=ss.slot[s.k+s.side];if(!n)return;out.push({y:s.y+4,draw:()=>{sideImg(s.x*2+fx,s.y*2+8-lift,n,t,ss.done);
+    if(all){g.strokeStyle='rgba(90,52,32,.9)';g.lineWidth=1;g.beginPath();g.moveTo(IX(455)+fx,IY(770)-lift);g.lineTo(s.x*2+8+fx,s.y*2-16-lift);g.stroke()}}})});
   return out;
 }
 function hdStableImgLight(t){
