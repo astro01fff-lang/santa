@@ -236,6 +236,7 @@ html.fs body{padding:0}html.fs .wrap{gap:0}html.fs .wrap>header,html.fs #netbar{
             </div>
           </div>
           <p class="treemsg" id="treemsg">Выберите игрушку внизу, потом нажмите на крючок.</p>
+          <p class="treemsg" id="treewarn" hidden style="color:#ffb4a8;font-weight:600"></p>
           <div class="tray" id="tray"></div>
           <p class="treemsg" id="treeothers" style="color:var(--muted);font-size:13px"></p>
           <button class="btn ghost" type="button" id="treeclose">Отойти от ёлки</button>
@@ -926,7 +927,7 @@ const ITEMS_L=[
  {x:206,y:130,hit:[211, 117, 42, 22],act(){if(st.gift)return ornAt('star','На дне открытого подарка снова лежит звезда.')||'Подарок открыт.';if(!has('ножницы'))return'Самый большой подарок туго перевязан лентой. Руками не развязать.';
    st.gift=true;drop('ножницы');gotOrn('star');renderSide();return'Вы разрезали ленту. В подарке золотая звезда для макушки и… '+piece('')}},
  {x:206,y:100,hit:[209, 56, 41, 62],act(){if(st.lit)return'Ёлка горит! Дверь открылась.';
-   {const back=['red','gold','bell'].find(k=>st.ornBack&&st.ornBack[k]);if(back){ornAt(back);return'Под ёлку закатилась игрушка: '+ORNN[back]+'. Подобрали.'}}
+   {const back=Object.keys(ORNN).find(k=>st.ornBack&&st.ornBack[k]);if(back){gotOrn(back);st.ornBack[back]=0;renderSide();return'Под ёлкой лежала укатившаяся игрушка: '+ORNN[back]+'. Подобрали.'}}
    if(!st.box){st.box=true;['red','gold','bell'].forEach(gotOrn);renderSide();return'Под ёлкой коробка со старыми игрушками: красный шар, золотой шар и колокольчик. Остальных не хватает.'}
    if(st.pieces<9)return'Ёлка не наряжена. Как её наряжали раньше? Нужно собрать всё старое фото.';
    openTree();return null}},
@@ -944,7 +945,8 @@ const HOOKS=[{x:697,y:250,ans:'snow'},{x:905,y:240,ans:'red'},{x:617,y:410,ans:n
 function gotOrn(k){st.orn[k]=1;st.ornOwner=st.ornOwner||{};st.ornOwner[k]=me}
 const ornMine=k=>(st.ornOwner||{})[k]===undefined||(st.ornOwner||{})[k]===me;
 // игрушка лежит в тайнике, если ее еще не взяли или она укатилась обратно
-function ornAt(k,txt){if(!st.orn[k]&&!st.hung[k]&&st.ornBack&&st.ornBack[k]){gotOrn(k);st.ornBack[k]=0;renderSide();return(txt||'Здесь снова лежит игрушка: '+ORNN[k]+'.')}
+// сорвавшаяся с крючка игрушка всегда укатывается под ёлку, забирают её там (см. ёлку в ITEMS_L)
+function ornAt(k,txt){
   if(k==='blue'||k==='snow'||k==='icicle'){if(!st.orn[k]&&!st.hung[k]&&!(st.seen||{})[k]){st.seen=st.seen||{};st.seen[k]=1;gotOrn(k);renderSide();return txt}}
   return null}
 function drawPhoto(c){if(!c)return;const x=c.getContext('2d');x.fillStyle='#0b0e1e';x.fillRect(0,0,c.width,c.height);
@@ -995,7 +997,9 @@ tcv.addEventListener('pointerdown',e=>{if(st.lit)return;const r=tcv.getBoundingC
     if(k==='star'){st.lit=true;tmsg.textContent='Ёлка загорелась! Дверь открылась.';renderTray();drawTreeCU();setTimeout(()=>{closeTree();say(people[me],'Ёлка горит! Дверь в мастерскую открылась.')},1600);return}
     tmsg.textContent='Повесили: '+ORNN[k]+'. Висит как на фото.'}
   else{st.orn[k]=0;delete st.ornOwner[k];st.ornBack=st.ornBack||{};st.ornBack[k]=1;treeSel=null;st.pen+=30;penFx={t:performance.now(),x:200,y:100};renderSide();
-    tmsg.textContent='Не то место! Игрушка сорвалась с крючка и укатилась туда, где её нашли. Её придётся найти заново. +30 секунд.'}
+    tmsg.textContent='Не то место! Игрушка сорвалась с крючка и укатилась под ёлку. +30 секунд.';
+    {const tw=document.getElementById('treewarn');tw.textContent='Игрушка «'+ORNN[k]+'» укатилась под ёлку. Отойдите от ёлки и нажмите на неё ещё раз, чтобы подобрать. +30 секунд.';tw.hidden=false;clearTimeout(tw._t);tw._t=setTimeout(()=>{tw.hidden=true},10000)}
+    setTimeout(()=>say(people[me],'Игрушка «'+ORNN[k]+'» укатилась под ёлку!'),50)}
   renderTray();drawTreeCU()});
 
 // ---------- ИНВЕНТАРЬ: МОЁ И ОБЩЕЕ ----------
@@ -1031,7 +1035,7 @@ document.getElementById('clockclose').addEventListener('click',closeClock);
 // где центр циферблата на картинке из нейросети (поправим под картинку)
 const CK_FACE={x:300,y:276,r:74};
 function drawClock(now){const x=ccv.getContext('2d');x.setTransform(1,0,0,1,0,0);x.fillStyle='#2a140e';x.fillRect(0,0,600,600);
-  const out=clockAnim&&now-clockAnim>900&&now-clockAnim<5200;const run=st.clock&&(!clockAnim||now-clockAnim>600);
+  const out=(clockAnim&&now-clockAnim>900&&now-clockAnim<5200)||(st.clock&&(!clockAnim||now-clockAnim>=5200));const run=st.clock&&(!clockAnim||now-clockAnim>600);
   const im=CUCKOO[out?1:0];let F=CK_FACE;
   let fromBg=false,fromImg=false;
   if(im.complete&&im.naturalWidth){fromImg=true;x.fillStyle='#3a1416';x.fillRect(0,0,600,600);x.imageSmoothingEnabled=true;x.drawImage(im,122,0,356,600)}
@@ -1441,7 +1445,7 @@ const ITEMS_W=[
  {x:205,y:66,hit:[176, 3, 53, 40],act(){if(sw.high)return'На стеллаже игрушки на следующий год.';if(!has('стремянка'))return'Стеллаж с игрушками. До верхней полки не дотянуться.';
    sw.high=true;drop('стремянка');take('табличка «Ева»');return'Со стремянки достали табличку «Ева» и… '+letter('Ева')}},
  {x:226,y:66,hit:[229, 40, 8, 25],act(){if(sw.behind)return'За стеллажом только пыль.';sw.behind=true;take('табличка «Гоша»');return'За стеллажом застряла табличка «Гоша»!'}},
- {x:236,y:80,hit:[232, 24, 21, 52],act(){if(sw.ladder)return'Тут стояла стремянка. Её уже взяли.';sw.ladder=true;take('стремянка');return'Вы взяли стремянку.'}},
+ {x:236,y:80,hit:[229, 50, 23, 25],act(){if(sw.ladder)return'Тут стояла стремянка. Её уже взяли.';sw.ladder=true;take('стремянка');return'Вы взяли стремянку.'}},
  {x:210,y:98,hit:[215, 76, 30, 35],act(){if(sw.sack)return'Пусто. Подарки уже на конвейере.';sw.sack=true;return'Сверху в мешке лежит конверт… '+letter('Алиса')}},
  {x:36,y:132,hit:[1, 112, 30, 28],act(){if(sw.junk)return'Заяц без уха, мяч без воздуха и грустный робот.';sw.junk=true;return'Под зайцем без уха лежит конверт… '+letter('Лёва')}},
  {x:18,y:90,hit:[7, 81, 21, 19],act(){if(sw.mat)return'Под ковриком больше ничего.';sw.mat=true;return'Под ковриком у входа конверт… '+letter('Гоша')}},
@@ -2084,6 +2088,8 @@ function hdLiving(t,dt,lit){
   if(lit){gp('l_tree');if(st.gift)gp('l_gift')}
   // открытая дверь
   if(lit)gp('l_door');
+  // укатившиеся под ёлку игрушки лежат у её подножия
+  if(st.ornBack){let n=0;for(const k in st.ornBack){if(!st.ornBack[k])continue;const im=ORNIMG[k];if(!okI(im))continue;const x=404+(n%4)*17,y=244+((n/4)|0)*12;n++;g.save();g.imageSmoothingEnabled=true;g.drawImage(im,x,y,16,16);g.restore()}}
 }
 function hdLivingLight(lit,t){
   lc.globalCompositeOperation='source-over';lc.fillStyle=lit?'#f2ece6':'#b8b0cc';lc.fillRect(0,0,HW,HH);
@@ -2110,7 +2116,7 @@ function hdWorkImg(t,dt){
   if(sw.running){const off=(t*12)%8;for(let s=0;s<LOOPLEN;s+=8){const [x,y]=loopPos(s+off);g.fillStyle='rgba(30,18,10,.35)';g.fillRect(x*2-1,y*2-1,3,3)}
     g.save();g.globalCompositeOperation='screen';glow(g,IX(612),IY(522),18+2*Math.sin(t*6),'rgba(255,150,60,.55)');glow(g,IX(945),IY(565),10,'rgba(255,170,80,.5)');g.restore()}
   // стремянка у правой стены (на фоне её нет: пропадает, когда её взяли)
-  if(!sw.ladder&&okI(ICOIMG['стремянка'])){g.save();g.imageSmoothingEnabled=true;g.drawImage(ICOIMG['стремянка'],IX(1385),IY(140),IX(125),IY(295));g.restore()}
+  if(!sw.ladder&&okI(ICOIMG['стремянка'])){g.save();g.imageSmoothingEnabled=true;{const w=44,h=w*96/90;g.drawImage(ICOIMG['стремянка'],IX(1440)-w/2,IY(432)-h,w,h)};g.restore()}
   // шкафчик: замок со значками / открыт
   if(sw.locker)gp('w_locker');
   // доска заказов: листок с цифрами
