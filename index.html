@@ -2838,7 +2838,7 @@ function measure(k){let g2=0,l=0;const lab=()=>'Отмерено: '+g2+' '+pl(g2
    {label:'Отмена',ghost:true,fn:()=>{}}]);
   const cnt=document.createElement('p');cnt.className='cnt picktext';cnt.textContent=lab();document.getElementById('pickopts').prepend(cnt)}
 // --- полки кладовой
-function shelf(high,title,list){if(high&&!has('стремянка'))return'Верхняя полка. Не дотянуться.';
+function shelf(high,title,list){if(high&&!has('стремянка'))return'Я вижу там то, что нам нужно! Но слишком высоко, мне не достать. Нужна стремянка.';
   const opts=list.filter(([k])=>!has(k)).map(([k,nm])=>({label:'Взять: '+nm,fn:()=>{take(k);say(people[me],'Вы взяли: '+nm+'.')}}));
   if(!opts.length)return'Всё нужное с этой полки уже у команды.';
   openPick(title,'На полке стоят банки. Что взять?',opts.concat([{label:'Ничего',ghost:true,fn:()=>{}}]));return null}
