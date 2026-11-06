@@ -3323,11 +3323,18 @@ function finDraw(now){const x=plFx.getContext('2d'),ER=(now-plT0)/1000/PL_SLOW;c
     // команда стоит полукругом и подходит к Королеве
     const TP=(k,n)=>{const u=sm(7,9.5,E);const bx=470+k*120,by=900;const tx=QX+(k-(n-1)/2)*105,ty=QY+95+Math.abs(k-(n-1)/2)*-12;return[bx+(tx-bx)*u,by+(ty-by)*u]};
     team(TP,'up',k=>E>7&&E<9.5);
-    // команда берёт её за руки: тёплый свет от каждого к её сердцу
-    if(E>9&&E<14&&people){const n=Math.min(6,people.length);const hx=QX,hy=QY-120,a=sm(9.3,10.3,E)*(1-sm(13.4,14,E));
-      x.save();x.globalCompositeOperation='screen';for(let k=0;k<n;k++){const [px0,py0]=TP(k,n);const px=px0,py=py0-120;
-        for(let j=0;j<10;j++){const v=((E*.8+j/10+k*.13)%1);const qx=px+(hx-px)*v,qy=py+(hy-py)*v-Math.sin(v*Math.PI)*40;x.fillStyle=`rgba(255,215,140,${a*(1-v*.4)})`;x.beginPath();x.arc(qx,qy,7,0,Math.PI*2);x.fill()}}
-      x.restore();const hb=1+.15*Math.sin(E*6);glowAt(hx,hy,120*hb*sm(9,13,E)+20,'rgba(255,190,120,1)',a)}
+    // команда берёт её за руки: Королеву окутывает тёплая аура из золотых искр
+    if(E>9&&E<14.5){const hx=QX,hy=QY-120,a=sm(9.3,10.4,E)*(1-sm(13.8,14.5,E)),grow=sm(9.5,12.5,E);
+      x.save();const hb=1+.1*Math.sin(E*5),R=(170+70*grow)*hb;
+      const gr=x.createRadialGradient(hx,hy+30,10,hx,hy+30,R);gr.addColorStop(0,`rgba(255,170,70,${.55*a})`);gr.addColorStop(.55,`rgba(255,130,40,${.28*a})`);gr.addColorStop(1,'rgba(255,120,40,0)');
+      x.fillStyle=gr;x.beginPath();x.ellipse(hx,hy+30,R,R*1.25,0,0,Math.PI*2);x.fill();
+      x.globalCompositeOperation='lighter';const cols=['255,200,80','255,160,40','255,230,150','255,140,60'];
+      for(let k=0;k<150;k++){const sp=(k%2?1:-1)*(.8+(k%7)*.12),ph=k*2.399,life=(E*.32+k/150)%1;
+        const ang=ph+E*sp,r=(60+(k%13)*14)*(1-.3*life),px=hx+Math.cos(ang)*r,py=hy+190-life*400+Math.sin(ang)*r*.3;
+        const tw=.55+.45*Math.sin(E*9+k*1.7),al=a*Math.sin(life*Math.PI)*tw,sz=5+(k%4)*2.2;
+        x.fillStyle=`rgba(${cols[k%4]},${al})`;x.fillRect(px-sz/2,py-sz/2,sz,sz);
+        if(k%3===0){x.fillRect(px-sz*2,py-1.2,sz*4,2.4);x.fillRect(px-1.2,py-sz*2,2.4,sz*4)}}
+      x.restore()}
     // снежинки-блёстки после превращения
     if(E>14){x.save();x.globalCompositeOperation='screen';for(let k=0;k<70;k++){const px=((k*137+E*30)%1536),py=((k*91+E*(40+k%30))%1024);x.fillStyle=`rgba(230,250,255,${.4+.4*Math.sin(E*3+k)})`;x.fillRect(px,py,5,5)}x.restore()}
   }else if(E<31){// --- полёт над миром
