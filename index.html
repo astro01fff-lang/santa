@@ -1663,7 +1663,7 @@ const DNAMES=Object.keys(DEER);
 const STX=[37,63,88,114,139,165,190,217];
 const STALL=['Молния','Комета','Лисичка','Гром','Скакун','Рудольф','Танцор','Купидон'];
 // места упряжки: пара 1 впереди (справа на экране), ряд «слева» сверху
-const SLOTS=[];for(let k=1;k<=4;k++)for(const side of ['слева','справа'])SLOTS.push({k,side,x:172-(k-1)*24,y:side==='слева'?134:156});
+const SLOTS=[];for(let k=1;k<=4;k++)for(const side of ['слева','справа'])SLOTS.push({k,side,x:190-(k-1)*30,y:side==='слева'?132:160});
 const ANSWER={'1слева':'Рудольф','1справа':'Комета','2слева':'Молния','2справа':'Скакун','3слева':'Купидон','3справа':'Танцор','4слева':'Гром','4справа':'Лисичка'};
 const PAGES=[
  ['Книга примет, страница 1','«Рудольф: красный нос. Комета: белое пятно и синий ошейник»'],
@@ -1723,7 +1723,7 @@ function slotAct(si){
   return null;
 }
 function sledAct(){
-  if(ss.tarp){ss.tarp=false;renderSide();return'Вы приподняли брезент. На боку саней вырезан узор: звезда, колокольчик, подкова, снежинка.'}
+  if(ss.tarp){ss.tarp=false;renderSide();return'Вы сдёрнули брезент. На боку саней вырезан узор: звезда, колокольчик, подкова, снежинка.'}
   if(ss.done)return'Сани взлетают!';
   const n=Object.keys(ss.slot).length;
   if(n<8)return'Сани ждут упряжку: поставлено '+n+' из 8 оленей.';
@@ -1743,10 +1743,10 @@ function chestAct(){
 }
 const ITEMS_S=[
  ...STALL.map((_,i)=>({x:STX[i],y:84,hit:[STX[i]-12,34,24,46],act(){return stallAct(i)}})),
- ...SLOTS.map((s,i)=>({x:s.x,y:s.y+2,hit:[s.x-10,s.y-14,20,18],act(){return slotAct(i)}})),
+ ...SLOTS.map((s,i)=>({x:s.x,y:s.y+2,hit:s.side==='слева'?[s.x-14,s.y-30,28,32]:[s.x-14,s.y-26,28,30],act(){return slotAct(i)}})),
  {x:32,y:84,hit:[23, 12, 19, 20],act(){return'Старое седло. Им давно не пользовались.'}},
  {x:54,y:84,hit:[50, 15, 9, 14],act(){return'Фонарь висит под самым потолком, не достать.'}},
- {x:78,y:84,hit:[65, 15, 28, 13],act(){if(ss.shelf)return'Колокольчики тихо звенят.';ss.shelf=true;privNote(...RULES[3]);return'Под самым большим колокольчиком записка Санты! Ее видите только вы.'}},
+ {x:78,y:84,hit:[65, 15, 28, 13],act(){return'Колокольчики на полке тихо звенят.'}},
  {x:56,y:98,hit:[18,83,21,21],act(){if(ss.sack)return'Мешок с ягелем, оленья еда.';ss.sack=true;privNote(...RULES[1]);return'В ягеле запуталась записка Санты! Ее видите только вы.'}},
  {x:46,y:90,hit:[40, 92, 11, 17],act(){if(ss.bucket)return'В ведре просто вода.';if(!has('фонарь'))return'Вода в ведре замерзла. Подо льдом белеет бумажка.';
    ss.bucket=true;privNote(...RULES[2]);return'Вы поднесли фонарь, лед растаял. В воде записка Санты! Ее видите только вы.'}},
@@ -2050,7 +2050,7 @@ const IMG_L=new Image();let IMG_L_OK=false;IMG_L.onload=()=>{IMG_L_OK=true};IMG_
 const IX=x=>x/3,IY=y=>y*0.34375;               // пиксели картинки 1536x1024 -> HD 512x352
 const OPEN={};for(const k of ['gift','obs','stable','clock','globe']){const im=new Image();im.src='rooms/open_'+k+'.webp';OPEN[k]=im}
 const drawOpen=(k,x,y,w,h)=>{const im=OPEN[k];if(im.complete&&im.naturalWidth){g.imageSmoothingEnabled=true;g.drawImage(im,IX(x),IY(y),IX(w),IY(h));g.imageSmoothingEnabled=false}};
-const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[1,586,488,338],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
+const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[0,560,520,400],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
 function gp(k,al){const im=GP[k],r=GPP[k];if(!okI(im))return;g.save();if(al!==undefined)g.globalAlpha=al;g.imageSmoothingEnabled=true;g.drawImage(im,IX(r[0]),IY(r[1]),IX(r[2]),IY(r[3]));g.restore()}
 const TARP=new Image();TARP.src='rooms/tarp.webp';const NOMILK=new Image();NOMILK.src='rooms/nomilk.webp';const NOBUCKET=new Image();NOBUCKET.src='rooms/nobucket.webp';
 function patchL(sx,sy,sw,sh,dx,dy){g.drawImage(IMG_L,sx,sy,sw,sh,IX(dx),IY(dy),IX(sw),IY(sh))}
@@ -2159,7 +2159,7 @@ const DORD=['Рудольф','Комета','Купидон','Молния','Г�
 const DIMG={f:{},s:{}};DORD.forEach((n,i)=>{for(const k of ['f','s']){const im=new Image();im.onload=()=>{DIMG[k][n]=im};im.src='rooms/deer/'+k+(i+1)+'.webp'}});
 function headImg(cx,t,n,limp){const im=DIMG.f[n];if(!im)return deerFront(cx,t,n,limp);const sc=.135,w=im.width*sc,h=im.height*sc;
   const bob=Math.sin(t*1.6+cx)*.8+(limp?Math.sin(t*5)*1.4:0);g.imageSmoothingEnabled=true;g.drawImage(im,cx-w/2,123-h+bob,w,h);g.imageSmoothingEnabled=false}
-function sideImg(sx,sy,n,t,run){const im=DIMG.s[n];if(!im)return deerSide(sx,sy,n,t,run);const sc=.12,w=im.width*sc,h=im.height*sc;
+function sideImg(sx,sy,n,t,run){const im=DIMG.s[n];if(!im)return deerSide(sx,sy,n,t,run);const sc=.2,w=im.width*sc,h=im.height*sc;
   const b=run?-Math.abs(Math.sin(t*12+sx))*3:Math.sin(t*1.5+sx)*.4;ell(g,sx,sy,w*.42,3,'rgba(0,0,0,.32)');g.imageSmoothingEnabled=true;g.drawImage(im,sx-w/2,sy-h+b,w,h);g.imageSmoothingEnabled=false}
 function hdStableImg(t,dt){
   if(IMG_S_OK){g.imageSmoothingEnabled=true;g.drawImage(IMG_S,0,0,HW,HH);g.imageSmoothingEnabled=false}else{g.fillStyle='#2a1a10';g.fillRect(0,0,HW,HH)}
@@ -2173,7 +2173,7 @@ function hdStableImg(t,dt){
   if(ss.chest)gp('s_chest');
   if(!ss.tarp)gp('s_sleigh');
   // места упряжки
-  if(has('упряжь')&&!ss.done)SLOTS.forEach(s=>{if(!ss.slot[s.k+s.side]){g.strokeStyle='rgba(242,193,78,.45)';g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(s.x*2-14,s.y*2-8,28,10);g.setLineDash([])}});
+  if(has('упряжь')&&!ss.done)SLOTS.forEach(s=>{if(!ss.slot[s.k+s.side]){g.strokeStyle='rgba(242,193,78,.5)';g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(s.x*2-24,s.y*2-6,48,14);g.setLineDash([])}});
   if(ss.done){const e=(performance.now()-ss.flyT)/1000;for(let i=0;i<14;i++){const a=(i*47+e*90)%360*Math.PI/180;g.fillStyle=`rgba(255,230,140,${Math.max(0,.9-e*.15)})`;g.fillRect(IX(240)+Math.cos(a)*(40+i*3),IY(760)+Math.sin(a)*(18+i),2,2)}}
 }
 function stableEnts2(t){
@@ -2915,7 +2915,7 @@ const ITEMS_LF=[
  {x:118,y:104,hit:[97,48,40,32],act(){if(ss.lp0)return'Книга примет. Остальные страницы пустые.';ss.lp0=true;privNote(...PAGES[0]);return'На столе книга примет оленей! Вы прочитали страницу. Её видите только вы.'}},
  {x:166,y:104,hit:[157,22,36,30],act(){if(ss.lp1)return'Доска с записками. Больше ничего полезного.';ss.lp1=true;privNote(...PAGES[1]);return'На доске приколот вырванный лист из книги примет! Его видите только вы.'}},
  {x:66,y:108,hit:[52,65,22,24],act(){if(ss.lp2)return'Пустая бочка.';ss.lp2=true;privNote(...PAGES[2]);return'В бочке лежит страница из книги примет! Её видите только вы.'}},
- {x:196,y:108,hit:[202,72,28,30],act(){if(ss.lp3)return'В ящике старые подковы.';ss.lp3=true;privNote(...PAGES[3]);return'В ящике под подковами страница из книги примет! Её видите только вы.'}},
+ {x:196,y:108,hit:[202,72,28,30],act(){if(ss.lp3)return'В ящике старые подковы.';ss.lp3=true;privNote(...PAGES[3]);ss.shelf=true;privNote(...RULES[3]);return'В ящике под подковами страница из книги примет и записка Санты! Их видите только вы.'}},
  {x:130,y:104,hit:[113,6,30,32],act(){return'Круглое окошко. Снег идёт всё сильнее.'}},
  {x:64,y:104,hit:[8,31,13,33],act(){return'Моток верёвки.'}}
 ];
@@ -3147,7 +3147,7 @@ function frame0(now){
   if(ST){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`${Math.max(8,Math.round(S*2.4))}px 'Press Start 2P', monospace`;
     for(let i=0;i<8;i++){const x=STX[i]*S,y=64.5*S,tx=ss.tags[i]||'???';const tw=ctx.measureText(tx).width+S*3;ctx.fillStyle='rgba(16,20,42,.82)';ctx.fillRect(x-tw/2,y-S*2.6,tw,S*5.2);ctx.fillStyle=ss.tags[i]?(ss.namesOK?'#7cd39a':'#f4ecd8'):'#f2c14e';ctx.fillText(tx,x,y+1)}
     if(has('упряжь')&&!ss.done){ctx.font=`${Math.max(7,Math.round(S*2))}px 'Press Start 2P', monospace`;ctx.fillStyle='rgba(244,236,216,.85)';
-      for(let k=1;k<=4;k++)ctx.fillText('пара '+k,(172-(k-1)*24)*S,124*S);ctx.textAlign='left';ctx.fillText('вперед →',184*S,146*S);ctx.textAlign='center'}
+      for(let k=1;k<=4;k++)ctx.fillText('пара '+k,(190-(k-1)*30)*S,171*S);ctx.textAlign='left';ctx.fillText('вперёд →',204*S,119*S);ctx.textAlign='center'}
     if(penFx){const a=1-(now-penFx.t)/1400;if(a<=0)penFx=null;else{ctx.font=`${Math.round(S*3.4)}px 'Press Start 2P', monospace`;ctx.fillStyle=`rgba(255,110,90,${a})`;ctx.fillText('+30 сек',penFx.x*S,(penFx.y-12-(1-a)*10)*S)}}
     ctx.textBaseline='bottom'}
   ctx.setTransform(DPR,0,0,DPR,0,0);
