@@ -1442,7 +1442,7 @@ const ITEMS_W=[
  {x:140,y:66,hit:[125, 23, 31, 23],act(){if(!sw.board){sw.board=true;TEAM.notes.push({t:'Доска заказов',b:'«Готово к Рождеству: машинок 4, кукол 7, мячей 2»'});renderSide()}return'На доске приколот листок: «Готово к Рождеству: машинок 4, кукол 7, мячей 2».'}},
  {x:166,y:66,hit:[160, 27, 12, 17],act(){if(sw.mail)return'Почтовый ящик пуст.';if(!has('ключ от ящика'))return'Почтовый ящик эльфов заперт на маленький замок.';
    sw.mail=true;drop('ключ от ящика');TEAM.notes.push({t:'Письмо '+GEN['Соня'],b:LETTER['Соня'],owner:me});letter('Миша');return'Ключ подошел! В ящике два письма: от Сони и от Миши. Их видите только вы.'}},
- {x:205,y:66,hit:[176, 3, 53, 40],act(){if(sw.high)return'На стеллаже игрушки на следующий год.';if(!has('стремянка'))return'Стеллаж с игрушками. До верхней полки не дотянуться.';
+ {x:205,y:66,hit:[176, 3, 53, 40],act(){if(sw.high)return'На стеллаже игрушки на следующий год.';if(!has('стремянка'))return'На верхней полке стеллажа что-то белеет! Но слишком высоко, мне не достать. Нужна стремянка.';
    sw.high=true;drop('стремянка');take('табличка «Ева»');return'Со стремянки достали табличку «Ева» и… '+letter('Ева')}},
  {x:226,y:66,hit:[229, 40, 8, 25],act(){if(sw.behind)return'За стеллажом только пыль.';sw.behind=true;take('табличка «Гоша»');return'За стеллажом застряла табличка «Гоша»!'}},
  {x:236,y:80,hit:[229, 50, 23, 25],act(){if(sw.ladder)return'Тут стояла стремянка. Её уже взяли.';sw.ladder=true;take('стремянка');return'Вы взяли стремянку.'}},
@@ -1748,7 +1748,7 @@ const ITEMS_S=[
  {x:54,y:84,hit:[50, 15, 9, 14],act(){return'Фонарь висит под самым потолком, не достать.'}},
  {x:78,y:84,hit:[65, 15, 28, 13],act(){return'Колокольчики на полке тихо звенят.'}},
  {x:56,y:98,hit:[18,83,21,21],act(){if(ss.sack)return'Мешок с ягелем, оленья еда.';ss.sack=true;privNote(...RULES[1]);return'В ягеле запуталась записка Санты! Ее видите только вы.'}},
- {x:46,y:90,hit:[40, 92, 11, 17],act(){if(ss.bucket)return'В ведре просто вода.';if(!has('фонарь'))return'Вода в ведре замерзла. Подо льдом белеет бумажка.';
+ {x:46,y:90,hit:[40, 92, 11, 17],act(){if(ss.bucket)return'В ведре просто вода.';if(!has('фонарь'))return'Вода в ведре замёрзла. Подо льдом белеет бумажка! Нужно что-то тёплое, чтобы растопить лёд.';
    ss.bucket=true;privNote(...RULES[2]);return'Вы поднесли фонарь, лед растаял. В воде записка Санты! Ее видите только вы.'}},
  {x:126,y:116,hit:[81, 90, 91, 21],act(){return'Длинная кормушка. В ней сено.'}},
  {x:206,y:130,hit:[195, 66, 30, 62],act(){goScene('loft',[72,140]);return null}},
@@ -2050,7 +2050,7 @@ const IMG_L=new Image();let IMG_L_OK=false;IMG_L.onload=()=>{IMG_L_OK=true};IMG_
 const IX=x=>x/3,IY=y=>y*0.34375;               // пиксели картинки 1536x1024 -> HD 512x352
 const OPEN={};for(const k of ['gift','obs','stable','clock','globe']){const im=new Image();im.src='rooms/open_'+k+'.webp';OPEN[k]=im}
 const drawOpen=(k,x,y,w,h)=>{const im=OPEN[k];if(im.complete&&im.naturalWidth){g.imageSmoothingEnabled=true;g.drawImage(im,IX(x),IY(y),IX(w),IY(h));g.imageSmoothingEnabled=false}};
-const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[0,560,520,400],s_nosled:[0,560,520,400],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing','s_sled','s_ladder']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
+const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[0,560,520,400],s_nosled:[0,560,520,400],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],c_nopend:[990,140,170,305],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing','s_sled','s_ladder','c_pend']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
 function gp(k,al){const im=GP[k],r=GPP[k];if(!okI(im))return;g.save();if(al!==undefined)g.globalAlpha=al;g.imageSmoothingEnabled=true;g.drawImage(im,IX(r[0]),IY(r[1]),IX(r[2]),IY(r[3]));g.restore()}
 const TARP=new Image();TARP.src='rooms/tarp.webp';const NOMILK=new Image();NOMILK.src='rooms/nomilk.webp';const NOBUCKET=new Image();NOBUCKET.src='rooms/nobucket.webp';
 function patchL(sx,sy,sw,sh,dx,dy){g.drawImage(IMG_L,sx,sy,sw,sh,IX(dx),IY(dy),IX(sw),IY(sh))}
@@ -2520,7 +2520,8 @@ function hdClockImg(t){
   if(sc.chest)gp('c_chest');
   if(sc.rug)gp('c_rug');
   if(sc.done){gp('c_door');
-    const a=Math.sin(t*2.4)*.35;g.save();g.translate(IX(1075),IY(250));g.rotate(a);g.restore()}
+    // маятник качается: под ним чистая стена, сам маятник поворачивается вокруг оси (1073,142)
+    gp('c_nopend');const im=GP.c_pend;if(okI(im)){const a=Math.sin(t*2.6)*.06;g.save();g.translate(IX(1073),IY(142));g.rotate(a);g.imageSmoothingEnabled=true;g.drawImage(im,IX(990-1073),IY(140-142),IX(170),IY(305));g.restore()}}
 }
 function hdClockLight(t){
   lc.globalCompositeOperation='source-over';lc.fillStyle=sc.done?'#efe6dc':'#cfc4d8';lc.fillRect(0,0,HW,HH);
@@ -2927,7 +2928,7 @@ const ITEMS_LF=[
 ];
 const ITEMS_FG=[
  {x:34,y:114,hit:[0,26,26,84],act(){goScene('stable',[36,66]);return null}},
- {x:72,y:100,hit:[50,28,45,24],act(){if(ss.hammer||has('молоток'))return'Клещи и молотки. Один молоток уже у команды.';ss.hammer=true;take('молоток');return'Вы сняли со стены кузнечный молоток.'}},
+ {x:72,y:100,hit:[50,28,45,24],act(){if(ss.hammer||has('молоток'))return'Клещи и молотки. Один молоток уже у команды.';ss.hammer=true;take('молоток');return'Вы взяли со стены один из кузнечных молотков.'}},
  {x:130,y:98,hit:[100,36,62,34],act(){if(ss.horse==='hot')return'Подкова раскалена докрасна.';if(!has('подкова'))return'Горн пылает. Тут куют подковы.';ss.horse='hot';return'Вы положили подкову в горн. Через минуту она раскалилась докрасна!'}},
  {x:127,y:140,hit:[104,86,46,34],act(){if(ss.horse!=='hot'&&ss.horse!=='bent')return'Наковальня. Холодный металл не гнётся.';if(ss.horse==='bent')return'Подкова выпрямлена, но ещё раскалена. Горячо!';
    if(!has('молоток'))return'Голыми руками раскалённую подкову не выпрямить.';ss.horse='bent';sfx('gear');return'Тук-тук-тук! Вы выпрямили подкову на наковальне. Она ещё горячая.'}},
