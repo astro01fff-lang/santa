@@ -2173,8 +2173,6 @@ function hdStableImg(t,dt){
   // сундук
   if(ss.chest)gp('s_chest');
   if(!ss.tarp)gp('s_sleigh');
-  // кучка табличек
-  if(ss.tags.some(x=>!x))for(const [tx,ty,rot] of [[150,166,-.2],[160,169,.15],[155,173,-.05]]){g.save();g.translate(tx,ty);g.rotate(rot);QQ(g,-9,-3.5,18,7,'#e8d8b0');QQ(g,-7,-1,14,1,'#8a7a5a');g.restore()}
   // места упряжки
   if(has('упряжь')&&!ss.done)SLOTS.forEach(s=>{if(!ss.slot[s.k+s.side]){g.strokeStyle='rgba(242,193,78,.45)';g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(s.x*2-14,s.y*2-8,28,10);g.setLineDash([])}});
   if(ss.done){const e=(performance.now()-ss.flyT)/1000;for(let i=0;i<14;i++){const a=(i*47+e*90)%360*Math.PI/180;g.fillStyle=`rgba(255,230,140,${Math.max(0,.9-e*.15)})`;g.fillRect(IX(240)+Math.cos(a)*(40+i*3),IY(760)+Math.sin(a)*(18+i),2,2)}}
@@ -2575,7 +2573,9 @@ function drawGears(now){
   if(sc.done){x.globalCompositeOperation='screen';const gr=x.createRadialGradient(768,512,0,768,512,700);gr.addColorStop(0,'rgba(255,220,140,.25)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,1536,1024);x.globalCompositeOperation='source-over'}
   if(!gearBox.hidden)gearRaf=requestAnimationFrame(drawGears);
 }
-gcv.addEventListener('pointerdown',e=>{if(sc.done)return;const r=gcv.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*1536,py=(e.clientY-r.top)/r.height*1024;
+gcv.addEventListener('pointerdown',e=>{if(sc.done)return;const r=gcv.getBoundingClientRect();
+  // холст вписан с сохранением пропорций (object-fit: contain): учитываем поля по краям
+  const k=Math.min(r.width/1536,r.height/1024),ox=(r.width-1536*k)/2,oy=(r.height-1024*k)/2;const px=(e.clientX-r.left-ox)/k,py=(e.clientY-r.top-oy)/k;
   let peg=null,bd=1e9;for(const p in TSIZE){if(sc.g.some(o=>o.peg===p))continue;const d=Math.hypot(px-PEGS[p][0],py-PEGS[p][1]);if(d<GR[TSIZE[p]]+10&&d<bd){bd=d;peg=p}}
   if(gearSel===null){gmsg.textContent='Сначала выберите шестерёнку внизу.';return}
   if(!peg){gmsg.textContent='Нажмите на пустой контур.';return}
