@@ -1454,7 +1454,7 @@ function freshW(){return{running:false,locker:false,board:false,mail:false,key:f
   gifts:GIFT_ORDER.map((n,i)=>({n,s:i*LOOPLEN/GIFT_ORDER.length,on:true}))}}
 function letter(name){TEAM.notes.push({t:'Письмо '+GEN[name],b:LETTER[name],owner:me});renderSide();return'Письмо '+GEN[name]+'! Его видите только вы. Прочитайте команде.'}
 
-const SOLID_W=[[0,0,W,64],[0,0,8,H],[246,0,10,H],[0,166,W,10],[52,70,148,60],[48,100,12,28],[2,116,29,24],[216,84,28,27],[232,66,13,8],[22,146,212,20]];
+const SOLID_W=[[0,0,W,64],[0,0,8,H],[246,0,10,H],[0,166,W,10],[52,70,148,60],[46,104,20,18],[2,116,29,24],[216,84,28,27],[232,66,13,8],[22,146,212,20]];
 
 const ITEMS_W=[
  {x:56,y:66,hit:[48, 56, 15, 12],act(){if(sw.key)return'Просто стружка. Пахнет ёлкой.';sw.key=true;take('ключ от ящика');return'В стружке что-то звякнуло… Маленький ключ!'}},
@@ -1472,7 +1472,7 @@ const ITEMS_W=[
  {x:210,y:98,hit:[215, 76, 30, 35],act(){if(sw.sack)return'Пусто. Подарки уже на конвейере.';sw.sack=true;return'Сверху в мешке лежит конверт… '+letter('Алиса')}},
  {x:36,y:132,hit:[1, 112, 30, 28],act(){if(sw.junk)return'Заяц без уха, мяч без воздуха и грустный робот.';sw.junk=true;return'Под зайцем без уха лежит конверт… '+letter('Лёва')}},
  {x:18,y:90,hit:[7, 81, 21, 19],act(){if(sw.mat)return'Под ковриком больше ничего.';sw.mat=true;return'Под ковриком у входа конверт… '+letter('Гоша')}},
- {x:42,y:114,hit:[50, 100, 10, 28],act(){if(sw.running)return'Конвейер работает, подарки едут по кругу.';if(!holds('рычаг'))return handMsg('рычаг','Конвейер стоит. На пульте пустой паз.');
+ {x:40,y:118,hit:[44,98,23,25],act(){if(sw.running)return'Конвейер работает, подарки едут по кругу.';if(!holds('рычаг'))return handMsg('рычаг','Конвейер стоит. На пульте пустой паз.');
    sw.running=true;sfx('lever');drop('рычаг');return'Рычаг встал на место. Конвейер загудел и поехал!'}},
  {x:240,y:118,hit:[245, 54, 10, 65],act(){if(sw.done){levelDone('clock');return null}return'Дверь в часовую башню заперта. Сначала разложите все подарки.'}}
 ].concat(BOXES0.map((_,i)=>({x:BXC[i],y:140,hit:[BXC[i]-11,144,22,21],box:i,act(){return boxAct(i)}})));
@@ -2078,7 +2078,7 @@ const IMG_L=new Image();let IMG_L_OK=false;IMG_L.onload=()=>{IMG_L_OK=true};IMG_
 const IX=x=>x/3,IY=y=>y*0.34375;               // пиксели картинки 1536x1024 -> HD 512x352
 const OPEN={};for(const k of ['gift','obs','stable','clock','globe']){const im=new Image();im.src='rooms/open_'+k+'.webp';OPEN[k]=im}
 const drawOpen=(k,x,y,w,h)=>{const im=OPEN[k];if(im.complete&&im.naturalWidth){g.imageSmoothingEnabled=true;g.drawImage(im,IX(x),IY(y),IX(w),IY(h));g.imageSmoothingEnabled=false}};
-const GPP={l_gift:[1290,650,140,160],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[0,560,520,400],s_nosled:[0,560,520,400],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],o_stars:[0,0,1536,300],l_rugfold:[440,630,200,140],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing','s_sled','s_ladder','s_icebucket','tongs','s_rope','o_stars','l_rugfold']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
+const GPP={l_gift:[1280,660,170,150],w_nopult:[250,560,130,200],l_fire:[664,188,243,290],l_door:[6,300,262,518],l_tree:[1270,276,266,408],c_door:[13,329,287,448],c_chest:[1041,449,180,170],c_rug:[826,606,168,98],o_dome:[442,0,634,694],o_curt:[1086,136,288,338],o_crys:[1369,266,98,328],o_door:[1426,386,110,298],o_globe:[518,729,299,211],o_chest:[810,770,199,182],s_sleigh:[0,560,520,400],s_nosled:[0,560,520,400],s_tarp:[1,586,488,338],s_chest:[1236,646,300,328],w_locker:[575,109,259,297],w_mail:[952,153,124,119],w_door:[1214,314,322,442],w_lever:[286,556,138,138],k_tin:[705,211,170,124],w_box0:[133,796,159,176],w_box1:[288,796,164,176],w_box2:[453,796,154,176],w_box3:[613,796,154,176],w_box4:[773,796,154,176],w_box5:[928,796,159,176],w_box6:[1088,796,154,176],w_box7:[1243,796,159,176],o_stars:[0,0,1536,300],l_rugfold:[440,630,200,140],f_nolamp:[574,222,96,158],k_dough:[683,395,170,125],k_tray:[838,466,262,100]};const GP={};for(const k of [...Object.keys(GPP),'safe0','safe1','shoe_hot_s','shoe_cold_s','drawing','s_sled','s_ladder','w_pult0','w_pult1','s_icebucket','tongs','s_rope','o_stars','l_rugfold']){const im=new Image();im.src='rooms/gp/'+k+'.webp';GP[k]=im}
 function gp(k,al){const im=GP[k],r=GPP[k];if(!okI(im))return;g.save();if(al!==undefined)g.globalAlpha=al;g.imageSmoothingEnabled=true;g.drawImage(im,IX(r[0]),IY(r[1]),IX(r[2]),IY(r[3]));g.restore()}
 const TARP=new Image();TARP.src='rooms/tarp.webp';const NOMILK=new Image();NOMILK.src='rooms/nomilk.webp';const NOBUCKET=new Image();NOBUCKET.src='rooms/nobucket.webp';
 function patchL(sx,sy,sw,sh,dx,dy){g.drawImage(IMG_L,sx,sy,sw,sh,IX(dx),IY(dy),IX(sw),IY(sh))}
@@ -2152,7 +2152,7 @@ function hdWorkImg(t,dt){
   if(sw.mail)gp('w_mail');
   // письмо и табличка на высокой полке
   // рычаг на пульте
-  if(sw.running){gp('w_lever');g.save();g.globalCompositeOperation='screen';glow(g,IX(322),IY(604),8,'rgba(120,255,140,.8)');g.restore()}
+  gp('w_nopult');
   // дверь во двор
   if(sw.done)gp('w_door');
   // коробки: закрытие
@@ -2161,13 +2161,9 @@ function hdWorkImg(t,dt){
     const sc=1.25-.25*a,cx=IX(r[0]+r[2]/2),by=IY(r[1]+r[3]);g.save();g.globalAlpha=a;g.imageSmoothingEnabled=true;g.drawImage(im,cx-IX(r[2])*sc/2,by-IY(r[3])*sc-(1-a)*12,IX(r[2])*sc,IY(r[3])*sc);g.restore()});
   // подарки на ленте
   sw.gifts.forEach(g0=>{if(!g0.on||g0.gone)return;const [x,y]=loopPos(g0.s);ell(g,x*2,y*2+9,11,3,'rgba(0,0,0,.35)');if(!drawToy(g0.n,x*2,y*2+9,24)){g.save();g.setTransform(6,0,0,6,0,0);GDRAW[g0.n](g,x-5,y-5);g.restore()}});
-  // пульт с рычагом рисуется поверх подарков на ленте
-  if(IMG_W_OK){g.save();g.beginPath();const poly=pts=>{pts.forEach(([x,y],q)=>q?g.lineTo(IX(x),IY(y)):g.moveTo(IX(x),IY(y)));g.closePath()};
-    poly([[297,577],[376,577],[376,669],[361,669],[361,750],[306,750],[306,669],[297,669]]);
-    if(sw.running)poly([[370,560],[408,556],[418,600],[395,640],[370,640]]);
-    g.clip();g.imageSmoothingEnabled=true;g.drawImage(IMG_W,280,560,110,200,IX(280),IY(560),IX(110),IY(200));
-    if(sw.running){const im=GP.w_lever,r=GPP.w_lever;if(okI(im))g.drawImage(im,IX(r[0]),IY(r[1]),IX(r[2]),IY(r[3]))}
-    g.restore();if(sw.running){g.save();g.globalCompositeOperation='screen';glow(g,IX(322),IY(604),8,'rgba(120,255,140,.8)');g.restore()}}
+  // пульт: новая картинка поверх подарков на ленте; без рычага — пустой паз, после — с рычагом
+  {const im=GP[sw.running?'w_pult1':'w_pult0'];if(okI(im)){g.save();g.imageSmoothingEnabled=true;g.drawImage(im,IX(258),IY(572),IX(146),IY(147));g.restore()}
+    if(sw.running){g.save();g.globalCompositeOperation='screen';glow(g,IX(335),IY(619),7,'rgba(120,255,140,.8)');g.restore()}}
 }
 function hdWorkImgLight(t){
   lc.globalCompositeOperation='source-over';lc.fillStyle='#d4cce0';lc.fillRect(0,0,HW,HH);
