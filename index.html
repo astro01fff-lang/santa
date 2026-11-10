@@ -2522,9 +2522,9 @@ function gearSim(){
 function loftClock(){const opts=[
   {label:'Осмотреть коробки',fn:()=>{say(people[me],'В коробках пыльные часовые стрелки и сломанные кукушки. Шестерёнок нет.')}},
   {label:'Заглянуть за фонарь',fn:()=>{if(sc.loft){say(people[me],'За фонарём пусто.');return}if(!sc.loftLamp){sc.loftLamp=true;say(people[me],'За фонарём стоит запертая шкатулка. На крышке выцарапано: «Ключ там, где время тикает».');return}say(people[me],'Запертая шкатулка за фонарём. «Ключ там, где время тикает».')}},
-  {label:'Открыть шкатулку',fn:()=>{if(sc.loft){say(people[me],'Шкатулка пуста.');return}if(!sc.loftLamp){say(people[me],'Какую шкатулку? Сначала осмотритесь.');return}if(!holds('ключик от шкатулки')){say(people[me],handMsg('ключик от шкатулки','Шкатулка заперта. Нужен ключик.'));return}sc.loft=true;drop('ключик от шкатулки');say(people[me],'Ключик подошёл! В шкатулке '+gotGear(2)+'! Её видите только вы.')}},
+  {label:'Открыть шкатулку за фонарём',fn:()=>{if(sc.loft){say(people[me],'Шкатулка пуста.');return}sc.loftLamp=true;if(!holds('ключик от шкатулки')){say(people[me],handMsg('ключик от шкатулки','Шкатулка заперта. Нужен ключик.'));return}sc.loft=true;drop('ключик от шкатулки');say(people[me],'Ключик подошёл! В шкатулке '+gotGear(2)+'! Её видите только вы.')}},
   {label:'Спуститься',ghost:true,fn:()=>{}}];
-  openPick('Антресоль','Вы забрались по лестнице на антресоль. Тут коробки, фонарь и пыль.',opts);return null}
+  openPick('Антресоль','Вы забрались по лестнице на антресоль. Тут коробки, фонарь, а за фонарём стоит маленькая шкатулка.',opts);return null}
 const SOLID_C=[[0,0,W,104],[0,0,24,124],[218,0,38,126],[0,172,W,4]];
 const ITEMS_C=[
  {x:30,y:116,hit:[3,40,22,82],act(){if(sc.done){levelDone('stable');return null}return'Дверь заперта. Она откроется, когда часы пойдут.'}},
