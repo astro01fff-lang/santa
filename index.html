@@ -2662,7 +2662,7 @@ function freeze(i){if(sb.phase==='win'||isFrozen(i))return;const now=performance
   sfx('freeze');sb.frozen[i]=true;sb.fallT[i]=now;sb.thaw[i]=0;if(i===me){path=null;qTaunt('Замёрз! Вся команда, ко мне — отогревать!')}}
 function thawTick(now,dt){if(sb.phase==='win')return;const PP=people.filter(q=>!q.gone&&!q.off);const all=PP.length>0&&PP.every(p=>isFrozen(p.i));
   if(all){if(!sb.allT)sb.allT=now;if(now-sb.allT>2200){sb.allT=0;sb.saves=(sb.saves||0)+1;
-      if(sb.saves===1){sb.santaT=now;qTaunt('Санта из темницы отдал вам последнюю искру тепла! Больше он помочь не сможет');}
+      if(sb.saves===1){sb.santaT=now;sb.nextAtk=now+8000;sb.spikes=[];sb.orbs=[];}
       else{sb.pen+=60;sb.hp=Math.max(sb.hp,50);if(sb.phase==='shield')sb.phase='fight';sb.spikes=[];sb.orbs=[];qTaunt('Ха-ха! Пока вы мёрзли, я залечила раны! +60 секунд');}
       PP.forEach(p=>{delete sb.frozen[p.i];delete sb.fallT[p.i];sb.lives[p.i]=3;sparkBurst(p.x+8,p.y+16,sb.saves===1?'#ffe9a8':'#cfefff',24)});sfx('shatter')}return}
   PP.forEach(p=>{if(!isFrozen(p.i))return;const alive=PP.filter(q=>!isFrozen(q.i));const near=alive.filter(q=>Math.hypot(q.x-p.x,q.y-p.y)<22);
@@ -2766,10 +2766,18 @@ function bossOverDraw(t,now){
   // снег после победы
   if(sb.phase==='win'&&(now-sb.winT)>5500){for(let k=0;k<160;k++){const x=(k*97.3+t*12*(1+k%3))%768,y=((k*53.7)+t*(30+k%5*8))%528;g.fillStyle='rgba(255,255,255,.85)';g.fillRect(x,y,k%4?2:3,k%4?2:3)}}
 }
-function bossHUD(now){
-  if(sb.santaT&&now-sb.santaT<3200){const e=(now-sb.santaT)/3200,al=e<.15?e/.15:e>.75?(1-e)/.25:1;const im=SANTA[2];
+function santaOverlay(now){
+  if(sb.santaT&&now-sb.santaT<8000){const e=(now-sb.santaT)/8000,al=e<.08?e/.08:e>.88?(1-e)/.12:1;const im=SANTA[2];
     ctx.save();ctx.globalAlpha=al*.55;const gr=ctx.createRadialGradient(W*S/2,H*S*.45,0,W*S/2,H*S*.45,W*S*.5);gr.addColorStop(0,'rgba(255,220,140,.9)');gr.addColorStop(1,'rgba(255,200,120,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,W*S,H*S);
-    ctx.globalAlpha=al;if(okI(im)){const h=H*S*.42,w=h*im.naturalWidth/im.naturalHeight;ctx.imageSmoothingEnabled=true;ctx.drawImage(im,W*S/2-w/2,H*S*.45-h/2-e*S*6,w,h)}ctx.restore()}
+    ctx.globalAlpha=al;if(okI(im)){const h=H*S*.42,w=h*im.naturalWidth/im.naturalHeight;ctx.imageSmoothingEnabled=true;ctx.drawImage(im,W*S/2-w/2,H*S*.36-h/2-e*S*4,w,h)}
+    const lines=['Санта собрал последние силы','и отдал вам своё тепло!','Лёд в его темнице слишком толстый —','больше он так помочь не сможет.','Теперь всё зависит от вас!'];
+    const fs=Math.max(13,Math.round(S*3.6)),lh=fs*1.35,bw=W*S*.78,bh=lh*lines.length+fs*1.2,bx=W*S/2-bw/2,by=H*S*.6;
+    ctx.fillStyle='rgba(16,20,42,.97)';ctx.fillRect(bx,by,bw,bh);ctx.strokeStyle='#f2c14e';ctx.lineWidth=Math.max(2,S*.6);ctx.strokeRect(bx,by,bw,bh);
+    ctx.textAlign='center';ctx.textBaseline='top';ctx.font=`700 ${fs}px 'Golos Text', system-ui, sans-serif`;
+    lines.forEach((t,k)=>{ctx.fillStyle=k===lines.length-1?'#f2c14e':'#fff2d0';ctx.fillText(t,W*S/2,by+fs*.6+k*lh)});
+    ctx.restore()}}
+function bossHUD(now){
+
   if(sb.phase==='win'&&now-sb.winT>9000)return;
   if(sb.phase==='fight'||sb.phase==='shield'){ctx.textAlign='center';ctx.textBaseline='middle';
     people.filter(p=>!p.gone).forEach(p=>{const x=(p.x+8-camX)*S,y=(p.y-19-camY)*S;if(isFrozen(p.i)){const t=(p.thawN||0)+'/'+(p.thawNeed||0)+' греют';ctx.font=`600 ${Math.max(10,Math.round(S*2.6))}px 'Golos Text', sans-serif`;ctx.fillStyle='#ffe2a8';ctx.strokeStyle='#10142a';ctx.lineWidth=S*.7;ctx.strokeText(t,x,y-S*2);ctx.fillText(t,x,y-S*2);return}
@@ -2783,6 +2791,7 @@ function bossHUD(now){
   const p=people[me];if(hasWand(me)&&sb.phase!=='win'){const r=Math.max(0,((sb.cd[me]||0)-now)/1200);const cx=(p.x+8-camX)*S,cy=(p.y-14-camY)*S;
     ctx.strokeStyle='rgba(255,230,150,.9)';ctx.lineWidth=S*.8;ctx.beginPath();ctx.arc(cx,cy,S*2.4,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-r));ctx.stroke()}
   if(sb.phase==='win'){const e=(now-sb.winT)/1000;if(e>5.5){ctx.font=`${Math.round(S*5)}px 'Press Start 2P', monospace`;ctx.globalAlpha=Math.min(1,(e-5.5)/1.2);ctx.fillStyle='#ffe9a8';ctx.strokeStyle='#1a1030';ctx.lineWidth=S*1.2;ctx.strokeText('Merry Christmas!',W*S/2,S*22);ctx.fillText('Merry Christmas!',W*S/2,S*22);ctx.globalAlpha=1}}
+  santaOverlay(now);
   ctx.textBaseline='bottom'}
 // ---------- эпилог ----------
 function totalPen(){return [st,sw,ss,so,sc,sb,sp,sk].reduce((a,o)=>a+((o&&o.pen)||0),0)}
@@ -2825,7 +2834,7 @@ function drawFlight(now){
   {const RIM=[[0,.40],[.12,.44],[.19,.47],[.3,.54],[.38,.58],[.48,.6],[.58,.6],[.68,.53],[.77,.43],[.85,.35],[1,.3]];
     const rim=u=>{for(let k=1;k<RIM.length;k++)if(u<=RIM[k][0]){const [a,b]=RIM[k-1],[c,d]=RIM[k];return b+(d-b)*(u-a)/(c-a)}return .3};
     x.save();
-    if(people){const PP=people.slice(0,6);PP.forEach((p,i)=>{const s2=SPR[p.i].right[0];const h=SH*.42,w=h*s2.width/s2.height;const u=.25+i*(PP.length>1?.44/(PP.length-1):0);
+    if(people){const PP=people.slice(0,6);PP.forEach((p,i)=>{const s2=SPR[p.i].right[0];const h=SH*.58,w=h*s2.width/s2.height;const u=.25+i*(PP.length>1?.44/(PP.length-1):0);
       const by=-SH*.5+rim(u)*SH;x.drawImage(s2,u*SW-w/2,by-h*.95-Math.abs(Math.sin(e*6+i))*SH*.012,w,h)})}
     x.restore()}
   x.restore();
@@ -2966,7 +2975,8 @@ const ITEMS_CL=[
  {x:160,y:108,hit:[146,70,32,32],act(){if(sk.p2)return'Ящик с яблоками.';sk.p2=true;privNote('Рецепт: сколько','«Первое — 2 кружки великана. Второе — 3 напёрстка гнома. Третье — 1 ложка великана. Четвёртое — 2 щепотки феи. Пятое — 1 напёрсток гнома».');return'Под яблоками лежит лист рецепта! Его видите только вы.'}},
  {x:124,y:108,hit:[117,65,15,35],act(){return'Мешок с картошкой. Холодный.'}},
  {x:70,y:110,hit:[58,69,23,37],act(){return'Бочка с квашеной капустой. Пахнет!'}},
- {x:102,y:108,hit:[91,70,22,31],act(){if(sk.ladder)return'Пустые ящики, покрытые инеем.';sk.ladder=true;take('стремянка');return'Вы взяли стремянку.'}}
+ {x:102,y:108,hit:[91,70,22,31],act(){return'Пустые ящики, покрытые инеем.'}},
+ {x:210,y:150,hit:[204,117,30,33],act(){if(sk.ladder)return'Тут стояла стремянка.';sk.ladder=true;take('стремянка');return'Вы взяли стремянку, которая стояла у бочки.'}}
 ];
 // --- сеновал и кузница
 const ITEMS_LF=[
@@ -3066,7 +3076,7 @@ function hdScene(k,t){const im=SIMG[k];if(im.complete&&im.naturalWidth){g.imageS
   if(k==='kitchen'){if(sk.bowl.length&&!sk.done)gp('k_dough');
     if(sk.done)gp('k_tray');
     if(sk.melt){const e=(performance.now()-sk.melt.t)/6000;g.save();g.globalCompositeOperation='screen';glow(g,IX(1275),IY(310),10+e*8,'rgba(255,190,90,.5)');g.restore()}}
-  if(k==='cellar'&&!sk.ladder&&okI(ICOIMG['стремянка'])){g.imageSmoothingEnabled=true;g.drawImage(ICOIMG['стремянка'],IX(560),IY(330),48,56);g.imageSmoothingEnabled=false}
+  if(k==='cellar'&&!sk.ladder&&okI(ICOIMG['стремянка'])){g.save();g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(IX(1315),IY(870),IX(85),IY(14),0,0,Math.PI*2);g.fill();g.imageSmoothingEnabled=true;g.drawImage(ICOIMG['стремянка'],IX(1230),IY(690),IX(170),IY(181));g.restore()}
   if(k==='cellar'&&sk.tin)gp('k_tin');
   if(k==='pantry'&&sk.ladderAt&&okI(ICOIMG['стремянка'])){const lx=sk.ladderAt==='left'?180:286;g.save();g.imageSmoothingEnabled=true;g.drawImage(ICOIMG['стремянка'],lx-20,150,40,58);g.restore()}
   if(k==='loft'&&ss.lantern)gp('f_nolamp');
