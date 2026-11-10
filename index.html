@@ -889,9 +889,7 @@ const has=k=>TEAM.inv.includes(k)||TEAM.inv.includes('@'+me+':'+k);
 const anyHas=k=>TEAM.inv.some(x=>baseIt(x)===k);
 // вещь применяется только из рук: holds — держит ли её этот игрок; handMsg — подсказка, если вещь есть у команды, но не в руках
 const holds=k=>heldBy(me)===k;
-function handMsg(k,orig){if(holds(k))return orig;const who=people&&people.find(p=>p.i!==me&&heldBy(p.i)===k);
-  if(who)return '«'+k[0].toUpperCase()+k.slice(1)+'» в руках у '+(OUTFITS[who.i]?OUTFITS[who.i].name:'товарища')+'. Пусть применит сам или вернёт команде.';
-  if(anyHas(k))return orig+' Возьмите в руки «'+k+'»: нажмите на неё в инвентаре внизу.';return orig}
+function handMsg(k,orig){return orig}
 function holdIt(k){const i=TEAM.inv.indexOf(k);if(i<0)return;const h=heldBy(me);if(h)TEAM.inv=TEAM.inv.map(x=>x==='@'+me+':'+h?h:x);
   const j=TEAM.inv.indexOf(k);TEAM.inv.splice(j,1,'@'+me+':'+k);try{sfx('pickup');if(people)people[me].hopT=performance.now()}catch(e){}renderSide()}
 function unholdIt(){const h=heldBy(me);if(!h)return;TEAM.inv=TEAM.inv.map(x=>x==='@'+me+':'+h?h:x);try{sfx('pickup')}catch(e){}renderSide()}
@@ -1465,7 +1463,7 @@ const ITEMS_W=[
  {x:140,y:66,hit:[125, 23, 31, 23],act(){if(!sw.board){sw.board=true;TEAM.notes.push({t:'Доска заказов',b:'«Готово к Рождеству: машинок 4, кукол 7, мячей 2»'});renderSide()}return'На доске приколот листок: «Готово к Рождеству: машинок 4, кукол 7, мячей 2».'}},
  {x:166,y:66,hit:[160, 27, 12, 17],act(){if(sw.mail)return'Почтовый ящик пуст.';if(!holds('ключ от ящика'))return handMsg('ключ от ящика','Почтовый ящик эльфов заперт на маленький замок.');
    sw.mail=true;drop('ключ от ящика');TEAM.notes.push({t:'Письмо '+GEN['Соня'],b:LETTER['Соня'],owner:me});letter('Миша');return'Ключ подошел! В ящике два письма: от Сони и от Миши. Их видите только вы.'}},
- {x:205,y:66,hit:[176, 3, 53, 40],act(){if(sw.high)return'На стеллаже игрушки на следующий год.';if(!holds('стремянка'))return handMsg('стремянка','На верхней полке стеллажа что-то белеет! Но слишком высоко, мне не достать. Нужна стремянка.');
+ {x:205,y:66,hit:[176, 3, 53, 40],act(){if(sw.high)return'На стеллаже игрушки на следующий год.';if(!holds('стремянка'))return handMsg('стремянка','На верхней полке стеллажа что-то белеет! Но слишком высоко, мне не достать.');
    sw.high=true;drop('стремянка');take('табличка «Ева»');return'Со стремянки достали табличку «Ева» и… '+letter('Ева')}},
  {x:226,y:66,hit:[229, 40, 8, 25],act(){if(sw.behind)return'За стеллажом только пыль.';sw.behind=true;take('табличка «Гоша»');return'За стеллажом застряла табличка «Гоша»!'}},
  {x:236,y:80,hit:[229, 50, 23, 25],act(){if(sw.ladder)return'Тут стояла стремянка. Её уже взяли.';sw.ladder=true;take('стремянка');return'Вы взяли стремянку.'}},
@@ -1776,7 +1774,7 @@ const ITEMS_S=[
  {x:54,y:84,hit:[50, 15, 9, 14],act(){return'Фонарь висит под самым потолком, не достать.'}},
  {x:78,y:84,hit:[65, 15, 28, 13],act(){return'Колокольчики на полке тихо звенят.'}},
  {x:56,y:98,hit:[18,83,21,21],act(){if(ss.sack)return'Мешок с ягелем, оленья еда.';ss.sack=true;privNote(...RULES[1]);return'В ягеле запуталась записка Санты! Ее видите только вы.'}},
- {x:46,y:90,hit:[40, 92, 11, 17],act(){if(ss.bucket)return'В ведре просто вода.';if(!holds('фонарь'))return handMsg('фонарь','Вода в ведре замёрзла. Подо льдом белеет бумажка! Нужно что-то тёплое, чтобы растопить лёд.');
+ {x:46,y:90,hit:[40, 92, 11, 17],act(){if(ss.bucket)return'В ведре просто вода.';if(!holds('фонарь'))return handMsg('фонарь','Вода в ведре замёрзла. Подо льдом белеет бумажка!');
    ss.bucket=true;privNote(...RULES[2]);return'Вы поднесли фонарь, лед растаял. В воде записка Санты! Ее видите только вы.'}},
  {x:126,y:116,hit:[81, 90, 91, 21],act(){return'Длинная кормушка. В ней сено.'}},
  {x:127,y:90,hit:[113,0,28,90],prio:true,act(){goScene('loft',[72,140]);return'Вы забрались по верёвочной лестнице на сеновал.'}},
@@ -2882,13 +2880,13 @@ function measure(k){let g2=0,l=0;const lab=()=>'Отмерено: '+g2+' '+pl(g2
    {label:'Отмена',ghost:true,fn:()=>{}}]);
   const cnt=document.createElement('p');cnt.className='cnt picktext';cnt.textContent=lab();document.getElementById('pickopts').prepend(cnt)}
 // --- полки кладовой
-function highThing(t){return sk.ladderAt?t:'Слишком высоко, мне не достать. Нужна стремянка.'}
+function highThing(t){return sk.ladderAt?t:'Слишком высоко, мне не достать.'}
 function shelf(high,title,list){
   if(high){const side=list[0][0]==='соль'?'left':'right';
     if(sk.ladderAt!==side){
       if(holds('стремянка')){drop('стремянка');sk.ladderAt=side;sfx('pickup');return'Вы поставили стремянку у этой полки. Теперь можно залезть и посмотреть, что наверху.'}
       if(sk.ladderAt){const t='Стремянка стоит у другой полки.';openPick(title,t+' Переставить её сюда?',[{label:'Переставить стремянку',fn:()=>{sk.ladderAt=side;say(people[me],'Вы переставили стремянку к этой полке.')}},{label:'Отмена',ghost:true,fn:()=>{}}]);return null}
-      return handMsg('стремянка','Я вижу там то, что нам нужно! Но слишком высоко, мне не достать. Нужна стремянка.')}}
+      return handMsg('стремянка','Я вижу там то, что нам нужно! Но слишком высоко, мне не достать.')}}
   const opts=list.filter(([k])=>!has(k)).map(([k,nm])=>({label:'Взять: '+nm,fn:()=>{take(k);say(people[me],'Вы взяли: '+nm+'.')}}));
   if(!opts.length)return'Всё нужное с этой полки уже у команды.';
   openPick(title,'На полке стоят банки. Что взять?',opts.concat([{label:'Ничего',ghost:true,fn:()=>{}}]));return null}
@@ -2896,10 +2894,7 @@ function shelf(high,title,list){
 function ovenAct(){if(sk.done)return'Печь остывает. Пряники готовы.';
   if(!sk.bowl.length)return'Печь горячая. На дверце табличка: «Пряники — 180°». Сначала замесите тесто в миске.';
   const cut=['звезда','ёлка','колокольчик','олень'].find(c=>holds('формочка: '+c));
-  if(!cut){const h=people&&people.find(p=>p.i!==me&&(heldBy(p.i)||'').startsWith('формочка'));
-    if(h)return'Формочку держит '+OUTFITS[h.i].name+'. Пусть поставит тесто в печь сам или вернёт формочку команде.';
-    {const f=TEAM.inv.map(baseIt).find(x=>x.startsWith('формочка'));if(f)return handMsg(f,'Тесто в миске, но чем вырезать пряники?')}
-    return'Тесто в миске, но чем вырезать пряники? Нужна формочка: она в ящике слева, рядом с холодильником.'}
+  if(!cut)return'Тесто в миске, но чем вырезать пряники?';
   const T=[140,160,180,200,220];
   openPick('Печь','На дверце табличка: «Пряники — 180°». Тесто вырезано формочкой «'+cut+'». Выставьте жар и время.',[
    {label:'Жар: '+sk.temp+'°',keep:true,fn:b=>{sk.temp=T[(T.indexOf(sk.temp)+1)%T.length];b.textContent='Жар: '+sk.temp+'°'}},
@@ -3047,13 +3042,13 @@ ITEMS_O.push(
 function swapHeld(a,b){TEAM.inv=TEAM.inv.map(x=>x==='@'+me+':'+a?'@'+me+':'+b:x);renderSide()}
 function forgeAct(){
   if(!ss.horse){if(!holds('подкова'))return handMsg('подкова','Горн пылает. Тут куют подковы.');drop('подкова');ss.horse='hot';return'Вы положили старую подкову в горн. Она раскалилась докрасна! Голыми руками её не достать.'}
-  if(ss.horse==='hot'){if(!holds('клещи'))return handMsg('клещи','Подкова в горне раскалена докрасна. Голыми руками не взять: нужны клещи.');ss.horse='tongs';swapHeld('клещи','клещи с подковой');return'Вы достали раскалённую подкову клещами. Теперь на наковальню!'}
+  if(ss.horse==='hot'){if(!holds('клещи'))return handMsg('клещи','Подкова в горне раскалена докрасна. Голыми руками не взять.');ss.horse='tongs';swapHeld('клещи','клещи с подковой');return'Вы достали раскалённую подкову клещами. Теперь на наковальню!'}
   return'Горн пылает.'}
 function anvilAct(){
   if(ss.horse==='tongs'||ss.horse==='tongs2'){if(!holds('клещи с подковой'))return'Подкова в клещах у товарища.';
     if(ss.horse==='tongs2')return'Подкова уже ровная. Остудите её в бочке с водой.';ss.horse='anvil';swapHeld('клещи с подковой','клещи');return'Вы положили раскалённую подкову на наковальню. Теперь выпрямите её молотком.'}
   if(ss.horse==='anvil'){if(!holds('молоток'))return handMsg('молоток','Раскалённая подкова лежит на наковальне. Чем её выпрямить?');ss.horse='bent';sfx('gear');return'Тук-тук-тук! Подкова выпрямлена. Она ещё раскалена: возьмите её клещами и остудите.'}
-  if(ss.horse==='bent'){if(!holds('клещи'))return handMsg('клещи','Подкова выпрямлена, но ещё раскалена. Голыми руками не взять: нужны клещи.');ss.horse='tongs2';swapHeld('клещи','клещи с подковой');return'Вы взяли ровную раскалённую подкову клещами. Остудите её в бочке.'}
+  if(ss.horse==='bent'){if(!holds('клещи'))return handMsg('клещи','Подкова выпрямлена, но ещё раскалена. Голыми руками не взять.');ss.horse='tongs2';swapHeld('клещи','клещи с подковой');return'Вы взяли ровную раскалённую подкову клещами. Остудите её в бочке.'}
   return'Наковальня. Холодный металл не гнётся.'}
 function barrelAct(){
   if(ss.horse==='tongs'){return'Подкова ещё кривая. Сначала выпрямите её на наковальне.'}
