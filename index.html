@@ -455,7 +455,8 @@ function makeSprite(o,dir,frame){
 }
 // персонажи из спрайт-листов: строки вниз, влево, вверх; вправо — зеркало
 const CHARS=[{name:'Аня',desc:'колпак Санты'},{name:'Рита',desc:'наушники и пряник'},{name:'Ксюша',desc:'очки и какао'},{name:'Алия',desc:'фиолетовая куртка'},{name:'Эльфина',desc:'платье эльфа'},{name:'Лена',desc:'шапка с помпоном'},
- {name:'Максим',desc:'костюм эльфа'},{name:'Дима',desc:'рожки оленя'},{name:'Тимур',desc:'борода и очки-гоглы'},{name:'Артём',desc:'худи и колпак'},{name:'Олег',desc:'очки и подарок'},{name:'Пряня',desc:'костюм пряника'}];
+ {name:'Максим',desc:'костюм эльфа'},{name:'Дима',desc:'рожки оленя'},{name:'Тимур',desc:'борода и очки-гоглы'},{name:'Артём',desc:'худи и колпак'},{name:'Олег',desc:'очки и подарок'},{name:'Пряня',desc:'костюм пряника'},
+ {name:'Стажёр',desc:'бейдж и кофе'},{name:'Снежок',desc:'круглый и пушистый'},{name:'Снеговик',desc:'ведро и морковка'}];
 const CSPR=CHARS.map((o,k)=>{const m={};['down','left','up','right'].forEach(d=>{m[d]=[0,1,2].map(()=>{const c=document.createElement('canvas');c.width=120;c.height=180;return c})});
   const im=new Image();im.onload=()=>{const R0={down:0,left:1,up:2};
     for(const d of ['down','left','up'])for(let f=0;f<3;f++)m[d][f].getContext('2d').drawImage(im,f*120,R0[d]*180,120,180,0,0,120,180);
