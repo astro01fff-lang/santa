@@ -3697,6 +3697,9 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 let base=null,localCh={},suspendUntil=0,lastSnapT=0,snapDirty=false;
 // свои изменения инвентаря/записок, которые лидер ещё мог не учесть в снимке (seq → подтверждение acks в снимке)
 let mySeq=0,pendInv=[];const acks={};
+// вещь в инвентаре одна, даже если у кого-то в руках («@слот:вещь»): иначе одновременное «взял» двоих её раздваивает
+function invAdd(x){if(TEAM.inv.includes(x))return false;const b=baseIt(x);const j=TEAM.inv.findIndex(q=>baseIt(q)===b);if(j<0){TEAM.inv.push(x);return true}if(x[0]==='@'&&TEAM.inv[j][0]!=='@')TEAM.inv[j]=x;return false}
+function invRm(x){let i=TEAM.inv.indexOf(x);if(i<0){const b=baseIt(x);i=TEAM.inv.findIndex(q=>baseIt(q)===b)}if(i>=0)TEAM.inv.splice(i,1)}
 const PK='santa_pend_'+SID;function savePend(){try{sessionStorage.setItem(PK,JSON.stringify({cid:CID,list:pendInv}))}catch(e){}}
 const noteKey=n=>n.t+'|'+n.b+'|'+(n.owner===undefined?'':n.owner);
 function takeBase(){base={};for(const k in ROOTS)base[k]=clone(ROOTS[k]());base.inv=TEAM.inv.slice();base.notes=TEAM.notes.map(noteKey);base.notesFull=clone(TEAM.notes)}
@@ -3724,8 +3727,8 @@ function applyDiff(m){if(m.cid===CID)return;
   if(m.lv&&m.lv!==levelOf(ROOM))return;
   tickDiff();/* сначала отправляем свои ещё не отправленные изменения, иначе takeBase() ниже их «проглотит» */
   (m.ops||[]).forEach(([p,v,del])=>setPath(p,v,del,false));
-  (m.inv&&m.inv.rm||[]).forEach(x=>{const i=TEAM.inv.indexOf(x);if(i>=0)TEAM.inv.splice(i,1)});
-  (m.inv&&m.inv.add||[]).forEach(x=>{if(!TEAM.inv.includes(x)){TEAM.inv.push(x);if(x[0]!=='@'&&!TEAM.inv.some(q=>q[0]==='@'&&baseIt(q)===x))try{floatIcon(x)}catch(e){}}});
+  (m.inv&&m.inv.rm||[]).forEach(invRm);
+  (m.inv&&m.inv.add||[]).forEach(x=>{if(invAdd(x)){if(x[0]!=='@'&&!TEAM.inv.some(q=>q[0]==='@'&&baseIt(q)===x))try{floatIcon(x)}catch(e){}}});
   (m.notes&&m.notes.rm||[]).forEach(k=>{const i=TEAM.notes.findIndex(n=>noteKey(n)===k);if(i>=0)TEAM.notes.splice(i,1)});
   (m.notes&&m.notes.add||[]).forEach(n=>{if(!TEAM.notes.some(q=>noteKey(q)===noteKey(n)))TEAM.notes.push(n)});
   if(m.seq)acks[m.cid]=Math.max(acks[m.cid]||0,m.seq);
@@ -3750,7 +3753,7 @@ function applySnap(m,force){if(!m||m.ty!=='snap')return;
   TEAM.inv=m.inv.slice();TEAM.notes=clone(m.notes);
   // снимок мог уйти от лидера раньше, чем дошли наши последние действия: накатываем их поверх
   if(!force){
-    pendInv.forEach(q=>{q.rm.forEach(x=>{const i=TEAM.inv.indexOf(x);if(i>=0)TEAM.inv.splice(i,1)});q.add.forEach(x=>{if(!TEAM.inv.includes(x))TEAM.inv.push(x)});
+    pendInv.forEach(q=>{q.rm.forEach(invRm);q.add.forEach(invAdd);
       q.nrm.forEach(k=>{const i=TEAM.notes.findIndex(n=>noteKey(n)===k);if(i>=0)TEAM.notes.splice(i,1)});q.nadd.forEach(n=>{if(!TEAM.notes.some(x=>noteKey(x)===noteKey(n)))TEAM.notes.push(n)})})}
   if(m.boss&&sb&&(force||m.lv==='boss')){sb.pen=m.boss.pen||0}
   fixCounters();takeBase();try{renderSide()}catch(e){}}
@@ -3882,7 +3885,7 @@ function restorePend(s){let o=null;try{o=JSON.parse(sessionStorage.getItem(PK)||
   const a=(s.acks&&s.acks[o.cid])||0,hn=hostNow();
   o.list.filter(q=>q.seq>a&&!(s.cid===o.cid&&s.at>q.h)&&hn-q.h<20000&&q.lv===levelOf(ROOM)).forEach(q=>{
     (q.ops||[]).forEach(([p,v,del])=>setPath(p,v,del,false));
-    (q.rm||[]).forEach(x=>{const i=TEAM.inv.indexOf(x);if(i>=0)TEAM.inv.splice(i,1)});(q.add||[]).forEach(x=>{if(!TEAM.inv.includes(x))TEAM.inv.push(x)});
+    (q.rm||[]).forEach(invRm);(q.add||[]).forEach(invAdd);
     (q.nrm||[]).forEach(k=>{const i=TEAM.notes.findIndex(n=>noteKey(n)===k);if(i>=0)TEAM.notes.splice(i,1)});(q.nadd||[]).forEach(n=>{if(!TEAM.notes.some(x=>noteKey(x)===noteKey(n)))TEAM.notes.push(n)})});
   try{renderSide()}catch(e){}/* следующий tickDiff разошлёт восстановленное как обычные изменения */}
 document.addEventListener('visibilitychange',()=>sendPos(true));
