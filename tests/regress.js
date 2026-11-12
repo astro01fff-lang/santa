@@ -55,6 +55,19 @@ async selfReload(c,ok){// игрок что-то сделал и сразу об
   const {lead,fol}=c;await fol.E(`BOT.act([137,89]);setTimeout(()=>location.reload(),150);0`).catch(()=>{});await W(600);await fol.waitReady();await W(4000);
   for(const p of [lead,fol])ok(await p.waitFor(`anyHas('стакан молока')`,8000),p.name+': молоко, взятое прямо перед перезагрузкой, не пропало ('+await p.E(`TEAM.inv.join(', ')`)+')');
   ok(await lead.E(`TEAM.inv.filter(x=>baseIt(x)==='стакан молока').length`)===1,'молоко не задвоилось')},
+async reach(c,ok){// настоящий клик мышью по каждому предмету во всех комнатах: нигде нет «Туда не пройти»
+  const p=c.P[0];const bad=[];
+  for(const [lv,subs] of [['living',[]],['work',[]],['clock',[]],['stable',['loft','forge']],['kitchen',['pantry','cellar']],['obs',[]]]){
+    await c.goto(lv);
+    for(const sc of [lv,...subs]){if(sc!==lv)await p.E(`goScene('${sc}',[100,120]);0`);await W(300);
+      const items=await p.E(`curItems().filter(o=>o.hit&&!/goScene|levelDone/.test(String(o.act))).map(o=>o.hit)`);
+      for(const h of items){await p.E(`document.querySelectorAll('.modal').forEach(m=>m.hidden=true);bubble=null;path=null;const p0=people[me];0`);
+        const [S,ZM,camX,ZX,camY,ZY]=await p.E(`[S,ZM,camX,ZX,camY,ZY]`);const r=await p.pg.locator('#game').boundingBox();
+        await p.pg.mouse.click(r.x+(h[0]+h[2]/2-camX-ZX)*S*ZM,r.y+(h[1]+h[3]/2-camY-ZY)*S*ZM);await W(60);
+        const t=await p.E(`bubble&&bubble.text||''`);if(/Туда не пройти/.test(t))bad.push(sc+' '+h.join(','))}}}
+  ok(!bad.length,'ко всем предметам можно подойти или осмотреть их издалека'+(bad.length?': '+bad.join(' | '):''))
+  await c.goto('stable');{const [S,ZM,camX,ZX,camY,ZY]=await p.E(`[S,ZM,camX,ZX,camY,ZY]`);const r=await p.pg.locator('#game').boundingBox();
+    await p.pg.mouse.click(r.x+(246-camX-ZX)*S*ZM,r.y+(15-camY-ZY)*S*ZM);ok(await p.waitFor(`ROOM==='loft'`,8000),'клик мышью по верёвочной лестнице ведёт на сеновал')}},
 async offline(c,ok){// пропала связь у игрока на 10 с: его действия доходят после возвращения, позиция и инвентарь сходятся
   const {lead,fol}=c;await fol.setOffline(true);await fol.act([6,143],'ведро');await W(10000);await fol.setOffline(false);
   ok(await lead.waitFor(`anyHas('пустое ведро')`,15000),'ведро, взятое без связи, появилось у товарища после восстановления');

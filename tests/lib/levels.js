@@ -11,6 +11,16 @@ async function goTo(P,room){for(let k=0;k<4;k++){const cur=await P.E('ROOM');if(
   if(!path)throw new Error('нет пути '+cur+' → '+room);const d=DOORS.find(([a,b])=>a===path[0]&&b===path[1]);await P.act(d[2],'дверь '+d[0]+'→'+d[1]);await W(350)}
   if(await P.E('ROOM')!==room)throw new Error('не дошёл до '+room)}
 
+const boxHit=async(P,i)=>[await P.E(`BXC[${i}]-11`),144];
+// снять нужный подарок с движущейся ленты: подойти к нему кликом по ленте и нажать, когда он ближе всех
+async function takeGift(P,i){const want=await P.E(`WANT[sw.boxes[${i}].name]`);const t0=Date.now();
+  while(Date.now()-t0<40000){const st=await P.E(`(()=>{const p=people[me];if(p.held)return p.held.n===${JSON.stringify(want)}?'ok':'wrong';const g0=sw.gifts.find(g=>g.n===${JSON.stringify(want)}&&g.on&&!g.gone);if(!g0)return 'none';
+      const [x,y]=loopPos(g0.s);const near=giftNear(p);return JSON.stringify({x,y,d:Math.hypot(p.x+8-x,p.y+20-y),near:near===g0,moving:!!path})})()`);
+    if(st==='ok')return true;if(st==='none'){await W(500);continue}
+    if(st==='wrong'){P.log('взял не тот подарок, возвращает на ленту');const [hx,hy]=await P.E(`(()=>{const p=people[me];return[p.x+8,Math.max(p.y+10,120)]})()`);await P.clickAt(hx,hy-14);await W(600);continue}
+    const g=JSON.parse(st);if(g.d<28&&!g.moving){await P.clickAt(g.x,g.y);await W(400);continue}
+    if(!g.moving&&g.d>=28)await P.clickAt(g.x,g.y);await W(350)}
+  return false}
 const LEVELS={
 async living(T){
   await T.step('living',async P=>{await T.take(P,[6,143],'пустое ведро')});
@@ -51,14 +61,13 @@ async work(T){
   await T.step('work',async P=>{if(await P.E('sw.running')){P.log('конвейер уже запущен товарищем');T.ok(true,'конвейер запущен');return}await P.hold('рычаг');await P.act([44,98],'пульт конвейера');T.ok(await P.waitFor('sw.running'),'конвейер запущен')});
   await T.step('work',async P=>{T.ok(await P.waitFor(`TEAM.notes.filter(n=>n.t.startsWith('Письмо')).length===8`),'найдено 8 писем')});
   for(let i=0;i<8;i++){
-    await T.step('work',async P=>{for(let k=0;k<5&&!(await P.E(`!!sw.boxes[${i}].name`));k++){const lab=await P.E(`TEAM.inv.map(baseIt).find(x=>x.startsWith('табличка'))`);if(!lab){await W(800);continue}await P.hold(lab);const r=await P.E(`BOT.near(BXC[${i}],150);BOT.act([BXC[${i}]-11,144])`);P.log('табличка на коробку '+i+': '+String(r).slice(0,40));await W(500)}
+    await T.step('work',async P=>{for(let k=0;k<5&&!(await P.E(`!!sw.boxes[${i}].name`));k++){const lab=await P.E(`TEAM.inv.map(baseIt).find(x=>x.startsWith('табличка'))`);if(!lab){await W(800);continue}await P.hold(lab);const r=await P.act(await boxHit(P,i),'коробка '+i);P.log('табличка на коробку '+i+': '+String(r).slice(0,40));await W(500)}
       T.ok(await P.waitFor(`!!sw.boxes[${i}].name`),'табличка на коробке '+(i+1))});
     await T.step('work',async P=>{const w=await P.E(`WANT[sw.boxes[${i}].name]`);let r;
       {const by=await P.E(`(()=>{const g=sw.gifts.find(g=>g.n===WANT[sw.boxes[${i}].name]&&!g.gone);return g&&!g.on&&g.by!=null&&g.by!==me?g.by:null})()`);
-       if(by!==null){for(const Q of T.P)if(Q!==P&&await Q.E('me')===by){Q.log('кладёт в коробку '+i+' подарок, который уже держит');await Q.E(`BOT.near(BXC[${i}],150);BOT.act([BXC[${i}]-11,144])`);T.ok(await Q.waitFor(`sw.boxes[${i}].done`),'коробка '+(i+1)+' собрана');return}}}
-      for(let a=0;a<10;a++){r=await P.E(`(()=>{const g0=sw.gifts.find(g=>g.n===WANT[sw.boxes[${i}].name]&&g.on&&!g.gone);if(!g0)return null;const [x,y]=loopPos(g0.s);BOT.near(x,y+2);return CONV.act()})()`);if(await P.E(`!!(people[me].held)`))break;await W(400)}
-      P.log('снял с ленты «'+w+'»');T.ok(await P.E('!!people[me].held'),'подарок «'+w+'» в руках');
-      await P.E(`BOT.near(BXC[${i}],150);BOT.act([BXC[${i}]-11,144])`);P.log('положил в коробку '+i);
+       if(by!==null){for(const Q of T.P)if(Q!==P&&await Q.E('me')===by){Q.log('кладёт в коробку '+i+' подарок, который уже держит');await Q.act(await boxHit(Q,i),'коробка '+i);T.ok(await Q.waitFor(`sw.boxes[${i}].done`),'коробка '+(i+1)+' собрана');return}}}
+      const got=await takeGift(P,i);P.log('снял с ленты «'+w+'»');T.ok(got,'подарок «'+w+'» в руках');
+      await P.act(await boxHit(P,i),'коробка '+i);P.log('положил в коробку '+i);
       T.ok(await P.waitFor(`sw.boxes[${i}].done`),'коробка '+(i+1)+' собрана')});
   }
   await T.step('work',async P=>{T.ok(await P.waitFor('sw.done'),'все подарки разложены')});
@@ -98,11 +107,11 @@ async stable(T){
   await T.step('forge',async P=>{await P.hold('клещи');await P.act([100,36],'горн');T.ok(await P.E(`heldBy(me)`)==='клещи с подковой','подкова в клещах');
     await P.act([104,86],'наковальня');await P.hold('молоток');await P.act([104,86],'наковальня');await P.hold('клещи');await P.act([104,86],'наковальня');await P.act([205,74],'бочка');
     T.ok(await P.waitFor(`anyHas('новая подкова')`),'новая подкова выкована')});
-  await T.step('stable',async P=>{const STALL=await P.E('STALL');for(let i=0;i<8;i++){await P.E(`stallAct(${i});0`);if(await P.E('pick.hidden'))await P.E(`stallAct(${i});0`);
+  await T.step('stable',async P=>{const STALL=await P.E('STALL');for(let i=0;i<8;i++){const sh=await P.E(`[STX[${i}]-12,34]`);await P.act(sh,'стойло '+(i+1));if(await P.E('pick.hidden'))await P.act(sh,'стойло '+(i+1));
       if(!(await P.E('pick.hidden'))){await P.pg.locator('#pickopts button').filter({hasText:new RegExp('^'+STALL[i]+'( \\(висит на другом\\))?$')}).first().click({timeout:5000});await W(120)}}
     P.log('развесил таблички');T.ok(await P.waitFor('ss.namesOK'),'таблички на стойлах')});
-  await T.step('stable',async P=>{const sk=await P.E(`STALL.indexOf('Скакун')`);await P.hold('новая подкова');await P.E(`say(people[me],stallAct(${sk}));0`);await P.hold('молоток');await P.E(`say(people[me],stallAct(${sk}));0`);T.ok(await P.waitFor('ss.shod'),'Скакун подкован')});
-  await T.step('stable',async P=>{await P.hold('упряжь');const ANS=await P.E('ANSWER');const SL=await P.E('SLOTS');for(let i=0;i<8;i++){await P.E(`slotAct(${i});0`);await P.pick(ANS[SL[i].k+SL[i].side])}P.log('запряг оленей')});
+  await T.step('stable',async P=>{const sk=await P.E(`STALL.indexOf('Скакун')`);const sh=await P.E(`[STX[${sk}]-12,34]`);await P.hold('новая подкова');await P.act(sh,'стойло Скакуна');await P.hold('молоток');await P.act(sh,'стойло Скакуна');T.ok(await P.waitFor('ss.shod'),'Скакун подкован')});
+  await T.step('stable',async P=>{await P.hold('упряжь');const ANS=await P.E('ANSWER');const SL=await P.E('SLOTS');const SH=await P.E(`SLOTS.map(s=>s.side==='слева'?[s.x-14,s.y-30]:[s.x-14,s.y-26])`);for(let i=0;i<8;i++){if(!(await P.E(`heldBy(me)==='упряжь'`)))await P.hold('упряжь');await P.act(SH[i],'место в упряжке '+(i+1));await P.pick(ANS[SL[i].k+SL[i].side])}P.log('запряг оленей')});
   await T.step('stable',async P=>{await P.act([2,107],'сани');T.ok(await P.waitFor('ss.done'),'сани взлетели')});
   return 'kitchen'},
 
@@ -118,7 +127,7 @@ async kitchen(T){
   await T.step('pantry',async P=>{await P.act([67,27],'верхняя полка');await P.pick('серебряной');await P.act([120,24],'полка');await P.pick('Переставить');await P.act([120,24],'полка');await P.pick('Имбирь')});
   await T.sync();
   await T.step('kitchen',async P=>{T.ok(await P.waitFor(`['мука','мёд во льду','имбирь','серебряная корица','звёздная пыль','формочка: звезда'].every(anyHas)`),'все продукты и формочка собраны: '+await P.E('TEAM.inv.join(", ")'))});
-  await T.step('kitchen',async P=>{await P.E(`BOT.near(212,104);0`);await P.hold('мёд во льду');await P.act([202,50],'плита (мёд)');T.ok(await P.waitFor(`anyHas('мёд')`,12000),'мёд растаял')});
+  await T.step('kitchen',async P=>{await P.hold('мёд во льду');await P.act([202,50],'плита (мёд)');T.ok(await P.waitFor(`anyHas('мёд')`,12000),'мёд растаял')});
   await T.step('kitchen',async P=>{const REC=await P.E('RECIPE');for(const [k,n,u] of REC){await P.act([117,72],'миска');await P.pick('Положить: '+k);for(let c=0;c<n;c++)await P.pick(u==='стакан'?'+1 стакан':'+1 ложка');await P.pick('Положить в миску')}P.log('замесил тесто')});
   await T.step('kitchen',async P=>{await P.hold('формочка: звезда');await P.act([143,40],'духовка');await P.pick('Жар');for(let c=0;c<3;c++)await P.pick('Время');await P.pick('Печь!');T.ok(await P.waitFor('sk.done'),'пряники испеклись')});
   return 'obs'},
@@ -128,13 +137,13 @@ async obs(T){
   await T.step('obs',async P=>{await P.act([137,146],'сундук обсерватории');await P.code('753')});
   await T.step('obs',async P=>{await P.hold('шестеренка');await P.act([35,36],'механизм купола');T.ok(await P.waitFor('so.dome'),'купол открыт')});
   const MIR=await T.any().E(`MIR.filter(o=>!o.decoy).map(o=>o.n)`);
-  for(const n of MIR)await T.step('obs',async P=>{const hn=await P.E(`TEAM.inv.map(baseIt).find(x=>x.startsWith('ручка'))`);await P.hold(hn);await P.E(`mirAct(MIR.find(o=>o.n==='${n}'));0`);P.log('вставил ручку в зеркало '+n)});
+  for(const n of MIR)await T.step('obs',async P=>{const hn=await P.E(`TEAM.inv.map(baseIt).find(x=>x.startsWith('ручка'))`);await P.hold(hn);await P.act(await P.E(`(()=>{const o=MIR.find(o=>o.n==='${n}');return[o.x-7,o.y-14]})()`),'зеркало '+n);P.log('вставил ручку в зеркало '+n)});
   await T.sync();
   await T.step('obs',async P=>{T.ok(await P.waitFor(`MIR.filter(o=>!o.decoy).every(o=>so.mir[o.n].owner!==null&&so.mir[o.n].owner!==undefined)`),'ручки вставлены во все зеркала');
     const sol=await P.E(`(()=>{const ns=${JSON.stringify(MIR)};const save=ns.map(n=>so.mir[n].st);for(let c=0;c<256;c++){ns.forEach((n,i)=>so.mir[n].st=(c>>(i*2))&3);traceBeam();if(so.done){so.done=false;const r=ns.map(n=>so.mir[n].st);ns.forEach((n,i)=>so.mir[n].st=save[i]);Object.values(so.mir).forEach(m=>m.frost=false);traceBeam();return r}}return null})()`);
     T.ok(!!sol,'у задачи с зеркалами есть решение');
     if(sol)for(let i=0;i<MIR.length;i++){const ow=await P.E(`so.mir['${MIR[i]}'].owner`);let Q=P;for(const R of T.P)if(await R.E('me')===ow)Q=R;
-      for(let c=0;c<8&&await Q.E(`so.mir['${MIR[i]}'].st`)!==sol[i];c++){await Q.E(`mirAct(MIR.find(o=>o.n==='${MIR[i]}'));0`);await W(150)}Q.log('повернул своё зеркало '+MIR[i]);await W(400)}
+      for(let c=0;c<8&&!(await Q.E('so.done'))&&await Q.E(`so.mir['${MIR[i]}'].st`)!==sol[i];c++){await Q.act(await Q.E(`(()=>{const o=MIR.find(o=>o.n==='${MIR[i]}');return[o.x-7,o.y-14]})()`),'повернуть зеркало');await W(150)}Q.log('повернул своё зеркало '+MIR[i]);await W(400)}
     T.ok(await P.waitFor('so.done'),'луч попал в кристалл')});
   return 'flight'},
 
@@ -145,16 +154,19 @@ async flight(T){
   return 'boss'},
 
 async boss(T){
-  // каждый игрок разбивает лёд вокруг своего жезла и стреляет; замёрзшего отогревают
-  for(const P of T.P){await P.closeUI();for(let a=0;a<12;a++){if(await P.E('hasWand(me)'))break;
-    await P.E(`(()=>{const its=bossItems();const it=its[${T.P.indexOf(P)}%Math.max(1,its.length)]||its[0];if(!it)return 0;BOT.near(it.x,it.y);it.act(people[me]);return 1})()`);await W(250)}
-    P.log('взял жезл');T.ok(await P.waitFor('hasWand(me)',5000),P.name+': световой жезл получен')}
-  const t0=Date.now();let frozenSeen=0;
+  // каждый игрок кликами разбивает лёд вокруг жезла, потом стреляет кликом по Королеве; замёрзшего отогревают, подходя к нему
+  for(const P of T.P){await P.closeUI();for(let a=0;a<8;a++){if(await P.E('hasWand(me)'))break;
+    const h=await P.E(`(()=>{const its=bossItems();const it=its[${T.P.indexOf(P)}%Math.max(1,its.length)]||its[0];return it?it.hit:null})()`);if(!h){await W(400);continue}
+    await P.act(h,'лёд вокруг жезла').catch(e=>P.log('ошибка клика по льду: '+e.message.split('\n')[0]))}
+    P.log('взял жезл');T.ok(await P.waitFor('hasWand(me)',5000),P.name+': световой жезл получен (кликами)')}
+  const t0=Date.now();let lastLog=0;
   while(Date.now()-t0<240000){const ph=await T.P[0].E('sb.phase');if(ph==='win')break;
-    for(const P of T.P){const st=await P.E(`(()=>{const fr=people.filter(p=>!p.gone&&!p.off&&isFrozen(p.i)&&p.i!==me);if(isFrozen(me))return 'frozen';if(fr.length){const q=fr[0];const p=people[me];p.x=q.x+6;p.y=q.y;return 'thaw'}
-        const p=people[me];if(p.x<60||p.x>320){p.x=150}const qx=sb.qx;bossShoot();return 'shoot'})()`).catch(()=>'err');if(st!=='shoot')frozenSeen++}
-    await W(400)}
-  const win=await T.P[0].E(`sb.phase==='win'`);T.ok(win,'Снежная Королева побеждена'+(win?' за '+Math.round((Date.now()-t0)/1000)+' с':''));
+    if(Date.now()-lastLog>8000){lastLog=Date.now();for(const P of T.P)P.log('бой: '+await P.E(`JSON.stringify({hp:Math.round(sb.hp),ph:sb.phase,fr:Object.keys(sb.frozen),lives:sb.lives,me,x:Math.round(people[me].x),y:Math.round(people[me].y),q:[Math.round(sb.qx),Math.round(sb.qy)],lead:NET.leader,shot:window.__myShot||0})`).catch(e=>e.message))}
+    for(const P of T.P){const st=await P.E(`(()=>{if(isFrozen(me))return {k:'frozen'};const fr=people.filter(p=>!p.gone&&!p.off&&isFrozen(p.i)&&p.i!==me);
+        if(fr.length){const q=fr[0];return {k:'thaw',x:q.x+8,y:q.y+16}}return {k:'shoot',x:sb.qx,y:sb.qy}})()`).catch(()=>({k:'err'}));
+      if(st.k==='shoot'||st.k==='thaw')await P.clickAt(st.x,st.y).catch(()=>{})}
+    await W(500)}
+  const win=await T.P[0].E(`sb.phase==='win'`);T.ok(win,'Снежная Королева побеждена кликами'+(win?' за '+Math.round((Date.now()-t0)/1000)+' с':''));
   for(const P of T.P)T.ok(await P.waitFor(`sb.phase==='win'`,8000),P.name+': видит победу');
   for(const P of T.P){const fs=await P.waitFor(`!document.getElementById('prolog').hidden||!document.getElementById('epibox').hidden||!document.getElementById('netui').hidden`,20000);T.ok(fs,P.name+': финальная сцена/эпилог показаны')}
   return 'end'}
