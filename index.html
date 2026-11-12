@@ -1206,10 +1206,11 @@ cv.addEventListener('pointerdown',e=>{
   if(ROOM==='work'&&!it&&lx>=52&&lx<=200&&ly>=68&&ly<=130){it=CONV}
   const me_=people[me];
   const tg=it===CONV?nearestFree(lx,Math.max(ly+10,134),40):it?nearestFree(it.x,it.y,16):nearestFree(lx,ly+8,14);
-  if(!tg){say(me_,'Туда не пройти.');return}
+  // к предмету не подойти (на стене, за мебелью): осматриваем издалека
+  if(!tg){if(it&&it!==CONV){path=null;pendingLook=false;pendingItem=null;actOn(it);return}say(me_,'Туда не пройти.');return}
   const pth=findPath(me_.x+8,me_.y+20,tg);
   clickMark=it&&it.hit?{rect:it.hit,t:performance.now()}:{x:lx,y:ly,t:performance.now()};
-  if(pth===null){say(me_,'Туда не пройти.');return}
+  if(pth===null){if(it&&it!==CONV){path=null;pendingLook=false;pendingItem=null;actOn(it);return}say(me_,'Туда не пройти.');return}
   // предмет: если персонаж рядом, срабатывает сразу; иначе он подходит и осматривает сам
   if(it){const fx=me_.x+8,fy=me_.y+20,sx=tg[0]*GS+2,sy=tg[1]*GS+2;
     if(!pth.length||Math.hypot(fx-sx,fy-sy)<=12||(it!==CONV&&Math.hypot(fx-it.x,fy-it.y)<=14)){path=null;pendingLook=false;pendingItem=null;actOn(it);return}}
@@ -1771,7 +1772,7 @@ function chestAct(){
   opts.push({label:'Открыть',fn:()=>{const want=[1,2,3,0];if(val.every((v,i)=>v===want[i])){ss.chest=true;take('упряжь');
       TEAM.notes.push({t:RULES[0][0],b:RULES[0][1],owner:me});renderSide();say(people[me],'Замок щелкнул! В сундуке упряжь и записка Санты. Записку видите только вы.')}
     else say(people[me],'Замок не поддается. Значки не те.')}});
-  openPick('Сундук с упряжью','На замке 4 колесика со значками. Нажимайте на колесико, чтобы сменить значок.',opts);return null;
+  openPick('Сундук с упряжью','На замке 4 значка. Нажимайте на кнопку с номером, чтобы сменить значок, потом «Открыть».',opts);return null;
 }
 const ITEMS_S=[
  ...STALL.map((_,i)=>({x:STX[i],y:84,hit:[STX[i]-12,34,24,46],act(){return stallAct(i)}})),
@@ -1783,7 +1784,7 @@ const ITEMS_S=[
  {x:46,y:90,hit:[40, 92, 11, 17],act(){if(ss.bucket)return'В ведре просто вода.';if(!holds('фонарь'))return handMsg('фонарь','Вода в ведре замёрзла. Подо льдом белеет бумажка!');
    ss.bucket=true;privNote(...RULES[2]);return'Вы поднесли фонарь, лед растаял. В воде записка Санты! Ее видите только вы.'}},
  {x:126,y:116,hit:[81, 90, 91, 21],act(){return'Длинная кормушка. В ней сено.'}},
- {x:228,y:40,hit:[236,0,20,33],prio:true,act(){goScene('loft',[72,140]);return'Вы забрались по верёвочной лестнице на сеновал.'}},
+ {x:238,y:84,hit:[236,0,20,33],prio:true,act(){goScene('loft',[72,140]);return'Вы забрались по верёвочной лестнице на сеновал.'}},
  {x:44,y:86,hit:[0,44,14,58],act(){goScene('forge',[36,116]);return null}},
  {x:214,y:142,hit:[220, 126, 27, 30],act(){return chestAct()}},
  {x:84,y:120,hit:[2, 107, 76, 49],act(){return sledAct()}},
@@ -2973,7 +2974,7 @@ const ITEMS_CL=[
  {x:64,y:114,hit:[0,5,55,100],act(){goScene('pantry',[176,138]);return null}},
  {x:176,y:146,hit:[184,50,66,90],act(){if(anyHas('мёд во льду')||anyHas('мёд')||sk.melt||sk.bowl.some(b=>b.k==='мёд'))return'Ледник полон льда. Мёд уже у команды.';sk.honey=true;take('мёд во льду');return'Во льду ледника вмёрзла банка мёда! Вы выломали её вместе с куском льда.'}},
  {x:132,y:108,hit:[118,42,26,15],act(){if(sk.tin){if(anyHas('звёздная пыль'))return'Жестяная коробка пуста.';take('звёздная пыль');return'Вы зачерпнули ещё звёздной пыли из коробки.'}
-   openCode('Жестяная коробка','3 цифры. На крышке нарисованы три звезды: жёлтая, синяя и красная. Под каждой окошко для цифры',3,'423',()=>{sk.tin=true;take('звёздная пыль');say(people[me],'Замок щёлкнул! В коробке мерцает звёздная пыль.')});return null}},
+   openCode('Жестяная коробка','3 цифры. На крышке три звезды: жёлтая, синяя и красная, под каждой окошко для цифры. Подсказка: посчитайте звёзды каждого цвета на детском рисунке на холодильнике.',3,'423',()=>{sk.tin=true;take('звёздная пыль');say(people[me],'Замок щёлкнул! В коробке мерцает звёздная пыль.')});return null}},
  {x:160,y:108,hit:[146,70,32,32],act(){if(sk.p2)return'Ящик с яблоками.';sk.p2=true;privNote('Рецепт: сколько','«Первое — 2 кружки великана. Второе — 3 напёрстка гнома. Третье — 1 ложка великана. Четвёртое — 2 щепотки феи. Пятое — 1 напёрсток гнома».');return'Под яблоками лежит лист рецепта! Его видите только вы.'}},
  {x:124,y:108,hit:[117,65,15,35],act(){return'Мешок с картошкой. Холодный.'}},
  {x:70,y:110,hit:[58,69,23,37],act(){return'Бочка с квашеной капустой. Пахнет!'}},
