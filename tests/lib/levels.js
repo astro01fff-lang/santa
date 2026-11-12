@@ -66,8 +66,8 @@ async work(T){
     await T.step('work',async P=>{const w=await P.E(`WANT[sw.boxes[${i}].name]`);let r;
       {const by=await P.E(`(()=>{const g=sw.gifts.find(g=>g.n===WANT[sw.boxes[${i}].name]&&!g.gone);return g&&!g.on&&g.by!=null&&g.by!==me?g.by:null})()`);
        if(by!==null){for(const Q of T.P)if(Q!==P&&await Q.E('me')===by){Q.log('кладёт в коробку '+i+' подарок, который уже держит');await Q.act(await boxHit(Q,i),'коробка '+i);T.ok(await Q.waitFor(`sw.boxes[${i}].done`),'коробка '+(i+1)+' собрана');return}}}
-      const got=await takeGift(P,i);P.log('снял с ленты «'+w+'»');T.ok(got,'подарок «'+w+'» в руках');
-      await P.act(await boxHit(P,i),'коробка '+i);P.log('положил в коробку '+i);
+      for(let att=0;att<3&&!(await P.E(`sw.boxes[${i}].done`));att++){const got=await takeGift(P,i);P.log('снял с ленты «'+w+'»'+(att?' (повтор '+att+')':''));if(!got)continue;
+        await P.act(await boxHit(P,i),'коробка '+i);P.log('положил в коробку '+i);await P.waitFor(`sw.boxes[${i}].done`,4000)}
       T.ok(await P.waitFor(`sw.boxes[${i}].done`),'коробка '+(i+1)+' собрана')});
   }
   await T.step('work',async P=>{T.ok(await P.waitFor('sw.done'),'все подарки разложены')});
