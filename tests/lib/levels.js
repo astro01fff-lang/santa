@@ -18,8 +18,8 @@ async function takeGift(P,i){const want=await P.E(`WANT[sw.boxes[${i}].name]`);c
       const [x,y]=loopPos(g0.s);const near=giftNear(p);return JSON.stringify({x,y,d:Math.hypot(p.x+8-x,p.y+20-y),near:near===g0,moving:!!path})})()`);
     if(st==='ok')return true;if(st==='none'){await W(500);continue}
     if(st==='wrong'){P.log('взял не тот подарок, возвращает на ленту');const [hx,hy]=await P.E(`(()=>{const p=people[me];return[p.x+8,Math.max(p.y+10,120)]})()`);await P.clickAt(hx,hy-14);await W(600);continue}
-    const g=JSON.parse(st);if(g.near&&!g.moving){await P.clickAt(g.x,g.y);await W(400);continue}
-    if(!g.moving&&g.d>14)await P.clickAt(g.x,g.y);await W(350)}
+    const g=JSON.parse(st);if(g.d<28&&!g.moving){await P.clickAt(g.x,g.y);await W(400);continue}
+    if(!g.moving&&g.d>=28)await P.clickAt(g.x,g.y);await W(350)}
   return false}
 const LEVELS={
 async living(T){
@@ -143,7 +143,7 @@ async obs(T){
     const sol=await P.E(`(()=>{const ns=${JSON.stringify(MIR)};const save=ns.map(n=>so.mir[n].st);for(let c=0;c<256;c++){ns.forEach((n,i)=>so.mir[n].st=(c>>(i*2))&3);traceBeam();if(so.done){so.done=false;const r=ns.map(n=>so.mir[n].st);ns.forEach((n,i)=>so.mir[n].st=save[i]);Object.values(so.mir).forEach(m=>m.frost=false);traceBeam();return r}}return null})()`);
     T.ok(!!sol,'у задачи с зеркалами есть решение');
     if(sol)for(let i=0;i<MIR.length;i++){const ow=await P.E(`so.mir['${MIR[i]}'].owner`);let Q=P;for(const R of T.P)if(await R.E('me')===ow)Q=R;
-      for(let c=0;c<8&&await Q.E(`so.mir['${MIR[i]}'].st`)!==sol[i];c++){await Q.act(await Q.E(`(()=>{const o=MIR.find(o=>o.n==='${MIR[i]}');return[o.x-7,o.y-14]})()`),'повернуть зеркало');await W(150)}Q.log('повернул своё зеркало '+MIR[i]);await W(400)}
+      for(let c=0;c<8&&!(await Q.E('so.done'))&&await Q.E(`so.mir['${MIR[i]}'].st`)!==sol[i];c++){await Q.act(await Q.E(`(()=>{const o=MIR.find(o=>o.n==='${MIR[i]}');return[o.x-7,o.y-14]})()`),'повернуть зеркало');await W(150)}Q.log('повернул своё зеркало '+MIR[i]);await W(400)}
     T.ok(await P.waitFor('so.done'),'луч попал в кристалл')});
   return 'flight'},
 
@@ -157,7 +157,7 @@ async boss(T){
   // каждый игрок кликами разбивает лёд вокруг жезла, потом стреляет кликом по Королеве; замёрзшего отогревают, подходя к нему
   for(const P of T.P){await P.closeUI();for(let a=0;a<8;a++){if(await P.E('hasWand(me)'))break;
     const h=await P.E(`(()=>{const its=bossItems();const it=its[${T.P.indexOf(P)}%Math.max(1,its.length)]||its[0];return it?it.hit:null})()`);if(!h){await W(400);continue}
-    await P.act(h,'лёд вокруг жезла')}
+    await P.act(h,'лёд вокруг жезла').catch(()=>{})}
     P.log('взял жезл');T.ok(await P.waitFor('hasWand(me)',5000),P.name+': световой жезл получен (кликами)')}
   const t0=Date.now();
   while(Date.now()-t0<240000){const ph=await T.P[0].E('sb.phase');if(ph==='win')break;
