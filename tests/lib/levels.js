@@ -96,7 +96,7 @@ async stable(T){
     await P.act([104,86],'наковальня');await P.hold('молоток');await P.act([104,86],'наковальня');await P.hold('клещи');await P.act([104,86],'наковальня');await P.act([205,74],'бочка');
     T.ok(await P.waitFor(`anyHas('новая подкова')`),'новая подкова выкована')});
   await T.step('stable',async P=>{const STALL=await P.E('STALL');for(let i=0;i<8;i++){await P.E(`stallAct(${i});0`);if(await P.E('pick.hidden'))await P.E(`stallAct(${i});0`);
-      if(!(await P.E('pick.hidden'))){await P.pg.locator('#pickopts button').filter({hasText:new RegExp('^'+STALL[i]+'$')}).first().click();await W(120)}}
+      if(!(await P.E('pick.hidden'))){await P.pg.locator('#pickopts button').filter({hasText:new RegExp('^'+STALL[i]+'( \\(висит на другом\\))?$')}).first().click({timeout:5000});await W(120)}}
     P.log('развесил таблички');T.ok(await P.waitFor('ss.namesOK'),'таблички на стойлах')});
   await T.step('stable',async P=>{const sk=await P.E(`STALL.indexOf('Скакун')`);await P.hold('новая подкова');await P.E(`say(people[me],stallAct(${sk}));0`);await P.hold('молоток');await P.E(`say(people[me],stallAct(${sk}));0`);T.ok(await P.waitFor('ss.shod'),'Скакун подкован')});
   await T.step('stable',async P=>{await P.hold('упряжь');const ANS=await P.E('ANSWER');const SL=await P.E('SLOTS');for(let i=0;i<8;i++){await P.E(`slotAct(${i});0`);await P.pick(ANS[SL[i].k+SL[i].side])}P.log('запряг оленей')});

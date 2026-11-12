@@ -25,6 +25,7 @@ class Player{
   async code(v){this.log('ввёл код '+v);await this.pg.fill('#codein',v);await this.pg.press('#codein','Enter');await W(250)}
   async pick(t){this.log('выбрал «'+t+'»');await this.pg.locator('#pickopts button',{hasText:t}).first().click({timeout:5000});await W(130)}
   async hold(k){this.log('взял в руки «'+k+'»');
+    if(await this.E(`heldBy(me)===${JSON.stringify(k)}`))return true;
     for(let a=0;a<12;a++){const sel=await this.pg.locator('#inv .slot.full').evaluateAll((els,k)=>els.findIndex(e=>{const t=e.title||'';return t===k||t.startsWith(k+' ')}),k);
       if(sel>=0){await this.pg.locator('#inv .slot.full').nth(sel).click();await W(140);if(await this.E(`heldBy(me)===${JSON.stringify(k)}`))return true}
       await W(300)}
