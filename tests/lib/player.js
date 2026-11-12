@@ -13,6 +13,13 @@ class Player{
   E(code){return this.pg.evaluate(c=>window.__EV(c),code)}
   async install(){await this.E(`window.BOT={
     find(h){return curItems().find(o=>o.hit&&o.hit[0]===h[0]&&o.hit[1]===h[1]&&(h[2]===undefined||o.hit[2]===h[2]))},
+    // тот же выбор предмета под курсором, что и в обработчике клика игры
+    under(lx,ly){let it=null,ba=1e9;for(const x of curItems()){if(x.hit){const [hx,hy,hw,hh]=x.hit;if(lx>=hx&&lx<=hx+hw&&ly>=hy&&ly<=hy+hh&&(x.prio?0:hw*hh)<ba){ba=x.prio?0:hw*hh;it=x}}}return it},
+    // точка внутри зоны предмета, по которой клик выберет именно его (ближе к центру)
+    pt(h){const it=this.find(h);if(!it)return null;const [hx,hy,hw,hh]=it.hit;const cx=hx+hw/2,cy=hy+hh/2;let best=null,bd=1e9;
+      for(let y=hy+1;y<hy+hh;y+=1.5)for(let x=hx+1;x<hx+hw;x+=1.5){if(this.under(x,y)!==it)continue;const d=Math.hypot(x-cx,y-cy);if(d<bd){bd=d;best=[x,y]}}return best},
+    scr(lx,ly){const r=cv.getBoundingClientRect();return[r.left+(lx-camX-ZX)*S*ZM,r.top+(ly-camY-ZY)*S*ZM]},
+    busy(){return !!(document.querySelector('.modal:not([hidden])')||!document.getElementById('netmsg').hidden)},
     act(h){const it=this.find(h);if(!it)return '__НЕТ__';bubble=null;if(!modal.hidden||!pick.hidden)return '__ЗАНЯТО__ '+(modal.hidden?'выбор':'окно');actOn(it);return bubble?bubble.text:'(окно)'},
     near(x,y){const p=people[me];p.x=x-8;p.y=y-20},
     closeUI(){document.getElementById('prolog').hidden=true;document.querySelectorAll('.modal').forEach(m=>{if(m.id!=='epibox')m.hidden=true});try{if(!treeBox.hidden)closeTree()}catch(e){}try{if(!gearBox.hidden)closeGears()}catch(e){}const nm=document.getElementById('netmsg');if(nm)nm.hidden=true}
@@ -23,7 +30,19 @@ class Player{
     for(let k=0;k<15;k++){if(await this.pg.evaluate(()=>!!(window.NET&&NET.gotSnap&&!NET.pendingSnap)).catch(()=>false))break;await W(200)}
     await W(800);await this.install();await this.closeUI()}
   async closeUI(){await this.E('BOT.closeUI();0')}
-  async act(h,label){this.log('нажал '+(label||JSON.stringify(h)));const r=await this.E(`BOT.act(${JSON.stringify(h)})`);if(r==='__НЕТ__'){const room=await this.E('ROOM').catch(()=>'?');throw new Error('нет предмета '+JSON.stringify(h)+(label?' «'+label+'»':'')+' в '+room)}this.log('  ← '+String(r).slice(0,60));await W(90);return r}
+  // настоящий клик мышью по предмету: персонаж идёт к нему и осматривает, как у живого игрока
+  async act(h,label){this.log('нажал '+(label||JSON.stringify(h)));
+    const pt=await this.E(`BOT.pt(${JSON.stringify(h)})`);if(!pt){const room=await this.E('ROOM').catch(()=>'?');throw new Error('нет предмета '+JSON.stringify(h)+(label?' «'+label+'»':'')+' в '+room)}
+    if(await this.E('BOT.busy()'))await this.closeUI();
+    const room0=await this.E(`(()=>{bubble=null;window.__lastSay=null;return ROOM})()`);
+    const [x,y]=await this.E(`BOT.scr(${pt[0]},${pt[1]})`);await this.pg.mouse.click(x,y);
+    let r='—';const t0=Date.now();
+    while(Date.now()-t0<12000){const st=await this.E(`(()=>{if(bubble&&bubble.text)return['say',bubble.text];if(BOT.busy())return['ui','(окно)'];if(ROOM!==${JSON.stringify(room0)})return['room','(переход)'];if(transBusy)return['room','(переход)'];return null})()`).catch(()=>null);
+      if(st){r=st[1];break}await W(120)}
+    if(r==='—')r='(нет реакции)';if(/Туда не пройти/.test(r))this.log('  ← ТУДА НЕ ПРОЙТИ');
+    this.log('  ← '+String(r).slice(0,60));await W(120);return r}
+  // клик мышью по точке сцены (пол, лента конвейера, Королева)
+  async clickAt(lx,ly){const [x,y]=await this.E(`BOT.scr(${lx},${ly})`);await this.pg.mouse.click(x,y)}
   async code(v){this.log('ввёл код '+v);await this.pg.fill('#codein',v);await this.pg.press('#codein','Enter');await W(250)}
   async pick(t){this.log('выбрал «'+t+'»');await this.pg.locator('#pickopts button',{hasText:t}).first().click({timeout:5000});await W(130)}
   async hold(k){this.log('взял в руки «'+k+'»');
