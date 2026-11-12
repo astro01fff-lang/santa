@@ -8,7 +8,7 @@ class Team{
   pick(a){return a[Math.floor(this.R()*a.length)]}
   who(){if(this.P.length<2)return this.P[0];return this.P[Math.floor(this.R()*this.P.length)]}
   any(){return this.P[0]}
-  other(P){return this.P.find(q=>q!==P)}
+  other(P){const o=this.P.filter(q=>q!==P);return o.length?o[Math.floor(this.R()*o.length)]:undefined}
   prof(P){return this.profiles[this.P.indexOf(P)]}
   ok(c,msg,sev){this.checks.push({level:this.level,ok:!!c,msg});if(!c)this.run.bug({team:this,sev:sev||'серьёзный',title:msg,level:this.level});return !!c}
   async step(room,fn){this.stepN++;const P=this.who();const partner=this.other(P);
@@ -41,7 +41,9 @@ class Team{
   async sync(){await W(1500);if(this.P.length<2)return;
     const snap=P=>P.E(`(()=>{const out={};const walk=(o,p,d)=>{if(d>3||o==null)return;for(const k in o){const v=o[k];if(/^(so\.(beam|passed|hitDecoy)|sc\.ang|st\.(hangT|catT)|sk\.melt|sw\.gifts\.\d+\.s$)/.test(p+k))continue;if(/T$|^t$|At$|^t0$|cd|parts|beams|spikes|orbs|shots|taunt|melt|^s$|frost/.test(k))continue;if(typeof v==='boolean'||typeof v==='string'||(typeof v==='number'&&Number.isInteger(v)&&Math.abs(v)<1000))out[p+k]=v;else if(typeof v==='object')walk(v,p+k+'.',d+1)}};
       const L=levelOf(ROOM);const R={living:'st',work:'sw',clock:'sc',stable:'ss',kitchen:'sk',obs:'so'}[L];if(R)walk(eval(R),R+'.',0);out.inv=TEAM.inv.map(baseIt).sort().join('|');out.level=L;return out})()`);
-    let diff=[];for(let a=0;a<4;a++){const [A,B]=await Promise.all(this.P.map(snap));diff=Object.keys(Object.assign({},A,B)).filter(k=>JSON.stringify(A[k])!==JSON.stringify(B[k])).map(k=>k+': '+JSON.stringify(A[k])+' / '+JSON.stringify(B[k]));if(!diff.length)return;await W(1500)}
+    let diff=[];for(let a=0;a<4;a++){const all=await Promise.all(this.P.map(snap));const A=all[0];diff=[];
+      all.slice(1).forEach((B,j)=>{Object.keys(Object.assign({},A,B)).filter(k=>JSON.stringify(A[k])!==JSON.stringify(B[k])).forEach(k=>diff.push(this.P[j+1].name+' '+k+': '+JSON.stringify(A[k])+' / '+JSON.stringify(B[k])))});
+      if(!diff.length)return;await W(1500)}
     this.ok(false,'Состояние у игроков разошлось: '+diff.slice(0,6).join('; '),'серьёзный')}
 }
 module.exports={Team,rng};

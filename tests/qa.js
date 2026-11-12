@@ -4,10 +4,11 @@
 const {chromium}=require('playwright');const fs=require('fs'),path=require('path'),cp=require('child_process');
 const {Player,W}=require('./lib/player');const {Team}=require('./lib/team');const {LEVELS,ORDER}=require('./lib/levels');
 const A=process.argv.slice(2);const arg=(k,d)=>{const i=A.indexOf('--'+k);return i<0?d:(A[i+1]&&!A[i+1].startsWith('--')?A[i+1]:true)};
-const NT=+arg('teams',4),SEED=+arg('seed',Date.now()%100000),CHAOS=!!arg('chaos',false),ONLY=arg('levels',null);
+const NT=+arg('teams',4),NP=+arg('players',2),SEED=+arg('seed',Date.now()%100000),CHAOS=!!arg('chaos',false),ONLY=arg('levels',null);
 const PORT=8765,BU='&bu='+encodeURIComponent('ws://127.0.0.1:9001'),BASE='http://127.0.0.1:'+PORT;
 const OUT=path.join(__dirname,'out',(CHAOS?'chaos-':'run-')+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'));fs.mkdirSync(path.join(OUT,'shots'),{recursive:true});
-const PROFILES=CHAOS?[['chaos','chaos'],['chaos','chaos'],['chaos','chaos'],['chaos','chaos']]:[['sequential','sequential'],['active','explorer'],['careless','sequential'],['unstable','active']];
+const BASEPR=[['sequential','sequential','explorer'],['active','explorer','careless'],['careless','sequential','unstable'],['unstable','active','sequential']];
+const PROFILES=BASEPR.map(r=>Array.from({length:NP},(_,i)=>CHAOS?'chaos':r[i%r.length]));
 const PNAME={sequential:'последовательный',active:'активный',explorer:'исследователь',careless:'невнимательный',unstable:'нестабильная связь',chaos:'хаос'};
 const LVNAME={living:'1. Гостиная',work:'2. Мастерская',clock:'3. Часовая башня',stable:'4. Конюшня',kitchen:'5. Кухня',obs:'6. Обсерватория',flight:'Полёт',boss:'7. Финал'};
 async function up(url,ms=8000){const t0=Date.now();while(Date.now()-t0<ms){try{await fetch(url);return true}catch(e){await W(300)}}return false}
@@ -22,13 +23,13 @@ const run={bugs:[],pend:[],t0:Date.now(),seed:SEED,
   if(!(await portOpen(9001))){kids.push(cp.spawn(process.execPath,[path.join(__dirname,'broker.js')],{stdio:'ignore'}))}
   await up(BASE+'/host.html');for(let k=0;k<30&&!(await portOpen(9001));k++)await W(300);
   const browser=await chromium.launch({headless:!arg('headed',false)});
-  console.log(`QA: команд ${NT}, сид ${SEED}${CHAOS?', режим хаоса':''}. Отчёт: ${OUT}`);
+  console.log(`QA: команд ${NT} по ${NP} игрока, сид ${SEED}${CHAOS?', режим хаоса':''}. Отчёт: ${OUT}`);
   // ведущая
   const host=await (await browser.newContext({viewport:{width:1400,height:900}})).newPage();const hostErr=[];host.on('pageerror',e=>hostErr.push(e.message));
   await host.goto(BASE+'/host.html?x=1'+BU);await W(800);await host.fill('#nTeams',String(NT));await host.click('#nCreate');await W(2500);
   const sid=new URL(host.url()).searchParams.get('s');
   const teams=[];for(let t=0;t<NT;t++){const T=new Team(run,'t'+(t+1),'Команда '+(t+1),PROFILES[t%PROFILES.length],SEED*31+t);teams.push(T);
-    for(let i=0;i<2;i++){const P=new Player(run,T,i,'Игрок'+(t+1)+'.'+(i+1));await P.open(browser,`${BASE}/index.html?s=${sid}&t=${T.id}${BU}`);
+    for(let i=0;i<NP;i++){const P=new Player(run,T,i,'Игрок'+(t+1)+'.'+(i+1));await P.open(browser,`${BASE}/index.html?s=${sid}&t=${T.id}${BU}`);
       await P.pg.fill('#netui input',P.name);await P.pg.click('#netui .btn.go');await W(900);await P.pg.click(`#netui .ch >> nth=${i}`);await W(900);await P.pg.click('#netui >> text=Я готов(а)');await W(400);T.P.push(P)}}
   const tStart=Date.now();await host.click('#bStart');await W(500);if(await host.locator('#dlgOk').isVisible())await host.click('#dlgOk');
   // пролог: текст появляется постепенно, у обоих игроков
