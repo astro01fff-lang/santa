@@ -157,12 +157,13 @@ async boss(T){
   // каждый игрок кликами разбивает лёд вокруг жезла, потом стреляет кликом по Королеве; замёрзшего отогревают, подходя к нему
   for(const P of T.P){await P.closeUI();for(let a=0;a<8;a++){if(await P.E('hasWand(me)'))break;
     const h=await P.E(`(()=>{const its=bossItems();const it=its[${T.P.indexOf(P)}%Math.max(1,its.length)]||its[0];return it?it.hit:null})()`);if(!h){await W(400);continue}
-    await P.act(h,'лёд вокруг жезла').catch(()=>{})}
+    await P.act(h,'лёд вокруг жезла').catch(e=>P.log('ошибка клика по льду: '+e.message.split('\n')[0]))}
     P.log('взял жезл');T.ok(await P.waitFor('hasWand(me)',5000),P.name+': световой жезл получен (кликами)')}
-  const t0=Date.now();
+  const t0=Date.now();let lastLog=0;
   while(Date.now()-t0<240000){const ph=await T.P[0].E('sb.phase');if(ph==='win')break;
+    if(Date.now()-lastLog>8000){lastLog=Date.now();for(const P of T.P)P.log('бой: '+await P.E(`JSON.stringify({hp:Math.round(sb.hp),ph:sb.phase,fr:Object.keys(sb.frozen),lives:sb.lives,me,x:Math.round(people[me].x),y:Math.round(people[me].y),q:[Math.round(sb.qx),Math.round(sb.qy)],lead:NET.leader,shot:window.__myShot||0})`).catch(e=>e.message))}
     for(const P of T.P){const st=await P.E(`(()=>{if(isFrozen(me))return {k:'frozen'};const fr=people.filter(p=>!p.gone&&!p.off&&isFrozen(p.i)&&p.i!==me);
-        if(fr.length){const q=fr[0];return {k:'thaw',x:q.x+8+10,y:q.y+22}}return {k:'shoot',x:sb.qx,y:sb.qy}})()`).catch(()=>({k:'err'}));
+        if(fr.length){const q=fr[0];return {k:'thaw',x:q.x+8,y:q.y+16}}return {k:'shoot',x:sb.qx,y:sb.qy}})()`).catch(()=>({k:'err'}));
       if(st.k==='shoot'||st.k==='thaw')await P.clickAt(st.x,st.y).catch(()=>{})}
     await W(500)}
   const win=await T.P[0].E(`sb.phase==='win'`);T.ok(win,'Снежная Королева побеждена кликами'+(win?' за '+Math.round((Date.now()-t0)/1000)+' с':''));

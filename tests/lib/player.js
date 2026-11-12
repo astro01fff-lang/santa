@@ -17,7 +17,7 @@ class Player{
     under(lx,ly){let it=null,ba=1e9;for(const x of curItems()){if(x.hit){const [hx,hy,hw,hh]=x.hit;if(lx>=hx&&lx<=hx+hw&&ly>=hy&&ly<=hy+hh&&(x.prio?0:hw*hh)<ba){ba=x.prio?0:hw*hh;it=x}}}return it},
     // точка внутри зоны предмета, по которой клик выберет именно его (ближе к центру)
     pt(h){const it=this.find(h);if(!it)return null;const [hx,hy,hw,hh]=it.hit;const cx=hx+hw/2,cy=hy+hh/2;let best=null,bd=1e9;
-      for(let y=hy+1;y<hy+hh;y+=1.5)for(let x=hx+1;x<hx+hw;x+=1.5){if(this.under(x,y)!==it)continue;const d=Math.hypot(x-cx,y-cy);if(d<bd){bd=d;best=[x,y]}}return best},
+      for(let y=hy+1;y<hy+hh;y+=1.5)for(let x=hx+1;x<hx+hw;x+=1.5){{const u=this.under(x,y);if(!u||!u.hit||u.hit.join()!==it.hit.join())continue}const d=Math.hypot(x-cx,y-cy);if(d<bd){bd=d;best=[x,y]}}return best},
     scr(lx,ly){const r=cv.getBoundingClientRect();return[r.left+(lx-camX-ZX)*S*ZM,r.top+(ly-camY-ZY)*S*ZM]},
     rootSig(){const L=levelOf(ROOM);const R={living:st,work:sw,clock:sc,stable:ss,kitchen:sk,obs:so}[L];try{return JSON.stringify(R,(k,v)=>/^(beam|passed|hitDecoy|rotT|ang|hangT|catT|melt|s|parts)$/.test(k)?undefined:v)+'|'+TEAM.inv.join(',')}catch(e){return ''}},
     busy(){return !!(document.querySelector('.modal:not([hidden])')||!document.getElementById('netmsg').hidden)},
@@ -43,7 +43,9 @@ class Player{
     if(r==='—')r='(нет реакции)';if(/Туда не пройти/.test(r))this.log('  ← ТУДА НЕ ПРОЙТИ');
     this.log('  ← '+String(r).slice(0,60));await W(120);return r}
   // клик мышью по точке сцены (пол, лента конвейера, Королева)
-  async clickAt(lx,ly){const [x,y]=await this.E(`BOT.scr(${lx},${ly})`);await this.pg.mouse.click(x,y)}
+  // клик в точку сцены; если она за краем экрана — в ближайшую видимую точку в её сторону, как сделал бы человек
+  async clickAt(lx,ly){const [x,y]=await this.E(`(()=>{const r=cv.getBoundingClientRect();const k=S*ZM;const x0=camX+ZX,y0=camY+ZY,x1=x0+r.width/k,y1=y0+r.height/k;
+      const cx=Math.max(x0+6,Math.min(x1-6,${lx})),cy=Math.max(y0+6,Math.min(y1-6,${ly}));return BOT.scr(cx,cy)})()`);await this.pg.mouse.click(x,y)}
   async code(v){this.log('ввёл код '+v);await this.pg.fill('#codein',v);await this.pg.press('#codein','Enter');await W(250)}
   async pick(t){this.log('выбрал «'+t+'»');await this.pg.locator('#pickopts button',{hasText:t}).first().click({timeout:5000});await W(130)}
   async hold(k){this.log('взял в руки «'+k+'»');
