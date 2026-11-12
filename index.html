@@ -3404,7 +3404,7 @@ function plDraw(now){if(plWait){plT0=now}
   if(E>PL_END-.5){const nb=document.getElementById('plnext');if(nb.hidden){nb.hidden=false;nb.focus()}}
   if(!plBox.hidden)plRaf=requestAnimationFrame(plDraw)}
 function plUpdAU(){try{const mb=document.getElementById('mbtn'),sb2=document.getElementById('sbtn');mb.setAttribute('aria-pressed','true');mb.textContent='♪ Музыка: вкл';sb2.setAttribute('aria-pressed','true');sb2.textContent='🔊 Звуки: вкл'}catch(_){}}
-function plGo(){plWait=false;document.getElementById('plstart').hidden=true;auInit();if(!AU.music||!AU.sound){AU.music=true;AU.sound=true;auApply();auSave();plUpdAU()}AU.track=null;auStartMusic(CUT==='fin'?'win':'cozy');plT0=performance.now();plCapI=-1;plSnd={};document.getElementById('plskip').focus()}
+function plGo(){plWait=false;document.getElementById('plstart').hidden=true;auInit();let auSet=null;try{auSet=localStorage.getItem('santa_audio')}catch(e){}if(auSet===null&&(!AU.music||!AU.sound)){/* выбор игрока (выключил звук) не трогаем */AU.music=true;AU.sound=true;auApply();auSave();plUpdAU()}AU.track=null;auStartMusic(CUT==='fin'?'win':'cozy');plT0=performance.now();plCapI=-1;plSnd={};document.getElementById('plskip').focus()}
 function openCut(mode,wait){CUT=mode;plBox.hidden=false;keys.clear();plT0=performance.now();plCapI=-1;plSnd={};const nb=document.getElementById('plnext');nb.hidden=true;nb.textContent=mode==='fin'?'Итоги':'Начать игру';
   document.getElementById('pltext').textContent='';plWait=!!wait;document.getElementById('plstart').hidden=!wait;if(!wait)plGo();
   plLast=0;cancelAnimationFrame(plRaf);plRaf=requestAnimationFrame(plDraw);setTimeout(()=>document.getElementById(wait?'plstart':'plskip').focus(),30)}

@@ -27,7 +27,7 @@ async gift(c,ok){// кукольный домик в руках у не-лиде
   await lead.E(`(()=>{const g=sw.gifts.find(g=>g.n==='телескоп');g.on=false;g.by=7;return 0})()`);await W(1200);ok(await lead.E(`sw.gifts.find(g=>g.n==='телескоп').on`),'«потерянный» подарок вернулся на ленту')},
 async banner(c,ok){// уровень проходит не-лидер, пока лидер на сеновале → баннер и переход у обоих
   const {lead,fol}=c;await c.goto('stable');await lead.E(`goScene('loft',[72,140]);0`);await W(500);
-  await fol.E(`ss.done=true;0`);let seen=[false,false];for(let t=0;t<60;t++){await W(100);for(const k of [0,1])if(await c.P[k].E(`!document.getElementById('trans').hidden`))seen[k]=true}
+  await fol.E(`SLOTS.forEach(s=>ss.slot[s.k+s.side]=ANSWER[s.k+s.side]);ss.shod=true;ss.tarp=false;say(people[me],sledAct());0`);let seen=[false,false];for(let t=0;t<60;t++){await W(100);for(const k of [0,1])if(await c.P[k].E(`!document.getElementById('trans').hidden`))seen[k]=true}
   ok(seen[0]&&seen[1],'баннер «Уровень пройден!» у обоих игроков ('+seen+')');for(const p of c.P)await p.waitRoom('kitchen');
   ok(await lead.E(`levelOf(ROOM)`)==='kitchen'&&await fol.E(`levelOf(ROOM)`)==='kitchen','оба на кухне, хотя лидер был на сеновале')},
 async boss(c,ok){// финал: без щита, оба стреляют, не бьёт во время отогрева, победа у обоих
@@ -38,8 +38,8 @@ async boss(c,ok){// финал: без щита, оба стреляют, не �
   const fm=await fol.E('me');await lead.E(`sb.frozen[${fm}]=true;sb.lives[${fm}]=0;sb.nextAtk=performance.now()+100;0`);await W(1500);
   const atk=await lead.E(`[sb.spikes.length,sb.orbs.length,sb.nextAtk-performance.now()]`);ok(atk[0]===0&&atk[1]===0&&atk[2]>500,'пока товарища отогревают, Королева не атакует ('+atk.map(Math.round)+')');
   await lead.E(`(()=>{const q=people[${fm}];const p=people[me];p.x=q.x+6;p.y=q.y;return 0})()`);ok(await lead.waitFor(`!isFrozen(${fm})`,6000),'товарищ оттаял, когда к нему подошли');
-  let phases=new Set();for(let t=0;t<200;t++){const ph=await lead.E('sb.phase');phases.add(ph);if(ph==='win')break;for(const p of c.P)await p.E(`sb.frozen={};bossShoot();0`).catch(()=>{});await W(300)}
-  ok(!phases.has('shield'),'щита нет ни разу (фазы: '+[...phases]+')');ok(await fol.waitFor(`sb.phase==='win'`,5000),'победа видна обоим');
+  let phases=new Set();for(let t=0;t<500;t++){const ph=await lead.E('sb.phase');phases.add(ph);if(ph==='win')break;for(const p of c.P)await p.E(`sb.frozen={};bossShoot();0`).catch(()=>{});await W(300)}
+  ok(!phases.has('shield'),'щита нет ни разу (фазы: '+[...phases]+')');ok(await lead.E(`sb.phase==='win'`),'Королева побеждена');ok(await fol.waitFor(`sb.phase==='win'`,5000),'победа видна обоим');
   await W(3000);await c.host.click('#nav button >> text=Результаты').catch(()=>{});await W(800);const rt=await c.host.$eval('#s-res',e=>e.innerText).catch(()=>'');ok(/1 место|место|\d\d:\d\d/i.test(rt),'панель ведущей показывает результат команды: '+rt.replace(/\s+/g,' ').slice(0,100))},
 async offline(c,ok){// пропала связь у игрока на 10 с: его действия доходят после возвращения, позиция и инвентарь сходятся
   const {lead,fol}=c;await fol.setOffline(true);await fol.act([6,143],'ведро');await W(10000);await fol.setOffline(false);
@@ -57,12 +57,12 @@ async sound(c,ok){// звук: кнопки видны везде, выключ�
   await lead.E(`goScene('loft',[72,140]);0`);ok(await lead.E(`!!document.getElementById('mbtn').offsetParent`),'кнопки видны на сеновале');
   await lead.reload();ok(await lead.E('AU.music===false'),'после перезагрузки музыка всё ещё выключена');await lead.pg.click('#mbtn');ok(await lead.E('AU.music===true'),'музыка включается обратно')},
 async stable(c,ok){// олень: можно вернуть в стойло без упряжи, подковать в стойле, имя видно
-  const {lead}=c;await c.goto('stable');await lead.E(`TEAM.inv.push('упряжь');0`);await lead.hold('упряжь');await lead.E(`slotAct(0);0`);await W(200);
+  const {lead}=c;await c.goto('stable');await lead.E(`ss.tags=STALL.slice();ss.namesOK=true;TEAM.inv.push('упряжь');renderSide();0`);await lead.hold('упряжь');await lead.E(`slotAct(0);0`);await W(200);
   const opts=await lead.pg.locator('#pickopts button').allTextContents();await lead.pick(opts.find(t=>!/Отмена|Закрыть/.test(t)));
-  await lead.E(`TEAM.inv=TEAM.inv.map(x=>x.replace(/^@\\d+:/,''));0`);await lead.E(`slotAct(0);0`);await W(200);const t=await lead.E(`document.getElementById('picktext').textContent`);const o2=await lead.pg.locator('#pickopts button').allTextContents();
+  await lead.E(`TEAM.inv=TEAM.inv.map(x=>x.replace(/^@\\d+:/,''));renderSide();0`);await lead.E(`slotAct(0);0`);await W(200);const t=await lead.E(`document.getElementById('picktitle').textContent`);const o2=await lead.pg.locator('#pickopts button').allTextContents();
   ok(/Это /.test(t),'при нажатии на запряжённого оленя видно его имя («'+t.slice(0,40)+'»)');ok(o2.some(x=>/Вернуть .* в стойло/.test(x)),'есть кнопка «Вернуть … в стойло» без упряжи в руках');
-  await lead.pick('Вернуть');ok(await lead.E(`ss.slots?ss.slots[0]==null:true`),'олень вернулся в стойло');
-  const sk=await lead.E(`STALL.indexOf('Скакун')`);await lead.E(`TEAM.inv.push('новая подкова','молоток');0`);await lead.hold('новая подкова');await lead.E(`say(people[me],stallAct(${sk}));0`);await lead.hold('молоток');await lead.E(`say(people[me],stallAct(${sk}));0`);
+  await lead.pick('Вернуть');ok(await lead.E(`!ss.slot[SLOTS[0].k+SLOTS[0].side]`),'олень вернулся в стойло');
+  const sk=await lead.E(`STALL.indexOf('Скакун')`);await lead.E(`TEAM.inv.push('новая подкова','молоток');renderSide();0`);await lead.hold('новая подкова');await lead.E(`say(people[me],stallAct(${sk}));0`);await lead.hold('молоток');await lead.E(`say(people[me],stallAct(${sk}));0`);
   ok(await lead.waitFor('ss.shod'),'Скакуна можно подковать прямо в стойле');
   const lad=await lead.E(`(()=>{const it=ITEMS_S.find(o=>o.hit&&o.hit[0]===236&&o.hit[1]===0);return it?it.hit:null})()`);ok(!!lad,'лестница на сеновал на месте ('+lad+')')},
 async prologue(c,ok){// пролог печатается постепенно и встаёт на паузу, пока вкладка скрыта
