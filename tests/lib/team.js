@@ -33,7 +33,7 @@ class Team{
     else if(kind==='careless'){const a=this.R();
       if(a<.08){P.log('обновил страницу');await P.reload()}
       else if(a<.35){const sc=await P.E(`(()=>{const subs={stable:['loft','forge'],kitchen:['pantry'],pantry:['cellar','kitchen'],loft:['stable'],forge:['stable'],cellar:['pantry']}[ROOM];return subs?subs[0]:null})()`);if(sc){await goTo(P,sc).catch(()=>{});P.log('ушёл в '+sc+' и вернулся');await W(600)}}
-      else if(a<.7){const n=await P.pg.locator('#inv .slot.full').count();if(n){const i=Math.floor(this.R()*n);P.log('потыкал инвентарь');await P.pg.locator('#inv .slot.full').nth(i).click().catch(()=>{});await W(150);await P.pg.locator('#inv .slot.full').nth(i).click().catch(()=>{});}}
+      else if(a<.7){const n=await P.pg.locator('#inv .slot.full').count();if(n){const i=Math.floor(this.R()*n);P.log('потыкал инвентарь');await P.pg.locator('#inv .slot.full').nth(i).click().catch(()=>{});await W(150);await P.pg.locator('#inv .slot.full').nth(i).click().catch(()=>{});await P.E('unholdIt();0').catch(()=>{})}}
       else{P.log('нажал Escape');await P.pg.keyboard.press('Escape');await P.closeUI()}}
     else if(kind==='active'){const box=await P.pg.locator('#game').boundingBox().catch(()=>null);if(box){P.log('быстро накликал по сцене');for(let k=0;k<6;k++){await P.pg.mouse.click(box.x+box.width*(.2+.6*this.R()),box.y+box.height*(.4+.5*this.R()));await W(40)}await W(400);await P.closeUI()}}
     else if(kind==='unstable'){if(this.R()<.4){const ms=2500+this.R()*5000;await P.setOffline(true);await W(ms);await P.setOffline(false);await W(800)}}}
