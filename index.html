@@ -3704,8 +3704,9 @@ let base=null,localCh={},suspendUntil=0,lastSnapT=0,snapDirty=false;
 // свои изменения инвентаря/записок, которые лидер ещё мог не учесть в снимке (seq → подтверждение acks в снимке)
 let mySeq=0,pendInv=[];const acks={};
 // вещь в инвентаре одна, даже если у кого-то в руках («@слот:вещь»): иначе одновременное «взял» двоих её раздваивает
-function invAdd(x){if(TEAM.inv.includes(x))return false;const b=baseIt(x);if(st&&st.used&&st.used[b])return false;const j=TEAM.inv.findIndex(q=>baseIt(q)===b);if(j<0){TEAM.inv.push(x);return true}if(x[0]==='@'&&TEAM.inv[j][0]!=='@')TEAM.inv[j]=x;return false}
-function invRm(x){let i=TEAM.inv.indexOf(x);if(i<0){const b=baseIt(x);i=TEAM.inv.findIndex(q=>baseIt(q)===b)}if(i>=0)TEAM.inv.splice(i,1)}
+function invAdd(x){if(TEAM.inv.includes(x))return false;const b=baseIt(x);if(st&&st.used&&st.used[b])return false;const j=TEAM.inv.findIndex(q=>baseIt(q)===b);if(j<0){TEAM.inv.push(x);return true}
+  const cur=TEAM.inv[j];if(x[0]==='@'){if(cur[0]!=='@')TEAM.inv[j]=x;else{/* двое одновременно взяли в руки одно и то же: у всех остаётся у игрока с меньшим номером */const sx=+x.slice(1,x.indexOf(':')),sc0=+cur.slice(1,cur.indexOf(':'));if(sx<sc0)TEAM.inv[j]=x}}return false}
+function invRm(x){let i=TEAM.inv.indexOf(x);if(i<0){const b=baseIt(x);i=TEAM.inv.findIndex(q=>baseIt(q)===b&&(x[0]==='@'||q[0]!=='@'))}if(i>=0)TEAM.inv.splice(i,1)}
 const PK='santa_pend_'+SID;function savePend(){try{sessionStorage.setItem(PK,JSON.stringify({cid:CID,list:pendInv}))}catch(e){}}
 const noteKey=n=>n.t+'|'+n.b+'|'+(n.owner===undefined?'':n.owner);
 function takeBase(){base={};for(const k in ROOTS)base[k]=clone(ROOTS[k]());base.inv=TEAM.inv.slice();base.notes=TEAM.notes.map(noteKey);base.notesFull=clone(TEAM.notes)}

@@ -68,6 +68,12 @@ async reach(c,ok){// настоящий клик мышью по каждому 
   ok(!bad.length,'ко всем предметам можно подойти или осмотреть их издалека'+(bad.length?': '+bad.join(' | '):''))
   await c.goto('stable');{const [S,ZM,camX,ZX,camY,ZY]=await p.E(`[S,ZM,camX,ZX,camY,ZY]`);const r=await p.pg.locator('#game').boundingBox();
     await p.pg.mouse.click(r.x+(246-camX-ZX)*S*ZM,r.y+(15-camY-ZY)*S*ZM);ok(await p.waitFor(`ROOM==='loft'`,8000),'клик мышью по верёвочной лестнице ведёт на сеновал')}},
+async holdRace(c,ok){// двое в одну долю секунды берут в руки одну вещь: у всех одинаково, вещь одна, у игрока с меньшим номером
+  const {P}=c;await P[0].act([6,143],'ведро');await W(2000);
+  for(let r=0;r<3;r++){await Promise.all(P.map(p=>p.E(`(()=>{if(heldBy(me))unholdIt();return 0})()`)));await W(1500);
+    await Promise.all(P.map(p=>p.E(`holdIt('пустое ведро');0`)));await W(3000);
+    const v=await Promise.all(P.map(p=>p.E(`TEAM.inv.filter(x=>baseIt(x)==='пустое ведро').join('|')`)));
+    ok(v.every(x=>x===v[0])&&!v[0].includes('|')&&v[0].startsWith('@'),'попытка '+(r+1)+': у всех одинаково и вещь одна ('+v.join(' / ')+')')}},
 async offline(c,ok){// пропала связь у игрока на 10 с: его действия доходят после возвращения, позиция и инвентарь сходятся
   const {lead,fol}=c;await fol.setOffline(true);await fol.act([6,143],'ведро');await W(10000);await fol.setOffline(false);
   ok(await lead.waitFor(`anyHas('пустое ведро')`,15000),'ведро, взятое без связи, появилось у товарища после восстановления');
@@ -99,6 +105,6 @@ async prologue(c,ok){// пролог печатается постепенно �
   browser=await chromium.launch();let fails=0;
   for(const [name,fn] of Object.entries(S)){if(ONLY&&!ONLY.includes(name)||name==='prologue')continue;console.log('▶ '+name);let c;
     const ok=(v,m)=>{results.push({sc:name,ok:!!v,msg:m});if(!v)fails++;console.log((v?'  ✓ ':'  ✗ ')+m)};
-    try{c=await game();await fn(c,ok)}catch(e){ok(false,'сценарий упал: '+e.message.split('\n')[0]);if(c)for(const p of c.P)await p.shot(path.join(OUT,name+'-'+p.name+'.png'))}
+    try{c=await game(name==='holdRace'?3:2);await fn(c,ok)}catch(e){ok(false,'сценарий упал: '+e.message.split('\n')[0]);if(c)for(const p of c.P)await p.shot(path.join(OUT,name+'-'+p.name+'.png'))}
     if(c){for(const p of c.P)if(p.errors.length)ok(false,p.name+': ошибки JS: '+p.errors.map(e=>e.msg).slice(0,3).join(' | '));await c.close()}}
   fs.writeFileSync(path.join(OUT,'regress.json'),JSON.stringify(results,null,1));console.log(`\nРЕГРЕССИЯ: проверок ${results.length}, провалено ${fails}. ${OUT}`);await browser.close();kids.forEach(k=>k.kill());process.exit(fails?1:0)})();
