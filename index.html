@@ -880,7 +880,7 @@ function hdLight(lit,t){
 // ---------- СОСТОЯНИЕ КОМНАТЫ ----------
 let st,ROOM='living';
 const TEAM={inv:[],notes:[]};
-function fresh(){return{pen:0,lit:false,box:false,orn:{},hung:{},inv:[],notes:[],pieces:0,pf:{},fireOut:false,catMoved:false,milk:false,bucket:0,safeSeen:false,safeOpen:false,shelfOpen:false,clock:false,gift:false,plaid:false,curtain:false,pillow:false,stocking:false,rug:false,ash:false,ashSeen:false}}
+function fresh(){return{pen:0,lit:false,box:false,orn:{},hung:{},inv:[],notes:[],pieces:0,pf:{},used:{},fireOut:false,catMoved:false,milk:false,bucket:0,safeSeen:false,safeOpen:false,shelfOpen:false,clock:false,gift:false,plaid:false,curtain:false,pillow:false,stocking:false,rug:false,ash:false,ashSeen:false}}
 // вещь «в руках»: в общем инвентаре хранится как '@номер:вещь', пользоваться ею может только тот, кто держит
 const baseIt=x=>x[0]==='@'?x.slice(x.indexOf(':')+1):x;
 const heldBy=i=>{const x=TEAM.inv.find(q=>q.startsWith('@'+i+':'));return x?baseIt(x):null};
@@ -894,8 +894,8 @@ function handMsg(k,orig){return orig}
 function holdIt(k){const i=TEAM.inv.indexOf(k);if(i<0)return;const h=heldBy(me);if(h)TEAM.inv=TEAM.inv.map(x=>x==='@'+me+':'+h?h:x);
   const j=TEAM.inv.indexOf(k);TEAM.inv.splice(j,1,'@'+me+':'+k);try{sfx('pickup');if(people)people[me].hopT=performance.now()}catch(e){}renderSide()}
 function unholdIt(){const h=heldBy(me);if(!h)return;TEAM.inv=TEAM.inv.map(x=>x==='@'+me+':'+h?h:x);try{sfx('pickup')}catch(e){}renderSide()}
-const take=k=>{if(!anyHas(k)){TEAM.inv.push(k);try{renderSide()}catch(e){};try{sfx('pickup');floatIcon(k);if(people)people[me].hopT=performance.now()}catch(e){}}};
-const drop=k=>{const mk='@'+me+':'+k;if(TEAM.inv.includes(mk))TEAM.inv=TEAM.inv.filter(x=>x!==mk);else TEAM.inv=TEAM.inv.filter(x=>x!==k);try{renderSide()}catch(e){}};
+const take=k=>{if(st&&st.used)delete st.used[k];if(!anyHas(k)){TEAM.inv.push(k);try{renderSide()}catch(e){};try{sfx('pickup');floatIcon(k);if(people)people[me].hopT=performance.now()}catch(e){}}};
+const drop=k=>{const mk='@'+me+':'+k;if(TEAM.inv.includes(mk))TEAM.inv=TEAM.inv.filter(x=>x!==mk);else TEAM.inv=TEAM.inv.filter(x=>x!==k);/* общий список израсходованного: устаревший снимок не вернёт вещь */if(st){if(!st.used)st.used={};st.used[k]=1}try{renderSide()}catch(e){}};
 function piece(back,key){if(!st.pf)st.pf={};const isNew=!st.pf[key];st.pf[key]=1;st.pieces=Math.min(9,Math.max(Object.keys(st.pf).length,st.pieces+(isNew?1:0)));try{sfx('important');floatIcon('обрывок')}catch(e){}if(back)TEAM.notes.push({t:'Обрывок '+st.pieces+' из 9',b:back});renderSide();
   return st.pieces>=9?'Это последний, девятый обрывок! Фото собрано целиком: кнопка «Фото ёлки» внизу. Теперь нарядите ёлку.':'Обрывок фото! ('+st.pieces+' из 9). Он встал на место на фото: кнопка «Фото ёлки» внизу.'+(back?' На обороте что-то написано.':'')}
 
@@ -2887,7 +2887,7 @@ function bowlText(){let g2=0,l=0;sk.bowl.forEach(b=>{if(b.unit==='стакан')
 function pl(n,a,b,c){const m=n%100,d=n%10;if(m>10&&m<20)return c;if(d===1)return a;if(d>1&&d<5)return b;return c}
 function bowlAct(){if(sk.done)return'На столе остывают волшебные пряники!';
   const have=INGR.filter(has);const opts=have.map(k=>({label:'Положить: '+k,fn:()=>measure(k)}));
-  if(sk.bowl.length)opts.push({label:'Вылить всё и начать заново',ghost:true,fn:()=>{const back=sk.bowl.map(b=>b.k);sk.bowl=[];back.forEach(k=>{if(!anyHas(k))TEAM.inv.push(k)});renderSide();say(people[me],'Вы вылили тесто и начали заново. Продукты вернулись в инвентарь: '+back.join(', ')+'.')}});
+  if(sk.bowl.length)opts.push({label:'Вылить всё и начать заново',ghost:true,fn:()=>{const back=sk.bowl.map(b=>b.k);sk.bowl=[];back.forEach(k=>{if(st.used)delete st.used[k];if(!anyHas(k))TEAM.inv.push(k)});renderSide();say(people[me],'Вы вылили тесто и начали заново. Продукты вернулись в инвентарь: '+back.join(', ')+'.')}});
   opts.push({label:'Отойти',ghost:true,fn:()=>{}});
   openPick('Миска для теста',bowlText()+(have.length?' Выберите, что положить.':' У команды нет продуктов: соберите их на кухне, в кладовой и в погребе.'),opts);return null}
 function measure(k){let g2=0,l=0;const lab=()=>'Отмерено: '+g2+' '+pl(g2,'стакан','стакана','стаканов')+', '+l+' '+pl(l,'ложка','ложки','ложек');
@@ -3698,7 +3698,7 @@ let base=null,localCh={},suspendUntil=0,lastSnapT=0,snapDirty=false;
 // свои изменения инвентаря/записок, которые лидер ещё мог не учесть в снимке (seq → подтверждение acks в снимке)
 let mySeq=0,pendInv=[];const acks={};
 // вещь в инвентаре одна, даже если у кого-то в руках («@слот:вещь»): иначе одновременное «взял» двоих её раздваивает
-function invAdd(x){if(TEAM.inv.includes(x))return false;const b=baseIt(x);const j=TEAM.inv.findIndex(q=>baseIt(q)===b);if(j<0){TEAM.inv.push(x);return true}if(x[0]==='@'&&TEAM.inv[j][0]!=='@')TEAM.inv[j]=x;return false}
+function invAdd(x){if(TEAM.inv.includes(x))return false;const b=baseIt(x);if(st&&st.used&&st.used[b])return false;const j=TEAM.inv.findIndex(q=>baseIt(q)===b);if(j<0){TEAM.inv.push(x);return true}if(x[0]==='@'&&TEAM.inv[j][0]!=='@')TEAM.inv[j]=x;return false}
 function invRm(x){let i=TEAM.inv.indexOf(x);if(i<0){const b=baseIt(x);i=TEAM.inv.findIndex(q=>baseIt(q)===b)}if(i>=0)TEAM.inv.splice(i,1)}
 const PK='santa_pend_'+SID;function savePend(){try{sessionStorage.setItem(PK,JSON.stringify({cid:CID,list:pendInv}))}catch(e){}}
 const noteKey=n=>n.t+'|'+n.b+'|'+(n.owner===undefined?'':n.owner);
@@ -3861,7 +3861,8 @@ document.getElementById('epiclose').addEventListener('click',()=>{NET.finDone=tr
 // Если двое почти одновременно делают два последних действия, каждый у себя видит, что одно ещё не сделано,
 // и уровень никто не засчитывает. Поэтому лидер сам проверяет условия по уже общему состоянию.
 function netDoneCheck(){if(SPEC||transBusy||!people)return;const L=levelOf(ROOM);
-  try{if(L==='obs'&&so&&so.dome&&!so.done)traceBeam();/* луч у всех по текущим зеркалам */
+  try{if(st&&st.used){const n=TEAM.inv.filter(x=>!st.used[baseIt(x)]);if(n.length!==TEAM.inv.length){TEAM.inv=n;renderSide()}}/* израсходованное не возвращается */
+    if(L==='obs'&&so&&so.dome&&!so.done)traceBeam();/* луч у всех по текущим зеркалам */
     if(!NET.leader)return;
     if(L==='work'&&sw&&!sw.done&&sw.boxes.length&&sw.boxes.every(b=>b.done)){sw.done=true;renderSide();autoNext('clock',2200)}
     else if(L==='clock'&&sc&&!sc.done&&Object.keys(TSIZE).every(p=>sc.g.some(q=>q.peg===p))){sc.done=true;sc.doneT=performance.now();autoNext('stable',3000)}
