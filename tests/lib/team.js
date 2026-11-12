@@ -1,6 +1,7 @@
 // Команда из нескольких виртуальных игроков: выбор действующего игрока, профили поведения,
 // проверки, запись багов, сверка состояния между игроками.
-const {W}=require('./player');const {goTo}=require('./levels');
+const {W}=require('./player');const {goTo,ORDER}=require('./levels');
+const LOF={pantry:'kitchen',cellar:'kitchen',loft:'stable',forge:'stable'};
 function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 class Team{
   constructor(run,id,name,profiles,seed){this.run=run;this.id=id;this.name=name;this.profiles=profiles;this.R=rng(seed);this.seed=seed;this.P=[];this.level='living';this.checks=[];this.stepN=0;this.levels={}}
@@ -13,7 +14,7 @@ class Team{
   async step(room,fn){this.stepN++;const P=this.who();const partner=this.other(P);
     const noise=partner&&this.level!=='boss'&&this.level!=='flight'?this.noise(partner):Promise.resolve();
     if(this.prof(P)==='unstable'&&this.R()<.12)this.blip(P,1500+this.R()*2500);
-    let err=null;for(const Q of [P,partner].filter(Boolean)){try{await this.ready(Q);await goTo(Q,room);await fn(Q);err=null;break}catch(e){err=e;Q.log('ОШИБКА: '+e.message.split('\n')[0]);await Q.closeUI().catch(()=>{});await W(1200)}}
+    let err=null;for(const Q of [P,partner].filter(Boolean)){try{await this.ready(Q);{const cur=await Q.E('levelOf(ROOM)');const want=LOF[room]||room;if(ORDER.indexOf(cur)>ORDER.indexOf(want)){Q.log('шаг пропущен: команда уже на уровне '+cur);err=null;break}}await goTo(Q,room);await fn(Q);err=null;break}catch(e){err=e;Q.log('ОШИБКА: '+e.message.split('\n')[0]);await Q.closeUI().catch(()=>{});await W(1200)}}
     await noise.catch(()=>{});if(err&&/has been closed/.test(err.message))throw err;
     if(err){this.run.bug({team:this,sev:'серьёзный',title:'Шаг не выполнился ни у одного игрока: '+err.message.split('\n')[0],level:this.level,room});this.failedSteps=(this.failedSteps||0)+1}
     await W(this.P.length>1?250:60)}

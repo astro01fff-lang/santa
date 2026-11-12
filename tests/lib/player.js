@@ -19,6 +19,7 @@ class Player{
     pt(h){const it=this.find(h);if(!it)return null;const [hx,hy,hw,hh]=it.hit;const cx=hx+hw/2,cy=hy+hh/2;let best=null,bd=1e9;
       for(let y=hy+1;y<hy+hh;y+=1.5)for(let x=hx+1;x<hx+hw;x+=1.5){if(this.under(x,y)!==it)continue;const d=Math.hypot(x-cx,y-cy);if(d<bd){bd=d;best=[x,y]}}return best},
     scr(lx,ly){const r=cv.getBoundingClientRect();return[r.left+(lx-camX-ZX)*S*ZM,r.top+(ly-camY-ZY)*S*ZM]},
+    rootSig(){const L=levelOf(ROOM);const R={living:st,work:sw,clock:sc,stable:ss,kitchen:sk,obs:so}[L];try{return JSON.stringify(R,(k,v)=>/^(beam|passed|hitDecoy|rotT|ang|hangT|catT|melt|s|parts)$/.test(k)?undefined:v)+'|'+TEAM.inv.join(',')}catch(e){return ''}},
     busy(){return !!(document.querySelector('.modal:not([hidden])')||!document.getElementById('netmsg').hidden)},
     act(h){const it=this.find(h);if(!it)return '__НЕТ__';bubble=null;if(!modal.hidden||!pick.hidden)return '__ЗАНЯТО__ '+(modal.hidden?'выбор':'окно');actOn(it);return bubble?bubble.text:'(окно)'},
     near(x,y){const p=people[me];p.x=x-8;p.y=y-20},
@@ -34,10 +35,10 @@ class Player{
   async act(h,label){this.log('нажал '+(label||JSON.stringify(h)));
     const pt=await this.E(`BOT.pt(${JSON.stringify(h)})`);if(!pt){const room=await this.E('ROOM').catch(()=>'?');throw new Error('нет предмета '+JSON.stringify(h)+(label?' «'+label+'»':'')+' в '+room)}
     if(await this.E('BOT.busy()'))await this.closeUI();
-    const room0=await this.E(`(()=>{path=null;pendingItem=null;pendingLook=false;bubble=null;return ROOM})()`);
+    const room0=await this.E(`(()=>{path=null;pendingItem=null;pendingLook=false;bubble=null;window.__R0=BOT.rootSig();return ROOM})()`);
     const [x,y]=await this.E(`BOT.scr(${pt[0]},${pt[1]})`);await this.pg.mouse.click(x,y);
     let r='—';const t0=Date.now();
-    while(Date.now()-t0<12000){const st=await this.E(`(()=>{if(bubble&&bubble.text)return['say',bubble.text];if(BOT.busy())return['ui','(окно)'];if(ROOM!==${JSON.stringify(room0)})return['room','(переход)'];if(transBusy)return['room','(переход)'];return null})()`).catch(()=>null);
+    while(Date.now()-t0<12000){const st=await this.E(`(()=>{if(bubble&&bubble.text)return['say',bubble.text];if(BOT.busy())return['ui','(окно)'];if(ROOM!==${JSON.stringify(room0)})return['room','(переход)'];if(BOT.rootSig()!==window.__R0&&!path)return['state','(изменилось состояние)'];if(transBusy)return['room','(переход)'];return null})()`).catch(()=>null);
       if(st){r=st[1];break}await W(120)}
     if(r==='—')r='(нет реакции)';if(/Туда не пройти/.test(r))this.log('  ← ТУДА НЕ ПРОЙТИ');
     this.log('  ← '+String(r).slice(0,60));await W(120);return r}
