@@ -16,7 +16,7 @@ const run={bugs:[],pend:[],t0:Date.now(),seed:SEED,
   bug(o){const id=this.bugs.length+1;const b={id,sev:o.sev,title:o.title,team:o.team?o.team.name:'—',level:LVNAME[o.level]||o.level||'—',room:o.room,seed:SEED,at:new Date().toISOString()};this.bugs.push(b);
     console.log(`  🐞 #${id} [${b.sev}] ${b.team} · ${b.level}: ${b.title}`);
     if(o.team)this.pend.push((async()=>{b.players=[];for(const P of o.team.P){const room=await P.E('ROOM').catch(()=>'?');const file=await P.shot(path.join(OUT,'shots',`bug${id}-${P.name}.png`));
-      if(process.env.QA_VERBOSE)console.log('     '+P.name+': '+P.trail.slice(-6).join(' → '));b.players.push({name:P.name,profile:PNAME[o.team.prof(P)],room,actions:P.trail.slice(-12),js:P.errors.slice(-5).map(e=>e.msg),net:P.net.slice(-5).map(e=>e.url+' '+e.err),shot:file&&path.relative(OUT,file)})}})().catch(()=>{}))}};
+      if(process.env.QA_VERBOSE)console.log('     '+P.name+': '+P.trail.slice(-6).join(' → '));const invlog=await P.E('window.__INVLOG||[]').catch(()=>[]);b.players.push({invlog,full:(P.full||[]).slice(-200),name:P.name,profile:PNAME[o.team.prof(P)],room,actions:P.trail.slice(-12),js:P.errors.slice(-5).map(e=>e.msg),net:P.net.slice(-5).map(e=>e.url+' '+e.err),shot:file&&path.relative(OUT,file)})}})().catch(()=>{}))}};
 (async()=>{
   const kids=[];if(await portOpen(PORT)){const r=await fetch(BASE+'/index.html').catch(()=>null);if(!r||r.headers.get('x-santa-qa')!=='1'){console.error('Порт '+PORT+' занят чужим сервером. Остановите его и запустите снова.');process.exit(2)}}else {kids.push(cp.spawn(process.execPath,[path.join(__dirname,'serve.js'),String(PORT)],{stdio:'ignore'}))}
   if(!(await portOpen(9001))){kids.push(cp.spawn(process.execPath,[path.join(__dirname,'broker.js')],{stdio:'ignore'}))}

@@ -53,6 +53,8 @@ async work(T){
   for(let i=0;i<8;i++){
     await T.step('work',async P=>{if(!(await P.E(`!!sw.boxes[${i}].name`))){const lab=await P.E(`TEAM.inv.map(baseIt).find(x=>x.startsWith('табличка'))`);await P.hold(lab);await P.E(`BOT.near(BXC[${i}],150);BOT.act([BXC[${i}]-11,144])`);P.log('табличка на коробку '+i)}});
     await T.step('work',async P=>{const w=await P.E(`WANT[sw.boxes[${i}].name]`);let r;
+      {const by=await P.E(`(()=>{const g=sw.gifts.find(g=>g.n===WANT[sw.boxes[${i}].name]&&!g.gone);return g&&!g.on&&g.by!=null&&g.by!==me?g.by:null})()`);
+       if(by!==null){for(const Q of T.P)if(Q!==P&&await Q.E('me')===by){Q.log('кладёт в коробку '+i+' подарок, который уже держит');await Q.E(`BOT.near(BXC[${i}],150);BOT.act([BXC[${i}]-11,144])`);T.ok(await Q.waitFor(`sw.boxes[${i}].done`),'коробка '+(i+1)+' собрана');return}}}
       for(let a=0;a<10;a++){r=await P.E(`(()=>{const g0=sw.gifts.find(g=>g.n===WANT[sw.boxes[${i}].name]&&g.on&&!g.gone);if(!g0)return null;const [x,y]=loopPos(g0.s);BOT.near(x,y+2);return CONV.act()})()`);if(await P.E(`!!(people[me].held)`))break;await W(400)}
       P.log('снял с ленты «'+w+'»');T.ok(await P.E('!!people[me].held'),'подарок «'+w+'» в руках');
       await P.E(`BOT.near(BXC[${i}],150);BOT.act([BXC[${i}]-11,144])`);P.log('положил в коробку '+i);

@@ -9,14 +9,15 @@ class Player{
     this.pg.on('requestfailed',r=>{const u=r.url();if(!this.online||/favicon/.test(u))return;this.net.push({t:Date.now(),url:u,err:r.failure()&&r.failure().errorText})});
     this.pg.on('response',r=>{if(r.status()>=400&&!/favicon/.test(r.url()))this.net.push({t:Date.now(),url:r.url(),err:'HTTP '+r.status()})});
     this.url=url;await this.pg.goto(url);await W(1500)}
-  log(s){this.trail.push(new Date().toISOString().slice(11,19)+' '+s);if(this.trail.length>60)this.trail.shift()}
+  log(s){this.trail.push(new Date().toISOString().slice(11,19)+' '+s);this.full=(this.full||[]).concat(this.trail[this.trail.length-1]);if(this.trail.length>60)this.trail.shift()}
   E(code){return this.pg.evaluate(c=>window.__EV(c),code)}
   async install(){await this.E(`window.BOT={
     find(h){return curItems().find(o=>o.hit&&o.hit[0]===h[0]&&o.hit[1]===h[1]&&(h[2]===undefined||o.hit[2]===h[2]))},
     act(h){const it=this.find(h);if(!it)return '__НЕТ__';bubble=null;if(!modal.hidden||!pick.hidden)return '__ЗАНЯТО__ '+(modal.hidden?'выбор':'окно');actOn(it);return bubble?bubble.text:'(окно)'},
     near(x,y){const p=people[me];p.x=x-8;p.y=y-20},
     closeUI(){document.getElementById('prolog').hidden=true;document.querySelectorAll('.modal').forEach(m=>{if(m.id!=='epibox')m.hidden=true});try{if(!treeBox.hidden)closeTree()}catch(e){}try{if(!gearBox.hidden)closeGears()}catch(e){}const nm=document.getElementById('netmsg');if(nm)nm.hidden=true}
-  };if(!window.__BANNERS){window.__BANNERS=[];const tr=document.getElementById('trans');new MutationObserver(()=>{if(!tr.hidden&&/Уровень пройден/.test(tr.textContent))window.__BANNERS.push({lv:levelOf(ROOM),t:Date.now()})}).observe(tr,{attributes:true,childList:true})}0`)}
+  };if(!window.__INVLOG){window.__INVLOG=[];let last=JSON.stringify(TEAM.inv);setInterval(()=>{const cur=JSON.stringify(TEAM.inv);if(cur!==last){window.__INVLOG.push(new Date().toISOString().slice(11,23)+' '+(NET&&NET.leader?'[лидер] ':'')+cur);last=cur;if(window.__INVLOG.length>400)window.__INVLOG.shift()}},50)}
+  if(!window.__BANNERS){window.__BANNERS=[];const tr=document.getElementById('trans');new MutationObserver(()=>{if(!tr.hidden&&/Уровень пройден/.test(tr.textContent))window.__BANNERS.push({lv:levelOf(ROOM),t:Date.now()})}).observe(tr,{attributes:true,childList:true})}0`)}
   async reload(){this.log('перезагрузка страницы');await this.pg.reload();await this.waitReady()}
   async waitReady(ms=20000){const t0=Date.now();while(Date.now()-t0<ms){const r=await this.pg.evaluate(()=>!!(window.__EV&&window.NET&&NET.started&&document.getElementById('netui').hidden)).catch(()=>false);if(r)break;await W(300)}
     for(let k=0;k<15;k++){if(await this.pg.evaluate(()=>!!(window.NET&&NET.gotSnap&&!NET.pendingSnap)).catch(()=>false))break;await W(200)}
