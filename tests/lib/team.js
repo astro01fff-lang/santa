@@ -25,7 +25,7 @@ class Team{
       const Q=this.other(P);await this.ready(Q);const room=await P.E('ROOM');await goTo(Q,room).catch(()=>{});
       P.log('берёт «'+name+'» одновременно с '+Q.name);Q.log('берёт «'+name+'» одновременно с '+P.name);
       await Promise.all([P.act(h,name),Q.act(h,name).catch(()=>{})]);await W(1500);
-      for(const R of this.P){const n=await R.E(`TEAM.inv.map(baseIt).filter(x=>x===${JSON.stringify(name)}).length`);this.ok(n===1,'одновременный клик двоих: «'+name+'» в инвентаре ровно 1 раз у '+R.name+' (сейчас '+n+')')}
+      for(const R of this.P){const q=`TEAM.inv.map(baseIt).filter(x=>x===${JSON.stringify(name)}).length`;await R.waitFor(q+'===1',6000);const n=await R.E(q);this.ok(n===1,'одновременный клик двоих: «'+name+'» в инвентаре ровно 1 раз у '+R.name+' (сейчас '+n+')')}
     }else{await P.act(h,name);this.ok(await P.waitFor(`anyHas(${JSON.stringify(name)})`),'взят предмет «'+name+'»')}}
   async noise(P){const pr=this.prof(P);if(pr==='sequential')return;await this.ready(P);
     const kind=pr==='chaos'?this.pick(['explorer','careless','active','unstable','none']):pr;
