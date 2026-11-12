@@ -47,6 +47,14 @@ async last2(c,ok){// двое одновременно закрывают две
   for(const [k,p] of P.entries())await p.E(`(()=>{const g0=sw.gifts.find(g=>g.n===WANT[sw.boxes[${6+k}].name]);g0.on=false;g0.by=me;people[me].held=g0;return 0})()`);await W(1500);
   await Promise.all(P.map((p,k)=>p.E(`(()=>{const i=${6+k};BOT.near(BXC[i],150);return boxAct(i)})()`)));
   for(const p of P)ok(await p.waitFor(`levelOf(ROOM)==='clock'`,15000),p.name+': после одновременного закрытия двух последних коробок команда перешла в часовую башню')},
+async leaderReload(c,ok){// лидер обновляет страницу; пока он загружается, товарищ берёт вещи → ничего не теряется
+  const {lead,fol}=c;const rl=lead.pg.reload();await W(300);await fol.act([137,89],'молоко');await fol.act([6,143],'ведро');await fol.act([95,130],'подушка (обрывок)');
+  await rl;await lead.waitReady();await W(6000);
+  for(const p of [lead,fol])ok(await p.waitFor(`anyHas('стакан молока')&&anyHas('пустое ведро')&&st.pillow&&st.pieces===1`,8000),p.name+': находки, сделанные пока лидер перезагружался, на месте ('+await p.E(`TEAM.inv.join(', ')+'; обрывков '+st.pieces`)+')')},
+async selfReload(c,ok){// игрок что-то сделал и сразу обновил страницу (до того как лидер ответил)
+  const {lead,fol}=c;await fol.E(`BOT.act([137,89]);setTimeout(()=>location.reload(),150);0`).catch(()=>{});await W(600);await fol.waitReady();await W(4000);
+  for(const p of [lead,fol])ok(await p.waitFor(`anyHas('стакан молока')`,8000),p.name+': молоко, взятое прямо перед перезагрузкой, не пропало ('+await p.E(`TEAM.inv.join(', ')`)+')');
+  ok(await lead.E(`TEAM.inv.filter(x=>baseIt(x)==='стакан молока').length`)===1,'молоко не задвоилось')},
 async offline(c,ok){// пропала связь у игрока на 10 с: его действия доходят после возвращения, позиция и инвентарь сходятся
   const {lead,fol}=c;await fol.setOffline(true);await fol.act([6,143],'ведро');await W(10000);await fol.setOffline(false);
   ok(await lead.waitFor(`anyHas('пустое ведро')`,15000),'ведро, взятое без связи, появилось у товарища после восстановления');
