@@ -62,7 +62,7 @@ aside{display:flex;flex-direction:column;gap:14px;min-width:0}
 .modal[hidden]{display:none}
 .intro{gap:10px;width:min(480px,100%)}
 .audioui{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;width:100%;justify-content:flex-end}
-.audioui .btn{font-size:9px;padding:8px 10px}.audioui .btn[aria-pressed="false"]{opacity:.55}
+.audioui .btn{font-size:9px;padding:8px 10px}.audioui .btn[aria-pressed="false"],#mbtn[aria-pressed="false"],#sbtn[aria-pressed="false"]{opacity:.55}
 .vol{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}.vol input{width:80px;accent-color:#f2c14e}
 .modal:not([hidden])>.sheet,.modal:not([hidden])>form{animation:sheetIn .22s ease-out}
 @keyframes sheetIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
@@ -1196,7 +1196,7 @@ cv.addEventListener('pointerdown',e=>{
   e.preventDefault();cv.focus();
   const r=cv.getBoundingClientRect();const lx=(e.clientX-r.left)/S/ZM+camX+ZX,ly=(e.clientY-r.top)/S/ZM+camY+ZY;
   if(palacePointerDown(lx,ly))return;
-  if(ROOM==='boss'&&(sb.phase==='fight'||sb.phase==='shield')){const [qx,qy,qw,qh]=bossQueenRect();if(lx>=qx&&lx<=qx+qw&&ly>=qy&&ly<=qy+qh){bossShoot();return}}
+  if(ROOM==='boss'&&(sb.phase==='fight'||sb.phase==='shield')){const [qx,qy,qw,qh]=bossQueenRect();if(lx>=qx&&lx<=qx+qw&&ly>=qy&&ly<=qy+qh){if(hasWand(me))window.__myShot=1;bossShoot();return}}
   // клик по предмету: идем к нему и осматриваем
   // попали внутрь зоны — берём самый маленький предмет под курсором; промахнулись — ближайший в пределах допуска
   let it=null,ba=1e9;for(const x of curItems()){if(x.hit){const [hx,hy,hw,hh]=x.hit;if(lx>=hx&&lx<=hx+hw&&ly>=hy&&ly<=hy+hh&&(x.prio?0:hw*hh)<ba){ba=x.prio?0:hw*hh;it=x}}}
@@ -1483,7 +1483,7 @@ function boxAct(i){
     bx.name=lab.match(/«(.+)»/)[1];drop(lab);return'Вы прикрепили табличку. Это коробка для '+GEN[bx.name]+'.'}
   if(bx.done)return'Коробка для '+GEN[bx.name]+' уже закрыта.';
   if(!p.held)return'Коробка для '+GEN[bx.name]+'. Пока пустая.';
-  const g0=p.held;p.held=null;
+  const g0=p.held;p.held=null;g0.by=null;
   if(g0.n===WANT[bx.name]){bx.done=true;bx.doneT=performance.now();g0.gone=true;renderSide();
     if(sw.boxes.every(b=>b.done)){sw.done=true;renderSide();
       return'Все подарки разложены! Дверь в часовую башню открыта!'}
@@ -1504,10 +1504,10 @@ function freeS(s0,self){
 function convDist(p){const cx=p.x+8,cy=p.y+20;const dx=Math.max(52-cx,0,cx-200),dy=Math.max(68-cy,0,cy-130);return Math.hypot(dx,dy)}
 function giftNear(p){let best=null,bd=24;const cx=p.x+8,cy=p.y+18;for(const g0 of sw.gifts){if(!g0.on||g0.gone)continue;const [x,y]=loopPos(g0.s);const d=Math.hypot(x-cx,y-cy);if(d<bd){bd=d;best=g0}}return best}
 const CONV={conv:true,act(){const p=people[me];
-  if(p.held){const h=p.held;p.held=null;h.s=freeS(loopS(p.x+8,p.y+10),h);h.on=true;return'Вы вернули «'+h.n+'» на ленту.'}
+  if(p.held){const h=p.held;p.held=null;h.s=freeS(loopS(p.x+8,p.y+10),h);h.on=true;h.by=null;return'Вы вернули «'+h.n+'» на ленту.'}
   if(!sw.running)return'Лента стоит. Сначала запустите конвейер.';
   const g0=giftNear(p);if(!g0)return'Подарки пока далеко. Подождите, пока подъедут.';
-  g0.on=false;p.held=g0;return'Вы сняли с ленты: '+g0.n+'.'}};
+  g0.on=false;g0.by=me;p.held=g0;return'Вы сняли с ленты: '+g0.n+'.'}};
 
 function drawWork(t,dt){
   if(sw.running)sw.gifts.forEach(g0=>{if(g0.on)g0.s+=12*dt});
@@ -1717,14 +1717,14 @@ function openPick(title,text,opts){document.getElementById('picktitle').textCont
 function closePick(){pick.hidden=true;cv.focus()}
 document.getElementById('pickclose').addEventListener('click',closePick);
 
+function shoeAct(){if(ss.shod)return null;
+  if(!ss.shoeOn&&holds('новая подкова')){ss.shoeOn=true;drop('новая подкова');return'Вы приложили новую подкову к копыту Скакуна. Теперь прибейте её молотком.'}
+  if(ss.shoeOn&&holds('молоток')){ss.shod=true;sfx('gear');return'Тук-тук! Вы подковали Скакуна. Он больше не хромает.'}
+  return null}
 function stallAct(i){
   const name=STALL[i];
   if(!deerAtStall(i))return'Стойло пустое: этот олень уже в упряжке.';
-  if(name==='Скакун'&&!ss.shod){
-    if(!ss.shoeOn&&holds('новая подкова')){ss.shoeOn=true;drop('новая подкова');return'Вы приложили новую подкову к копыту Скакуна. Теперь её надо прибить молотком.'}
-    if(ss.shoeOn&&holds('молоток')){ss.shod=true;return'Тук-тук! Вы подковали оленя. Он больше не хромает.'}
-    if(ss.shoeOn&&ss.namesOK)return handMsg('молоток','Подкова приложена к копыту. Чем её прибить?');
-    if(ss.namesOK&&anyHas('новая подкова'))return handMsg('новая подкова','Скакун поджимает ногу: не хватает подковы.')}
+  if(name==='Скакун'&&!ss.shod){const r=shoeAct();if(r)return r;if(ss.shoeOn&&ss.namesOK)return'Подкова приложена к копыту, но ещё не прибита.'}
   if(ss.namesOK)return'Это '+name+'. '+(name==='Скакун'&&!ss.shod?'Он хромает: не хватает подковы.':'Олень довольно жует ягель.');
   const cur=ss.tags[i];
   const opts=DNAMES.map(n=>({label:n+(ss.tags.includes(n)&&ss.tags[i]!==n?' (висит на другом)':''),fn:()=>{const j=ss.tags.indexOf(n);if(j>=0)ss.tags[j]=null;ss.tags[i]=n;checkTags()}}));
@@ -1741,11 +1741,14 @@ function checkTags(){renderSide();
 function slotAct(si){
   const sl=SLOTS[si],key=sl.k+sl.side;
   if(ss.done)return'Упряжка готова.';
-  if(!holds('упряжь'))return handMsg('упряжь','Здесь место для оленя в упряжке.'+(anyHas('упряжь')?'':' Нужна упряжь.'));
+  if(ss.slot[key]){const n=ss.slot[key];
+    if(n==='Скакун'&&!ss.shod){const r=shoeAct();if(r)return r}
+    openPick('Это '+n,'Пара '+sl.k+(sl.k===1?', впереди всех':sl.k===4?', у самых саней':'')+'. '+(n==='Скакун'&&!ss.shod?(ss.shoeOn?'Подкова приложена к копыту, но ещё не прибита.':'Скакун хромает: не хватает подковы.'):DEER[n].d[0].toUpperCase()+DEER[n].d.slice(1)+'.'),
+      [{label:'Вернуть '+n+' в стойло',fn:()=>{delete ss.slot[key];renderSide();say(people[me],n+' вернулся в стойло.')}},{label:'Оставить',ghost:true,fn:()=>{}}]);return null}
+  if(!holds('упряжь'))return handMsg('упряжь','Здесь место для оленя в упряжке.');
   if(!ss.namesOK)return'Сначала разберитесь, кто есть кто: на стойлах нет табличек.';
   const placed=Object.values(ss.slot);
   const opts=DNAMES.filter(n=>!placed.includes(n)).map(n=>({label:n,fn:()=>{ss.slot[key]=n;renderSide();say(people[me],n+' теперь в паре '+sl.k+'.')}}));
-  if(ss.slot[key])opts.push({label:'Вернуть '+ss.slot[key]+' в стойло',ghost:true,fn:()=>{delete ss.slot[key];renderSide()}});
   openPick('Пара '+sl.k,(sl.k===1?'Первая пара, впереди всех. ':sl.k===4?'Последняя пара, у самых саней. ':'')+(ss.slot[key]?'Сейчас здесь '+ss.slot[key]+'.':'Кого сюда поставить?'),opts);
   return null;
 }
@@ -2136,7 +2139,14 @@ function hdLivingLight(lit,t){
 // ================= МАСТЕРСКАЯ НА ФОНЕ ИЗ НЕЙРОСЕТИ =================
 const IMG_W=new Image();let IMG_W_OK=false;IMG_W.onload=()=>{IMG_W_OK=true};IMG_W.src='rooms/work.webp';
 const BXI=[[145,280],[300,440],[465,595],[625,755],[785,915],[940,1075],[1100,1230],[1255,1390]];
+function giftHolders(){if(!sw||!sw.gifts||!people)return;
+  // подарок «в руках» хранится в общем состоянии (g.by = номер игрока): так его видят все и он не теряется при перезагрузке
+  people.forEach(p=>{const g0=sw.gifts.find(q=>!q.on&&!q.gone&&q.by===p.i);p.held=g0||null});
+  // потерянный подарок (не на ленте, не в коробке, ни у кого в руках) возвращается на ленту
+  const boss=!window.__NET||(window.NET&&NET.leader);if(!boss)return;
+  sw.gifts.forEach(q=>{if(q.on||q.gone)return;const h=q.by!=null&&people[q.by];if(h&&!h.gone&&!h.off)return;q.on=true;q.by=null;q.s=freeS(q.s||0,q)})}
 function hdWorkImg(t,dt){
+  giftHolders();
   if(sw.running)sw.gifts.forEach(g0=>{if(g0.on)g0.s+=12*dt});
   if(IMG_W_OK){g.imageSmoothingEnabled=true;g.drawImage(IMG_W,0,0,HW,HH);g.imageSmoothingEnabled=false}else{g.fillStyle='#3a2a1a';g.fillRect(0,0,HW,HH)}
   // движение ленты
@@ -2479,7 +2489,7 @@ const INTRO={
  kitchen:{n:5,t:'Пряничная кухня',d:'Олени запряжены, но до дворца Королевы им не долететь. Помогут только волшебные пряники миссис Клаус. Королева заморозила книгу рецептов, уцелели лишь отдельные страницы. Испеките пряники по рецепту. Кухня, кладовая и погреб связаны дверью и люком.',l:[]},
  obs:{n:6,t:'Обсерватория',d:'Сани готовы, олени сыты. Но где замок Снежной Королевы? Дорогу к нему покажет только северное сияние. Откройте купол и направьте луч звезды через зеркала в кристалл.',l:[]},
  clock:{n:3,t:'Часовая башня',d:'Королева остановила главные часы Северного полюса: пока они стоят, полночь не наступит. Найдите в башне 6 шестерёнок и вставьте их в механизм на стене, каждую в контур своего размера.',l:[]},
- boss:{n:7,t:'Ледяной дворец',d:'Санта вморожен в лёд рядом с троном Снежной Королевы. Обычным оружием её не победить. Найдите световые жезлы, вмёрзшие в лёд по всему залу, и все вместе сразитесь с Королевой. У каждого три жизни. Кто попал под ледяные колья, теряет жизнь, а без жизней замерзает. Замёрзшего отогревают только всей командой: встаньте вокруг него и держитесь рядом, пока лёд не растает.',l:[]}
+ boss:{n:7,t:'Ледяной дворец',d:'Санта вморожен в лёд рядом с троном Снежной Королевы. Обычным оружием её не победить. Разбейте лёд у светового жезла (нажмите на него 3 раза), возьмите себе один жезл и стреляйте в Королеву — нажимайте на неё. Каждому — свой жезл. У каждого три жизни. Кто попал под ледяные колья, теряет жизнь, а без жизней замерзает. Замёрзшего отогревают только всей командой: встаньте вокруг него и держитесь рядом, пока лёд не растает.',l:[]}
 };
 const introBox=document.getElementById('introbox');
 function showIntro(r){const d=INTRO[r];if(!d)return;sfx('task');
@@ -2669,7 +2679,7 @@ function bossShoot(){
     else{sparkBurst(sb.qx,sb.qy+10,'#9adfff',8);if(need>1)say(p,'Щит держит! Нужен залп: '+need+' луча одновременно.')}
     return}
   sfx('hit');sb.hp-=100/(45*nShooters());sb.hitUntil=now+260;sb.lastHit=now;sparkBurst(sb.qx,sb.qy,'#fff2c0',12);
-  const thr=[66,33][sb.shN||0];if(thr!==undefined&&sb.hp<=thr&&sb.phase==='fight'){sb.shN=(sb.shN||0)+1;sfx('shield');sb.phase='shield';sb.shots=[];qTaunt('Ледяной щит! Вам его не пробить!');sb.castUntil=now+800}
+  const thr=undefined;if(thr!==undefined&&sb.hp<=thr&&sb.phase==='fight'){sb.shN=(sb.shN||0)+1;sfx('shield');sb.phase='shield';sb.shots=[];qTaunt('Ледяной щит! Вам его не пробить!');sb.castUntil=now+800}
   if(sb.hp<=0){sfx('victory');auStartMusic('win');sb.finalSec=Math.floor((now-GAME_T0)/1000);sb.hp=0;sb.phase='win';sb.winT=now;sb.spikes=[];sb.orbs=[];sb.frozen={};renderSide()}
 }
 function bossAttack(now){
@@ -2686,8 +2696,10 @@ function bossTick(now,dt){
   if(!sb)return;thawTick(now,dt);
   if(sb.phase==='fight'||sb.phase==='shield'){
     const tt=now/1000;sb.qx=192+Math.sin(tt*.42)*95;sb.qy=128+Math.sin(tt*.9)*10;
+    {const live=people.filter(p=>!p.gone&&!p.off);const thawing=live.some(p=>isFrozen(p.i))&&!live.every(p=>isFrozen(p.i));
+     if(thawing){sb.nextAtk=Math.max(sb.nextAtk,now+2500);sb.spikes=sb.spikes.filter(q=>now<q.t0);sb.orbs=[]}}
     if(now>sb.nextAtk)bossAttack(now);
-    if(sb.phase==='fight'&&sb.lastHit&&now-sb.lastHit>4000&&sb.hp<100){const cap=[100,66,33][sb.shN||0];sb.hp=Math.min(cap,sb.hp+dt*1.2);if(!sb.regT||now-sb.regT>6000){sb.regT=now;qTaunt('Холод лечит меня! Не давайте мне передышки!')}}
+    if(sb.phase==='fight'&&sb.lastHit&&now-sb.lastHit>4000&&sb.hp<100){const cap=100;sb.hp=Math.min(cap,sb.hp+dt*1.2);if(!sb.regT||now-sb.regT>6000){sb.regT=now;qTaunt('Холод лечит меня! Не давайте мне передышки!')}}
   }else if(sb.phase==='intro'){sb.qx=192;sb.qy=118+Math.sin(now/700)*3}
   sb.spikes.forEach(s=>{if(!s.hit&&now>s.t0+1500){s.hit=true;sfx('spike');sb.shake=Math.max(sb.shake,now+180);people.filter(p=>!p.gone&&!p.off).forEach(p=>{if(Math.hypot(p.x+8-s.x,p.y+20-s.y)<10)freeze(p.i)});for(let k=0;k<5;k++)sb.parts.push({x:s.x,y:s.y-4,vx:(Math.random()-.5)*70,vy:-30-Math.random()*40,life:.5,t:0,col:'#e8f8ff',s:1.4})}});
   sb.spikes=sb.spikes.filter(s=>now<s.t0+2900);
@@ -2774,6 +2786,10 @@ function bossHUD(now){
   if(sb.phase!=='win'){ctx.fillStyle='rgba(10,14,34,.85)';ctx.fillRect(x-4,y-4,w+8,S*5+8);ctx.fillStyle='#3a1a24';ctx.fillRect(x,y,w,S*5);
     ctx.fillStyle=sb.phase==='shield'?'#9adfff':'#d6453d';ctx.fillRect(x,y,w*sb.hp/100,S*5);
     ctx.font=`${Math.max(7,Math.round(S*2.2))}px 'Press Start 2P', monospace`;ctx.fillStyle='#f4ecd8';ctx.fillText(sb.phase==='shield'?'ЩИТ! Нужен залп: '+Math.min(3,nShooters())+' луча за 3 секунды':'Снежная Королева',W*S/2,y+S*2.6)}
+  // подсказка-инструкция внизу, пока игрок не начал стрелять
+  if(sb.phase!=='win'&&!(window.__myShot)){const t=hasWand(me)?'Жезл у вас! Нажимайте на Королеву, чтобы стрелять.':'Найдите жезл во льду и нажмите на него 3 раза, чтобы разбить лёд. Каждому — один жезл.';
+    const fs2=Math.max(11,Math.round(S*3));ctx.font=`600 ${fs2}px 'Golos Text', system-ui, sans-serif`;const tw=ctx.measureText(t).width+fs2*1.6,bx=(W*S-tw)/2,by=H*S-fs2*3.2;
+    ctx.fillStyle='rgba(16,20,42,.9)';ctx.fillRect(bx,by,tw,fs2*2);ctx.strokeStyle='#f2c14e';ctx.lineWidth=Math.max(1.5,S*.4);ctx.strokeRect(bx,by,tw,fs2*2);ctx.fillStyle='#fff2d0';ctx.textBaseline='middle';ctx.fillText(t,W*S/2,by+fs2)}
   if(sb.taunt){const a=1-(now-sb.taunt.t)/3200;if(a<=0)sb.taunt=null;else{ctx.font=`600 ${Math.max(12,Math.round(S*3.2))}px 'Golos Text', system-ui, sans-serif`;ctx.lineWidth=S;ctx.strokeStyle=`rgba(10,20,50,${a})`;ctx.fillStyle=`rgba(200,235,255,${a})`;ctx.strokeText(sb.taunt.s,W*S/2,y+S*11);ctx.fillText(sb.taunt.s,W*S/2,y+S*11)}}
   const p=people[me];if(hasWand(me)&&sb.phase!=='win'){const r=Math.max(0,((sb.cd[me]||0)-now)/1200);const cx=(p.x+8-camX)*S,cy=(p.y-14-camY)*S;
     ctx.strokeStyle='rgba(255,230,150,.9)';ctx.lineWidth=S*.8;ctx.beginPath();ctx.arc(cx,cy,S*2.4,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-r));ctx.stroke()}
@@ -3079,7 +3095,7 @@ function hdSceneLight(k,t){const L={kitchen:[[1010,330,90],[1390,230,60],[160,20
 const AU={ctx:null,mus:null,sfx:null,music:true,sound:true,mv:.5,sv:.7,track:null,timer:0,next:0,step:0,last:{}};
 try{const s=JSON.parse(localStorage.getItem('santa_audio')||'null');if(s)Object.assign(AU,{music:!!s.music,sound:!!s.sound,mv:+s.mv,sv:+s.sv})}catch(e){}
 function auSave(){try{localStorage.setItem('santa_audio',JSON.stringify({music:AU.music,sound:AU.sound,mv:AU.mv,sv:AU.sv}))}catch(e){}}
-function auInit(){if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return}
+function auInit(){if(window.__SPEC)return;if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return}
   try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;AU.ctx=new C();
     AU.master=AU.ctx.createGain();AU.master.connect(AU.ctx.destination);
     AU.mus=AU.ctx.createGain();AU.sfx=AU.ctx.createGain();AU.mus.connect(AU.master);AU.sfx.connect(AU.master);
@@ -3106,7 +3122,7 @@ const TRACKS={
  boss:{bpm:120,wave:'sawtooth',bass:'square',mel:[[69,.5],[69,.5],[72,1],[71,1],[69,1],[76,2],[75,1],[74,1],[72,1],[71,.5],[72,.5],[69,2],[0,2]],bassl:[[45,2],[45,2],[41,2],[43,2]],perc:true},
  win:{bpm:110,wave:'triangle',bass:'sine',mel:[[67,1],[72,1],[72,.5],[74,.5],[72,.5],[71,.5],[69,1],[69,1],[69,1],[74,1],[74,.5],[76,.5],[74,.5],[72,.5],[71,1],[67,1],[67,1],[76,1],[76,.5],[77,.5],[76,.5],[74,.5],[72,1],[69,1],[67,.5],[67,.5],[69,1],[74,1],[71,1],[72,4]],bassl:[[48,4],[53,4],[50,4],[55,4],[52,4],[53,4],[55,4],[48,4]],bell:true}
 };
-function auStartMusic(name){AU.wantTrack=name;if(!AU.ctx||AU.track===name)return;
+function auStartMusic(name){if(window.__SPEC)return;AU.wantTrack=name;if(!AU.ctx||AU.track===name)return;
   const c=AU.ctx;const t=c.currentTime;
   // плавная смена: приглушить, сменить, вернуть
   AU.mus.gain.cancelScheduledValues(t);AU.mus.gain.setTargetAtTime(0,t,.25);
@@ -3121,7 +3137,7 @@ function auTick(){const c=AU.ctx;if(!c||!AU.track)return;const T0=TRACKS[AU.trac
     AU.next+=d*b;AU.step++}
   while(AU.bnext<c.currentTime+.4){const [n,d]=T0.bassl[AU.bstep%T0.bassl.length];tone(NOTE(n),AU.bnext,d*b*.9,{type:T0.bass,v:.13,a:.05,dest:AU.mus});AU.bnext+=d*b;AU.bstep++}}
 // эффекты; один и тот же звук не чаще раза в 80 мс
-function sfx(n){if(!AU.ctx||!AU.sound)return;const c=AU.ctx,t=c.currentTime;const pn=performance.now();if(AU.last[n]&&pn-AU.last[n]<80)return;AU.last[n]=pn;
+function sfx(n){if(window.__SPEC||!AU.ctx||!AU.sound)return;const c=AU.ctx,t=c.currentTime;const pn=performance.now();if(AU.last[n]&&pn-AU.last[n]<80)return;AU.last[n]=pn;
   const S={
    click:()=>tone(900,t,.05,{type:'square',v:.06}),
    step:()=>noise(t,.04,{f:500,q:.8,v:.05}),
@@ -3157,7 +3173,9 @@ function sfx(n){if(!AU.ctx||!AU.sound)return;const c=AU.ctx,t=c.currentTime;cons
 // ---- кнопки звука ----
 function auUI(){const box=document.getElementById('audioui');if(!box)return;
   const mb=document.getElementById('mbtn'),sb2=document.getElementById('sbtn'),mv=document.getElementById('mvol'),sv=document.getElementById('svol');
-  const upd=()=>{mb.setAttribute('aria-pressed',AU.music?'true':'false');mb.textContent=AU.music?'♪ Музыка: вкл':'♪ Музыка: выкл';sb2.setAttribute('aria-pressed',AU.sound?'true':'false');sb2.textContent=AU.sound?'🔊 Звуки: вкл':'🔈 Звуки: выкл';mv.value=AU.mv;sv.value=AU.sv};
+  // кнопки звука — в нижней панели игры: видны всегда, в том числе в режиме «Весь экран» и на маленьком экране
+  {const hr=document.querySelector('.hotbar .hb-right');if(hr){mb.className='btn notesbtn';sb2.className='btn notesbtn';hr.prepend(sb2);hr.prepend(mb)}}
+  const upd=()=>{mb.setAttribute('aria-pressed',AU.music?'true':'false');mb.textContent=AU.music?'♪ Музыка':'♪ Музыка: выкл';sb2.setAttribute('aria-pressed',AU.sound?'true':'false');sb2.textContent=AU.sound?'🔊 Звуки':'🔈 Звуки: выкл';mv.value=AU.mv;sv.value=AU.sv};
   mb.addEventListener('click',()=>{auInit();AU.music=!AU.music;auApply();auSave();upd()});
   sb2.addEventListener('click',()=>{auInit();AU.sound=!AU.sound;auApply();auSave();upd();sfx('click')});
   mv.addEventListener('input',()=>{auInit();AU.mv=+mv.value;auApply();auSave()});sv.addEventListener('input',()=>{auInit();AU.sv=+sv.value;auApply();auSave()});
@@ -3334,7 +3352,10 @@ function plImg(x,im,cx,by,h,al=1,rot=0){if(!okI(im)||al<=0)return;const w=h*im.n
 function plPatch(x,k,al){const im=GP[k],r=GPP[k];if(!okI(im)||al<=0)return;x.save();x.globalAlpha=al;x.drawImage(im,r[0],r[1],r[2],r[3]);x.restore()}
 let CUT='pro',plWait=false;
 const PL_SLOW=1.7;
-function plDraw(now){if(plWait){plT0=now}if(CUT==='fin')return finDraw(now);const x=plFx.getContext('2d'),E=(now-plT0)/1000/PL_SLOW,e=E<11?E:(E<17?11:E-6);const K=plFx.width/1536;x.setTransform(K,0,0,K,0,0);x.imageSmoothingEnabled=true;
+let plLast=0;
+function plDraw(now){if(plWait){plT0=now}
+  // вкладка была скрыта (игрок в Meet) — заставка стоит на паузе, а не убегает вперёд
+  if(plLast&&now-plLast>250)plT0+=now-plLast-16;plLast=now;if(CUT==='fin')return finDraw(now);const x=plFx.getContext('2d'),E=(now-plT0)/1000/PL_SLOW,e=E<11?E:(E<17?11:E-6);const K=plFx.width/1536;x.setTransform(K,0,0,K,0,0);x.imageSmoothingEnabled=true;
   // тряска при заморозке
   const sh=e>12.4&&e<13.2?(1-(e-12.4)/.8)*14:0;x.translate((Math.random()-.5)*sh,(Math.random()-.5)*sh);
   if(okI(IMG_L))x.drawImage(IMG_L,0,0,1536,1024);else{x.fillStyle='#2a1a14';x.fillRect(0,0,1536,1024)}
@@ -3384,7 +3405,7 @@ function plUpdAU(){try{const mb=document.getElementById('mbtn'),sb2=document.get
 function plGo(){plWait=false;document.getElementById('plstart').hidden=true;auInit();if(!AU.music||!AU.sound){AU.music=true;AU.sound=true;auApply();auSave();plUpdAU()}AU.track=null;auStartMusic(CUT==='fin'?'win':'cozy');plT0=performance.now();plCapI=-1;plSnd={};document.getElementById('plskip').focus()}
 function openCut(mode,wait){CUT=mode;plBox.hidden=false;keys.clear();plT0=performance.now();plCapI=-1;plSnd={};const nb=document.getElementById('plnext');nb.hidden=true;nb.textContent=mode==='fin'?'Итоги':'Начать игру';
   document.getElementById('pltext').textContent='';plWait=!!wait;document.getElementById('plstart').hidden=!wait;if(!wait)plGo();
-  cancelAnimationFrame(plRaf);plRaf=requestAnimationFrame(plDraw);setTimeout(()=>document.getElementById(wait?'plstart':'plskip').focus(),30)}
+  plLast=0;cancelAnimationFrame(plRaf);plRaf=requestAnimationFrame(plDraw);setTimeout(()=>document.getElementById(wait?'plstart':'plskip').focus(),30)}
 function showProlog(){openCut('pro',false)}
 function showFinale(){openCut('fin',false)}
 function closeProlog(){plBox.hidden=true;cancelAnimationFrame(plRaf);if(CUT==='fin'){showEpilogue();return}try{auStartMusic(ROOM==='boss'?'ice':'cozy')}catch(_){}roomT0=performance.now();GAME_T0=performance.now();const b=document.getElementById('introok');if(b&&b.offsetParent)b.focus();else cv.focus()}
@@ -3648,7 +3669,7 @@ function startGame(fromSpec){NET.started=true;pz.hidden=!NET.paused;takeBase();
   if(SPEC){hideUI();return}
   if(since<0){show('count');const tick=setInterval(()=>{if(hostNow()>=cfg.startAt){clearInterval(tick);hideUI();try{auInit()}catch(e){}showProlog()}else render()},200);return}
   hideUI();
-  if(since<PROLOG_MS){showProlog();plT0=performance.now()-since}
+  if(since<PROLOG_MS){showProlog()}
 }
 const PROLOG_MS=Math.round(32*1700)+800;
 // ---------- игроки: движение ----------
