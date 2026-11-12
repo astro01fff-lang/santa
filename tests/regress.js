@@ -68,7 +68,7 @@ async stable(c,ok){// олень: можно вернуть в стойло бе
 async prologue(c,ok){// пролог печатается постепенно и встаёт на паузу, пока вкладка скрыта
   const p=c.P[0];await p.E(`(()=>{const b=document.getElementById('prolog');b.hidden=false;return 0})()`);ok(true,'пролог проверяется в основном прогоне (qa.js)')}
 };
-(async()=>{const kids=[];if(await portOpen(PORT)){const r=await fetch(BASE+'/index.html').catch(()=>null);if(!r||r.headers.get('x-santa-qa')!=='1'){console.error('Порт '+PORT+' занят чужим сервером. Остановите его и запустите снова.');process.exit(2)}}else kids.push(cp.spawn(process.execPath,[path.join(__dirname,'serve.js'),String(PORT)],{stdio:'ignore'}));if(!(await portOpen(9001)))kids.push(cp.spawn('python3',[path.join(__dirname,'broker.py')],{stdio:'ignore'}));await W(2000);
+(async()=>{const kids=[];if(await portOpen(PORT)){const r=await fetch(BASE+'/index.html').catch(()=>null);if(!r||r.headers.get('x-santa-qa')!=='1'){console.error('Порт '+PORT+' занят чужим сервером. Остановите его и запустите снова.');process.exit(2)}}else kids.push(cp.spawn(process.execPath,[path.join(__dirname,'serve.js'),String(PORT)],{stdio:'ignore'}));if(!(await portOpen(9001)))kids.push(cp.spawn(process.execPath,[path.join(__dirname,'broker.js')],{stdio:'ignore'}));await W(2000);
   browser=await chromium.launch();let fails=0;
   for(const [name,fn] of Object.entries(S)){if(ONLY&&!ONLY.includes(name)||name==='prologue')continue;console.log('▶ '+name);let c;
     const ok=(v,m)=>{results.push({sc:name,ok:!!v,msg:m});if(!v)fails++;console.log((v?'  ✓ ':'  ✗ ')+m)};

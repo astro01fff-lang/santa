@@ -19,7 +19,7 @@ const run={bugs:[],pend:[],t0:Date.now(),seed:SEED,
       if(process.env.QA_VERBOSE)console.log('     '+P.name+': '+P.trail.slice(-6).join(' → '));b.players.push({name:P.name,profile:PNAME[o.team.prof(P)],room,actions:P.trail.slice(-12),js:P.errors.slice(-5).map(e=>e.msg),net:P.net.slice(-5).map(e=>e.url+' '+e.err),shot:file&&path.relative(OUT,file)})}})().catch(()=>{}))}};
 (async()=>{
   const kids=[];if(await portOpen(PORT)){const r=await fetch(BASE+'/index.html').catch(()=>null);if(!r||r.headers.get('x-santa-qa')!=='1'){console.error('Порт '+PORT+' занят чужим сервером. Остановите его и запустите снова.');process.exit(2)}}else {kids.push(cp.spawn(process.execPath,[path.join(__dirname,'serve.js'),String(PORT)],{stdio:'ignore'}))}
-  if(!(await portOpen(9001))){kids.push(cp.spawn('python3',[path.join(__dirname,'broker.py')],{stdio:'ignore'}))}
+  if(!(await portOpen(9001))){kids.push(cp.spawn(process.execPath,[path.join(__dirname,'broker.js')],{stdio:'ignore'}))}
   await up(BASE+'/host.html');for(let k=0;k<30&&!(await portOpen(9001));k++)await W(300);
   const browser=await chromium.launch({headless:!arg('headed',false)});
   console.log(`QA: команд ${NT}, сид ${SEED}${CHAOS?', режим хаоса':''}. Отчёт: ${OUT}`);

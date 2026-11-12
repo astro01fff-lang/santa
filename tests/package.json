@@ -1,0 +1,15 @@
+{
+  "name": "santa-qa",
+  "private": true,
+  "description": "Автотесты игры «Спасти Рождество» (на сайт не влияют)",
+  "scripts": {
+    "qa": "node qa.js",
+    "chaos": "node qa.js --chaos",
+    "regress": "node regress.js"
+  },
+  "devDependencies": {
+    "aedes": "^0.51.3",
+    "playwright": "1.48.2",
+    "websocket-stream": "^5.5.2"
+  }
+}
