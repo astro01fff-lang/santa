@@ -18,7 +18,7 @@ class Player{
     closeUI(){document.getElementById('prolog').hidden=true;document.querySelectorAll('.modal').forEach(m=>{if(m.id!=='epibox')m.hidden=true});try{if(!treeBox.hidden)closeTree()}catch(e){}try{if(!gearBox.hidden)closeGears()}catch(e){}const nm=document.getElementById('netmsg');if(nm)nm.hidden=true}
   };if(!window.__INVLOG){window.__INVLOG=[];let last=JSON.stringify(TEAM.inv);setInterval(()=>{const cur=JSON.stringify(TEAM.inv);if(cur!==last){window.__INVLOG.push(new Date().toISOString().slice(11,23)+' '+(NET&&NET.leader?'[лидер] ':'')+cur);last=cur;if(window.__INVLOG.length>400)window.__INVLOG.shift()}},50)}
   if(!window.__BANNERS){window.__BANNERS=[];const tr=document.getElementById('trans');new MutationObserver(()=>{if(!tr.hidden&&/Уровень пройден/.test(tr.textContent))window.__BANNERS.push({lv:levelOf(ROOM),t:Date.now()})}).observe(tr,{attributes:true,childList:true})}0`)}
-  async reload(){this.log('перезагрузка страницы');await this.pg.reload();await this.waitReady()}
+  async reload(){this.reloadAt=Date.now();this.log('перезагрузка страницы');await this.pg.reload();await this.waitReady()}
   async waitReady(ms=20000){const t0=Date.now();while(Date.now()-t0<ms){const r=await this.pg.evaluate(()=>!!(window.__EV&&window.NET&&NET.started&&document.getElementById('netui').hidden)).catch(()=>false);if(r)break;await W(300)}
     for(let k=0;k<15;k++){if(await this.pg.evaluate(()=>!!(window.NET&&NET.gotSnap&&!NET.pendingSnap)).catch(()=>false))break;await W(200)}
     await W(800);await this.install();await this.closeUI()}

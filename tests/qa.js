@@ -53,7 +53,7 @@ const run={bugs:[],pend:[],t0:Date.now(),seed:SEED,
       const want=next||ORDER[ORDER.indexOf(lv)+1];const lvlKey=want==='flight'?'obs':want;
       let moved=true;for(const P of T.P){const r=await P.waitRoom(want==='flight'?'boss':want,want==='flight'?25000:20000).catch(()=>null);
         if(want==='flight'){if(!(await P.E(`!flightBox.hidden||ROOM==='boss'`)))moved=false}else if(r!==want)moved=false}
-      if(want!=='flight'&&lv!=='flight'){for(const P of T.P){const seen=await P.E(`(window.__BANNERS||[]).length`).catch(()=>0);T.ok(seen>0,P.name+': показан баннер «Уровень пройден!»')}}
+      if(want!=='flight'&&lv!=='flight'){for(const P of T.P){const seen=await P.E(`(window.__BANNERS||[]).length`).catch(()=>0);if(!seen&&P.reloadAt&&Date.now()-P.reloadAt<20000){P.log('баннер пропущен: обновлял страницу');continue}T.ok(seen>0,P.name+': показан баннер «Уровень пройден!»')}}
       if(!moved){run.bug({team:T,sev:'критический',title:'Команда не перешла на «'+(LVNAME[want]||want)+'» после прохождения уровня',level:lv});await hostGoto(T,want==='flight'?'boss':want)}
       else if(want!=='flight'&&want!=='boss'){let hv=null;for(let k=0;k<12;k++){hv=await host.$eval('#goto_'+T.id,e=>e.value).catch(()=>null);if(hv===want)break;await W(500)}T.ok(hv===want,'панель ведущей видит команду на уровне «'+LVNAME[want]+'» ('+hv+')')}
       T.levels[lv]={sec:Math.round((Date.now()-t0)/1000),ok:T.checks.slice(cs).every(c=>c.ok),checks:T.checks.length-cs,moved};
