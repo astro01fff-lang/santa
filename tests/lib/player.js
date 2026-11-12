@@ -34,7 +34,7 @@ class Player{
   async act(h,label){this.log('нажал '+(label||JSON.stringify(h)));
     const pt=await this.E(`BOT.pt(${JSON.stringify(h)})`);if(!pt){const room=await this.E('ROOM').catch(()=>'?');throw new Error('нет предмета '+JSON.stringify(h)+(label?' «'+label+'»':'')+' в '+room)}
     if(await this.E('BOT.busy()'))await this.closeUI();
-    const room0=await this.E(`(()=>{bubble=null;window.__lastSay=null;return ROOM})()`);
+    const room0=await this.E(`(()=>{path=null;pendingItem=null;pendingLook=false;bubble=null;return ROOM})()`);
     const [x,y]=await this.E(`BOT.scr(${pt[0]},${pt[1]})`);await this.pg.mouse.click(x,y);
     let r='—';const t0=Date.now();
     while(Date.now()-t0<12000){const st=await this.E(`(()=>{if(bubble&&bubble.text)return['say',bubble.text];if(BOT.busy())return['ui','(окно)'];if(ROOM!==${JSON.stringify(room0)})return['room','(переход)'];if(transBusy)return['room','(переход)'];return null})()`).catch(()=>null);
