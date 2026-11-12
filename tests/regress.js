@@ -41,6 +41,12 @@ async boss(c,ok){// финал: без щита, оба стреляют, не �
   let phases=new Set();for(let t=0;t<500;t++){const ph=await lead.E('sb.phase');phases.add(ph);if(ph==='win')break;for(const p of c.P)await p.E(`sb.frozen={};bossShoot();0`).catch(()=>{});await W(300)}
   ok(!phases.has('shield'),'щита нет ни разу (фазы: '+[...phases]+')');ok(await lead.E(`sb.phase==='win'`),'Королева побеждена');ok(await fol.waitFor(`sb.phase==='win'`,5000),'победа видна обоим');
   await W(3000);await c.host.click('#nav button >> text=Результаты').catch(()=>{});await W(800);const rt=await c.host.$eval('#s-res',e=>e.innerText).catch(()=>'');ok(/1 место|место|\d\d:\d\d/i.test(rt),'панель ведущей показывает результат команды: '+rt.replace(/\s+/g,' ').slice(0,100))},
+async last2(c,ok){// двое одновременно закрывают две последние коробки → уровень всё равно засчитан у обоих
+  const {P}=c;await c.goto('work');
+  await P[0].E(`sw.running=true;sw.boxes.forEach((b,i)=>{b.name=Object.keys(WANT)[i];if(i<6){b.done=true;const g=sw.gifts.find(g=>g.n===WANT[b.name]);g.gone=true;g.on=false}});renderSide();0`);await W(2500);
+  for(const [k,p] of P.entries())await p.E(`(()=>{const g0=sw.gifts.find(g=>g.n===WANT[sw.boxes[${6+k}].name]);g0.on=false;g0.by=me;people[me].held=g0;return 0})()`);await W(1500);
+  await Promise.all(P.map((p,k)=>p.E(`(()=>{const i=${6+k};BOT.near(BXC[i],150);return boxAct(i)})()`)));
+  for(const p of P)ok(await p.waitFor(`levelOf(ROOM)==='clock'`,15000),p.name+': после одновременного закрытия двух последних коробок команда перешла в часовую башню')},
 async offline(c,ok){// пропала связь у игрока на 10 с: его действия доходят после возвращения, позиция и инвентарь сходятся
   const {lead,fol}=c;await fol.setOffline(true);await fol.act([6,143],'ведро');await W(10000);await fol.setOffline(false);
   ok(await lead.waitFor(`anyHas('пустое ведро')`,15000),'ведро, взятое без связи, появилось у товарища после восстановления');

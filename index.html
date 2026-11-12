@@ -3846,8 +3846,18 @@ const _showEpilogue=showEpilogue;
 showEpilogue=function(){_showEpilogue();document.getElementById('epitime').textContent='';
   document.getElementById('epiclose').textContent='Дальше'};
 document.getElementById('epiclose').addEventListener('click',()=>{NET.finDone=true;NET.paused=true;show('finished')});
+// ---------- завершение уровня по общему состоянию ----------
+// Если двое почти одновременно делают два последних действия, каждый у себя видит, что одно ещё не сделано,
+// и уровень никто не засчитывает. Поэтому лидер сам проверяет условия по уже общему состоянию.
+function netDoneCheck(){if(SPEC||transBusy||!people)return;const L=levelOf(ROOM);
+  try{if(L==='obs'&&so&&so.dome&&!so.done)traceBeam();/* луч у всех по текущим зеркалам */
+    if(!NET.leader)return;
+    if(L==='work'&&sw&&!sw.done&&sw.boxes.length&&sw.boxes.every(b=>b.done)){sw.done=true;renderSide();autoNext('clock',2200)}
+    else if(L==='clock'&&sc&&!sc.done&&Object.keys(TSIZE).every(p=>sc.g.some(q=>q.peg===p))){sc.done=true;sc.doneT=performance.now();autoNext('stable',3000)}
+    else if(L==='stable'&&ss&&!ss.namesOK&&ss.tags&&ss.tags.length===STALL.length&&ss.tags.every((n,i)=>n===STALL[i])){ss.namesOK=true;renderSide()}
+  }catch(e){}}
 // ---------- главный цикл сети ----------
-setInterval(()=>{if(SPEC&&people&&people[me]&&ROOM==='boss'){people[me].x=184;people[me].y=112}if(!NET.started)return;leaderTick();sendPos(false);tickDiff();
+setInterval(()=>{if(SPEC&&people&&people[me]&&ROOM==='boss'){people[me].x=184;people[me].y=112}if(!NET.started)return;leaderTick();sendPos(false);tickDiff();netDoneCheck();
   if(NET.leader){const now=performance.now();
     if(ROOM==='work'&&sw.running&&now-(NET.gAt||0)>1000){NET.gAt=now;pubT('ev',{ty:'gifts',s:sw.gifts.map(g0=>Math.round(g0.s*10)/10)},0)}
     if((snapDirty&&now-lastSnapT>800)||now-lastSnapT>5000){lastSnapT=now;snapDirty=false;const s=snapshot();s.cid=CID;C.publish(B+'/t/'+myTeam+'/state',J(s),{qos:1,retain:true})}
