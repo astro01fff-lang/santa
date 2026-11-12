@@ -880,7 +880,7 @@ function hdLight(lit,t){
 // ---------- СОСТОЯНИЕ КОМНАТЫ ----------
 let st,ROOM='living';
 const TEAM={inv:[],notes:[]};
-function fresh(){return{pen:0,lit:false,box:false,orn:{},hung:{},inv:[],notes:[],pieces:0,fireOut:false,catMoved:false,milk:false,bucket:0,safeSeen:false,safeOpen:false,shelfOpen:false,clock:false,gift:false,plaid:false,curtain:false,pillow:false,stocking:false,rug:false,ash:false,ashSeen:false}}
+function fresh(){return{pen:0,lit:false,box:false,orn:{},hung:{},inv:[],notes:[],pieces:0,pf:{},fireOut:false,catMoved:false,milk:false,bucket:0,safeSeen:false,safeOpen:false,shelfOpen:false,clock:false,gift:false,plaid:false,curtain:false,pillow:false,stocking:false,rug:false,ash:false,ashSeen:false}}
 // вещь «в руках»: в общем инвентаре хранится как '@номер:вещь', пользоваться ею может только тот, кто держит
 const baseIt=x=>x[0]==='@'?x.slice(x.indexOf(':')+1):x;
 const heldBy=i=>{const x=TEAM.inv.find(q=>q.startsWith('@'+i+':'));return x?baseIt(x):null};
@@ -896,7 +896,7 @@ function holdIt(k){const i=TEAM.inv.indexOf(k);if(i<0)return;const h=heldBy(me);
 function unholdIt(){const h=heldBy(me);if(!h)return;TEAM.inv=TEAM.inv.map(x=>x==='@'+me+':'+h?h:x);try{sfx('pickup')}catch(e){}renderSide()}
 const take=k=>{if(!anyHas(k)){TEAM.inv.push(k);try{renderSide()}catch(e){};try{sfx('pickup');floatIcon(k);if(people)people[me].hopT=performance.now()}catch(e){}}};
 const drop=k=>{const mk='@'+me+':'+k;if(TEAM.inv.includes(mk))TEAM.inv=TEAM.inv.filter(x=>x!==mk);else TEAM.inv=TEAM.inv.filter(x=>x!==k);try{renderSide()}catch(e){}};
-function piece(back){st.pieces=Math.min(9,st.pieces+1);try{sfx('important');floatIcon('обрывок')}catch(e){}if(back)TEAM.notes.push({t:'Обрывок '+st.pieces+' из 9',b:back});renderSide();
+function piece(back,key){if(!st.pf)st.pf={};const isNew=!st.pf[key];st.pf[key]=1;st.pieces=Math.min(9,Math.max(Object.keys(st.pf).length,st.pieces+(isNew?1:0)));try{sfx('important');floatIcon('обрывок')}catch(e){}if(back)TEAM.notes.push({t:'Обрывок '+st.pieces+' из 9',b:back});renderSide();
   return st.pieces>=9?'Это последний, девятый обрывок! Фото собрано целиком: кнопка «Фото ёлки» внизу. Теперь нарядите ёлку.':'Обрывок фото! ('+st.pieces+' из 9). Он встал на место на фото: кнопка «Фото ёлки» внизу.'+(back?' На обороте что-то написано.':'')}
 
 // ---------- СТОЛКНОВЕНИЯ ----------
@@ -907,24 +907,24 @@ function hits(x,y){const fx=x+4.02,fy=y+18.02,fw=7.96,fh=3.96;const L=ROOM==='ki
 // ---------- ПРЕДМЕТЫ ----------
 // hidden: тайник без подсказки «E», его нужно найти самим
 const ITEMS_L=[
- {x:102,y:126,hit:[95, 130, 15, 8],hidden:true,act(){if(st.pillow)return'Под подушкой больше ничего.';st.pillow=true;return piece('')}},
- {x:82,y:74,hit:[23, 7, 10, 43],hidden:true,act(){if(st.curtain)return'За шторой только пыль.';st.curtain=true;return piece('')}},
+ {x:102,y:126,hit:[95, 130, 15, 8],hidden:true,act(){if(st.pillow)return'Под подушкой больше ничего.';st.pillow=true;return piece('','pillow')}},
+ {x:82,y:74,hit:[23, 7, 10, 43],hidden:true,act(){if(st.curtain)return'За шторой только пыль.';st.curtain=true;return piece('','curtain')}},
  {x:82,y:78,hit:[59, 7, 14, 43],hidden:true,act(){return ornAt('icicle','За шторой в складках висит стеклянная сосулька! Это ёлочная игрушка.')||'За этой шторой только мишура и паутинка.'}},
  {x:86,y:74,hit:[33, 10, 26, 37],act(){if(st.bucket===1&&holds('пустое ведро')){st.bucket=2;drop('пустое ведро');take('ведро снега');const sn=ornAt('snow',' ');renderSide();return'Вы открыли окно и набрали полное ведро снега. Бр-р!'+(sn?' А к стеклу примерзла снежинка, ёлочная игрушка!':'')}
    return ornAt('snow','К стеклу примерзла белая снежинка. Да это же ёлочная игрушка!')||(st.bucket===1?handMsg('пустое ведро','За окном метель. На подоконнике снаружи намело гору снега.'):'За окном метель. На подоконнике снаружи намело гору снега.')}},
  {x:28,y:150,hit:[6, 143, 16, 20],act(){if(st.bucket===0){st.bucket=1;take('пустое ведро');renderSide();return'Пустое ведро для угля. Может пригодиться.'}return'Тут стояло ведро.'}},
  {x:94,y:74,hit:[78, 15, 20, 20],act(){if(!st.safeSeen){st.safeSeen=true;return'Картина висела криво. За ней сейф! Замок на 4 цифры.'}
-   if(st.safeOpen)return ornAt('horse')||'Сейф пуст.';openCode('Сейф Санты','4 цифры',4,['0940','2140'],()=>{st.safeOpen=true;take('золотой ключик');const m=piece('');gotOrn('horse');say(people[me],'Сейф открылся! Внутри золотой ключик, деревянная лошадка-игрушка и… '+m)});return null}},
+   if(st.safeOpen)return ornAt('horse')||'Сейф пуст.';openCode('Сейф Санты','4 цифры',4,['0940','2140'],()=>{st.safeOpen=true;take('золотой ключик');const m=piece('','safe');gotOrn('horse');say(people[me],'Сейф открылся! Внутри золотой ключик, деревянная лошадка-игрушка и… '+m)});return null}},
  {x:182,y:74,hit:[173, 7, 17, 35],act(){if(st.clock){openClock(false);clockMsg('Часы идут. Кукушка довольно выглядывает.');return null}
    if(!holds('золотой ключик')){openClock(false);clockMsg(handMsg('золотой ключик','Часы стоят, стрелки замерли. Их заводят ключиком: сбоку маленькая замочная скважина.'));return null}
    st.clock=true;st.clockT=performance.now()+600;drop('золотой ключик');renderSide();openClock(true);return null}},
  {x:114,y:74,hit:[112, 34, 10, 18],act(){return ornAt('blue','В красном носке синий стеклянный шар! Игрушка с ёлки.')||'Красный носок. Пусто, даже угля нет.'}},
- {x:154,y:74,hit:[142, 34, 10, 18],act(){if(st.stocking)return'Зеленый носок пуст.';st.stocking=true;return'В зеленом носке что-то шуршит… '+piece('')}},
+ {x:154,y:74,hit:[142, 34, 10, 18],act(){if(st.stocking)return'Зеленый носок пуст.';st.stocking=true;return'В зеленом носке что-то шуршит… '+piece('','stocking')}},
  {x:134,y:74,hit:[119, 48, 28, 20],act(){
    if(!st.fireOut){if(holds('ведро снега')){st.fireOut=true;drop('ведро снега');renderSide();return'Пш-ш-ш! Огонь погас. В золе что-то белеет…'}
      return handMsg('ведро снега','Огонь горит жарко. В глубине, в золе, что-то белеет, но руку не сунешь.')}
-   if(st.ash)return'В камине только зола.';st.ash=true;take('ключ от шкафа');return'В золе маленький медный ключ и обгоревший уголок… '+piece('')}},
- {x:204,y:74,hit:[199, 7, 49, 57],act(){if(st.shelfOpen){if(st.book)return'Остальные книги просто книги.';st.book=true;return'«Рождественская песнь» сама выпала с полки. Внутри… '+piece('')}
+   if(st.ash)return'В камине только зола.';st.ash=true;take('ключ от шкафа');return'В золе маленький медный ключ и обгоревший уголок… '+piece('','ash')}},
+ {x:204,y:74,hit:[199, 7, 49, 57],act(){if(st.shelfOpen){if(st.book)return'Остальные книги просто книги.';st.book=true;return'«Рождественская песнь» сама выпала с полки. Внутри… '+piece('','book')}
    if(!holds('ключ от шкафа'))return handMsg('ключ от шкафа','Стеклянная дверца шкафа заперта. Нужен ключ.');st.shelfOpen=true;drop('ключ от шкафа');renderSide();return'Ключ подошёл! Стеклянная дверца шкафа открылась.'}},
  {x:58,y:110,hit:[45,58,19,21],act(){if(st.plaid)return ornAt('cone','В складках пледа запуталась шишка-игрушка.')||'Плед больше ничего не прячет.';gotOrn('cone');st.plaid=true;renderSide();return'В складках пледа запуталась шишка, ёлочная игрушка!'}},
  {x:58,y:112,hit:[47,75,14,12],act(){return'Подушка в кресле. Под ней пусто.'}},
@@ -935,9 +935,9 @@ const ITEMS_L=[
  {x:166,y:126,hit:[155, 108, 18, 12],act(){if(st.catMoved)return'Кот лежит на диване и мурлычет.';
    if(holds('стакан молока')){st.catMoved=true;st.catT=performance.now();drop('стакан молока');take('ножницы');renderSide();return'Кот выпил молоко и перебрался на диван. Под ним лежали ножницы!'}
    return handMsg('стакан молока','Кот спит и не двигается. Кажется, он что-то прячет под лапой.')}},
- {x:82,y:126,hit:[79, 117, 14, 11],hidden:true,act(){if(st.rug)return'Под ковром больше ничего.';st.rug=true;return'Вы подняли угол ковра… '+piece('')}},
+ {x:82,y:126,hit:[79, 117, 14, 11],hidden:true,act(){if(st.rug)return'Под ковром больше ничего.';st.rug=true;return'Вы подняли угол ковра… '+piece('','rug')}},
  {x:206,y:130,hit:[211, 117, 42, 22],act(){if(st.gift)return ornAt('star','На дне открытого подарка снова лежит звезда.')||'Подарок открыт.';if(!holds('ножницы'))return handMsg('ножницы','Самый большой подарок туго перевязан лентой. Руками не развязать.');
-   st.gift=true;drop('ножницы');gotOrn('star');renderSide();return'Вы разрезали ленту. В подарке золотая звезда для макушки и… '+piece('')}},
+   st.gift=true;drop('ножницы');gotOrn('star');renderSide();return'Вы разрезали ленту. В подарке золотая звезда для макушки и… '+piece('','gift')}},
  {x:206,y:100,hit:[209, 56, 41, 62],act(){if(st.lit)return'Ёлка горит! Дверь открылась.';
    {const back=Object.keys(ORNN).find(k=>st.ornBack&&st.ornBack[k]);if(back){gotOrn(back);st.ornBack[back]=0;renderSide();return'Под ёлкой лежала укатившаяся игрушка: '+ORNN[back]+'. Подобрали.'}}
    if(!st.box){st.box=true;['red','gold','bell'].forEach(gotOrn);renderSide();return'Под ёлкой коробка со старыми игрушками: красный шар, золотой шар и колокольчик. Остальных не хватает.'}
@@ -1049,7 +1049,7 @@ const clockBox=document.getElementById('clockbox'),ccv=document.getElementById('
 const CK_H=9,CK_M=40;
 function clockMsg(t){document.getElementById('clockmsg').textContent=t}
 function openClock(wind){clockAnim=wind?performance.now():0;clockBox.hidden=false;keys.clear();cancelAnimationFrame(clockRaf);clockRaf=requestAnimationFrame(drawClock);
-  if(wind){clockMsg('Вы вставили золотой ключик и завели часы…');sfx('gear');setTimeout(()=>{sfx('bells');const m=piece('');clockMsg('Ку-ку! Ку-ку! Вместо кукушки из окошка выпал… '+m)},1500)}
+  if(wind){clockMsg('Вы вставили золотой ключик и завели часы…');sfx('gear');setTimeout(()=>{sfx('bells');const m=piece('','clock');clockMsg('Ку-ку! Ку-ку! Вместо кукушки из окошка выпал… '+m)},1500)}
   setTimeout(()=>document.getElementById('clockclose').focus(),30)}
 function closeClock(){clockBox.hidden=true;cancelAnimationFrame(clockRaf);cv.focus()}
 document.getElementById('clockclose').addEventListener('click',closeClock);
@@ -3695,6 +3695,8 @@ const EXCL=[/^sw\.gifts\.\d+\.s$/,/^st\.(hangT|catT)/,/^sc\.ang/,/^sk\.melt/,/^s
 const isTimeKey=path=>path.split('.').some(k=>/(^t$|T$|T0$)/.test(k));
 const clone=o=>JSON.parse(JSON.stringify(o));
 let base=null,localCh={},suspendUntil=0,lastSnapT=0,snapDirty=false;
+// свои изменения инвентаря/записок, которые лидер ещё мог не учесть в снимке (seq → подтверждение acks в снимке)
+let mySeq=0,pendInv=[];const acks={};
 const noteKey=n=>n.t+'|'+n.b+'|'+(n.owner===undefined?'':n.owner);
 function takeBase(){base={};for(const k in ROOTS)base[k]=clone(ROOTS[k]());base.inv=TEAM.inv.slice();base.notes=TEAM.notes.map(noteKey);base.notesFull=clone(TEAM.notes)}
 function diff(a,b,pfx,out){if(EXCL.some(r=>r.test(pfx)))return;
@@ -3713,19 +3715,24 @@ function tickDiff(){if(SPEC||!NET.started||!base||transBusy||performance.now()<s
   const nk=TEAM.notes.map(noteKey);const nadd=TEAM.notes.filter(n=>!base.notes.includes(noteKey(n)));const nrm=base.notes.filter(k=>!nk.includes(k));
   if(!ops.length&&!add.length&&!rm.length&&!nadd.length&&!nrm.length)return;
   const now=performance.now();ops.forEach(o=>localCh[o[0]]=now);
-  pubT('ev',{ty:'d',s:mySlot,cid:CID,lv:levelOf(ROOM),ops,inv:{add,rm},notes:{add:nadd,rm:nrm}},1);
+  const seq=++mySeq;if(add.length||rm.length||nadd.length||nrm.length)pendInv.push({seq,t:now,add,rm,nadd:clone(nadd),nrm});
+  pubT('ev',{ty:'d',s:mySlot,cid:CID,seq,lv:levelOf(ROOM),ops,inv:{add,rm},notes:{add:nadd,rm:nrm}},1);
   takeBase();snapDirty=true}
 function applyDiff(m){if(m.cid===CID)return;if(m.lv&&m.lv!==levelOf(ROOM))return;
+  tickDiff();/* сначала отправляем свои ещё не отправленные изменения, иначе takeBase() ниже их «проглотит» */
   (m.ops||[]).forEach(([p,v,del])=>setPath(p,v,del,false));
   (m.inv&&m.inv.rm||[]).forEach(x=>{const i=TEAM.inv.indexOf(x);if(i>=0)TEAM.inv.splice(i,1)});
   (m.inv&&m.inv.add||[]).forEach(x=>{if(!TEAM.inv.includes(x)){TEAM.inv.push(x);if(x[0]!=='@'&&!TEAM.inv.some(q=>q[0]==='@'&&baseIt(q)===x))try{floatIcon(x)}catch(e){}}});
   (m.notes&&m.notes.rm||[]).forEach(k=>{const i=TEAM.notes.findIndex(n=>noteKey(n)===k);if(i>=0)TEAM.notes.splice(i,1)});
   (m.notes&&m.notes.add||[]).forEach(n=>{if(!TEAM.notes.some(q=>noteKey(q)===noteKey(n)))TEAM.notes.push(n)});
-  takeBase();snapDirty=true;try{renderSide()}catch(e){}}
-function snapshot(){const o={ty:'snap',lv:levelOf(ROOM),inFlight:!flightBox.hidden,at:hostNow(),inv:TEAM.inv,notes:TEAM.notes,boss:{phase:sb.phase,hp:sb.hp,pen:sb.pen}};for(const k in ROOTS)o[k]=ROOTS[k]();
+  if(m.seq)acks[m.cid]=Math.max(acks[m.cid]||0,m.seq);
+  fixCounters();takeBase();snapDirty=true;try{renderSide()}catch(e){}}
+function fixCounters(){/* счётчик обрывков считаем по найденным, а не по присланному числу: иначе одновременные находки теряются */if(st&&st.pf&&Object.keys(st.pf).length)st.pieces=Math.min(9,Object.keys(st.pf).length)}
+function snapshot(){const o={ty:'snap',acks,lv:levelOf(ROOM),inFlight:!flightBox.hidden,at:hostNow(),inv:TEAM.inv,notes:TEAM.notes,boss:{phase:sb.phase,hp:sb.hp,pen:sb.pen}};for(const k in ROOTS)o[k]=ROOTS[k]();
   const s2=JSON.parse(JSON.stringify(o));if(s2.sw&&s2.sw.gifts)s2.sw.gifts.forEach(g0=>g0.s=Math.round(g0.s*10)/10);return s2}
 function applySnap(m,force){if(!m||m.ty!=='snap')return;
   if(!force&&(transBusy||!flightBox.hidden))return;
+  if(!force)tickDiff();
   const myLv=levelOf(ROOM);
   if(m.lv!==myLv||force){if(m.inFlight&&!force){return}
     goRoom(m.lv)}
@@ -3733,8 +3740,12 @@ function applySnap(m,force){if(!m||m.ty!=='snap')return;
   for(const k in ROOTS){const ops=[];diff(ROOTS[k](),m[k],k,ops);ops.forEach(([p,v,del])=>{if(!force&&localCh[p]&&now-localCh[p]<2500)return;setPath(p,v,del,true)})}
   if(m.sw&&m.sw.gifts&&sw.gifts)m.sw.gifts.forEach((g0,i)=>{if(sw.gifts[i])sw.gifts[i].s=g0.s});
   TEAM.inv=m.inv.slice();TEAM.notes=clone(m.notes);
+  // снимок мог уйти от лидера раньше, чем дошли наши последние действия: накатываем их поверх
+  if(force)pendInv=[];else{const a=(m.acks&&m.acks[CID])||0;pendInv=pendInv.filter(q=>q.seq>a&&now-q.t<10000);
+    pendInv.forEach(q=>{q.rm.forEach(x=>{const i=TEAM.inv.indexOf(x);if(i>=0)TEAM.inv.splice(i,1)});q.add.forEach(x=>{if(!TEAM.inv.includes(x))TEAM.inv.push(x)});
+      q.nrm.forEach(k=>{const i=TEAM.notes.findIndex(n=>noteKey(n)===k);if(i>=0)TEAM.notes.splice(i,1)});q.nadd.forEach(n=>{if(!TEAM.notes.some(x=>noteKey(x)===noteKey(n)))TEAM.notes.push(n)})})}
   if(m.boss&&sb&&(force||m.lv==='boss')){sb.pen=m.boss.pen||0}
-  takeBase();try{renderSide()}catch(e){}}
+  fixCounters();takeBase();try{renderSide()}catch(e){}}
 // ---------- лидер команды ----------
 let leaderSlot=-1;
 function computeLeader(){if(!roster||!myTeam)return -1;const mem=teamMembers(myTeam);const now=performance.now();
