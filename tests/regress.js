@@ -39,7 +39,7 @@ async boss(c,ok){// финал: без щита, оба стреляют, не �
   const atk=await lead.E(`[sb.spikes.length,sb.orbs.length,sb.nextAtk-performance.now()]`);ok(atk[0]===0&&atk[1]===0&&atk[2]>500,'пока товарища отогревают, Королева не атакует ('+atk.map(Math.round)+')');
   await lead.E(`(()=>{const q=people[${fm}];const p=people[me];p.x=q.x+6;p.y=q.y;return 0})()`);ok(await lead.waitFor(`!isFrozen(${fm})`,6000),'товарищ оттаял, когда к нему подошли');
   let phases=new Set();for(let t=0;t<500;t++){const ph=await lead.E('sb.phase');phases.add(ph);if(ph==='win')break;for(const p of c.P)await p.E(`sb.frozen={};bossShoot();0`).catch(()=>{});await W(300)}
-  ok(!phases.has('shield'),'щита нет ни разу (фазы: '+[...phases]+')');ok(await lead.E(`sb.phase==='win'`),'Королева побеждена');ok(await fol.waitFor(`sb.phase==='win'`,5000),'победа видна обоим');
+  ok(!phases.has('shield'),'щита нет ни разу (фазы: '+[...phases]+')');ok(await lead.E(`sb.phase==='win'`),'Королева побеждена (здоровье '+Math.round(await lead.E('sb.hp'))+', фазы: '+[...phases]+')');ok(await fol.waitFor(`sb.phase==='win'`,5000),'победа видна обоим');
   await W(3000);await c.host.click('#nav button >> text=Результаты').catch(()=>{});await W(800);const rt=await c.host.$eval('#s-res',e=>e.innerText).catch(()=>'');ok(/1 место|место|\d\d:\d\d/i.test(rt),'панель ведущей показывает результат команды: '+rt.replace(/\s+/g,' ').slice(0,100))},
 async last2(c,ok){// двое одновременно закрывают две последние коробки → уровень всё равно засчитан у обоих
   const {P}=c;await c.goto('work');
