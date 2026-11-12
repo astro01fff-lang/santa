@@ -48,7 +48,7 @@ async work(T){
   await T.step('work',async P=>{await T.take(P,[229,50],'стремянка')});
   await T.step('work',async P=>{await P.hold('стремянка');await P.act([176,3],'верхняя полка')});
   for(const h of [[229,40],[215,76],[1,112],[7,81]])await T.step('work',async P=>{await P.act(h);await P.closeUI()});
-  await T.step('work',async P=>{await P.hold('рычаг');await P.act([44,98],'пульт конвейера');T.ok(await P.waitFor('sw.running'),'конвейер запущен')});
+  await T.step('work',async P=>{if(await P.E('sw.running')){P.log('конвейер уже запущен товарищем');T.ok(true,'конвейер запущен');return}await P.hold('рычаг');await P.act([44,98],'пульт конвейера');T.ok(await P.waitFor('sw.running'),'конвейер запущен')});
   await T.step('work',async P=>{T.ok(await P.waitFor(`TEAM.notes.filter(n=>n.t.startsWith('Письмо')).length===8`),'найдено 8 писем')});
   for(let i=0;i<8;i++){
     await T.step('work',async P=>{if(!(await P.E(`!!sw.boxes[${i}].name`))){const lab=await P.E(`TEAM.inv.map(baseIt).find(x=>x.startsWith('табличка'))`);await P.hold(lab);await P.E(`BOT.near(BXC[${i}],150);BOT.act([BXC[${i}]-11,144])`);P.log('табличка на коробку '+i)}});
