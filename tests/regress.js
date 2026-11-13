@@ -27,7 +27,7 @@ async gift(c,ok){// кукольный домик в руках у не-лиде
   await lead.E(`(()=>{const g=sw.gifts.find(g=>g.n==='телескоп');g.on=false;g.by=7;return 0})()`);await W(1200);ok(await lead.E(`sw.gifts.find(g=>g.n==='телескоп').on`),'«потерянный» подарок вернулся на ленту')},
 async banner(c,ok){// уровень проходит не-лидер, пока лидер на сеновале → баннер и переход у обоих
   const {lead,fol}=c;await c.goto('stable');await lead.E(`goScene('loft',[72,140]);0`);await W(500);
-  await fol.E(`SLOTS.forEach(s=>ss.slot[s.k+s.side]=ANSWER[s.k+s.side]);ss.shod=true;ss.tarp=false;say(people[me],sledAct());0`);let seen=[false,false];for(let t=0;t<60;t++){await W(100);for(const k of [0,1])if(await c.P[k].E(`!document.getElementById('trans').hidden`))seen[k]=true}
+  await fol.E(`SLOTS.forEach(s=>ss.slot[s.k+s.side]=ANSWER[s.k+s.side]);ss.shod=true;ss.tarp=false;ss.order=true;ss.harness=true;say(people[me],sledAct());0`);let seen=[false,false];for(let t=0;t<60;t++){await W(100);for(const k of [0,1])if(await c.P[k].E(`!document.getElementById('trans').hidden`))seen[k]=true}
   ok(seen[0]&&seen[1],'баннер «Уровень пройден!» у обоих игроков ('+seen+')');for(const p of c.P)await p.waitRoom('kitchen');
   ok(await lead.E(`levelOf(ROOM)`)==='kitchen'&&await fol.E(`levelOf(ROOM)`)==='kitchen','оба на кухне, хотя лидер был на сеновале')},
 async boss(c,ok){// финал: без щита, оба стреляют, не бьёт во время отогрева, победа у обоих

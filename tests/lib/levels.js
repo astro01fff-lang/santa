@@ -64,10 +64,12 @@ async work(T){
     await T.step('work',async P=>{for(let k=0;k<5&&!(await P.E(`!!sw.boxes[${i}].name`));k++){const lab=await P.E(`TEAM.inv.map(baseIt).find(x=>x.startsWith('табличка'))`);if(!lab){await W(800);continue}await P.hold(lab);const r=await P.act(await boxHit(P,i),'коробка '+i);P.log('табличка на коробку '+i+': '+String(r).slice(0,40));await W(500)}
       T.ok(await P.waitFor(`!!sw.boxes[${i}].name`),'табличка на коробке '+(i+1))});
     await T.step('work',async P=>{const w=await P.E(`WANT[sw.boxes[${i}].name]`);let r;
-      {const by=await P.E(`(()=>{const g=sw.gifts.find(g=>g.n===WANT[sw.boxes[${i}].name]&&!g.gone);return g&&!g.on&&g.by!=null&&g.by!==me?g.by:null})()`);
-       if(by!==null){for(const Q of T.P)if(Q!==P&&await Q.E('me')===by){Q.log('кладёт в коробку '+i+' подарок, который уже держит');await Q.act(await boxHit(Q,i),'коробка '+i);T.ok(await Q.waitFor(`sw.boxes[${i}].done`),'коробка '+(i+1)+' собрана');return}}}
-      for(let att=0;att<3&&!(await P.E(`sw.boxes[${i}].done`));att++){const got=await takeGift(P,i);P.log('снял с ленты «'+w+'»'+(att?' (повтор '+att+')':''));if(!got)continue;
-        await P.act(await boxHit(P,i),'коробка '+i);P.log('положил в коробку '+i);await P.waitFor(`sw.boxes[${i}].done`,4000)}
+      for(let att=0;att<4&&!(await P.E(`sw.boxes[${i}].done`));att++){
+        const by=await P.E(`(()=>{const g=sw.gifts.find(g=>g.n===WANT[sw.boxes[${i}].name]&&!g.gone);return g&&!g.on&&g.by!=null&&g.by!==me?g.by:null})()`);
+        let Q=null;if(by!==null)for(const R of T.P)if(R!==P&&await R.E('me')===by)Q=R;
+        if(Q){Q.log('кладёт в коробку '+i+' подарок, который уже держит');await Q.act(await boxHit(Q,i),'коробка '+i)}
+        else{const got=await takeGift(P,i);P.log('снял с ленты «'+w+'»'+(att?' (повтор '+att+')':''));if(got){await P.act(await boxHit(P,i),'коробка '+i);P.log('положил в коробку '+i)}}
+        await P.waitFor(`sw.boxes[${i}].done`,4000)}
       T.ok(await P.waitFor(`sw.boxes[${i}].done`),'коробка '+(i+1)+' собрана')});
   }
   await T.step('work',async P=>{T.ok(await P.waitFor('sw.done'),'все подарки разложены')});
@@ -111,8 +113,13 @@ async stable(T){
       if(!(await P.E('pick.hidden'))){await P.pg.locator('#pickopts button').filter({hasText:new RegExp('^'+STALL[i]+'( \\(висит на другом\\))?$')}).first().click({timeout:5000});await W(120)}}
     P.log('развесил таблички');T.ok(await P.waitFor('ss.namesOK'),'таблички на стойлах')});
   await T.step('stable',async P=>{const sk=await P.E(`STALL.indexOf('Скакун')`);const sh=await P.E(`[STX[${sk}]-12,34]`);await P.hold('новая подкова');await P.act(sh,'стойло Скакуна');await P.hold('молоток');await P.act(sh,'стойло Скакуна');T.ok(await P.waitFor('ss.shod'),'Скакун подкован')});
-  await T.step('stable',async P=>{await P.hold('упряжь');const ANS=await P.E('ANSWER');const SL=await P.E('SLOTS');const SH=await P.E(`SLOTS.map(s=>s.side==='слева'?[s.x-14,s.y-30]:[s.x-14,s.y-26])`);for(let i=0;i<8;i++){if(!(await P.E(`heldBy(me)==='упряжь'`)))await P.hold('упряжь');await P.act(SH[i],'место в упряжке '+(i+1));await P.pick(ANS[SL[i].k+SL[i].side])}P.log('запряг оленей')});
-  await T.step('stable',async P=>{await P.act([2,107],'сани');T.ok(await P.waitFor('ss.done'),'сани взлетели')});
+  await T.step('stable',async P=>{const ANS=await P.E('ANSWER');const SL=await P.E('SLOTS');const SH=await P.E(`SLOTS.map(s=>s.side==='слева'?[s.x-14,s.y-30]:[s.x-14,s.y-26])`);
+    for(let i=0;i<8;i++){if(await P.E(`!!ss.slot[SLOTS[${i}].k+SLOTS[${i}].side]`))continue;const r=await P.act(SH[i],'место в упряжке '+(i+1));
+      if(i===0)T.ok(await P.E(`document.getElementById('picktitle').textContent`)==='Чьё это место?','клик по квадратику без упряжи: «Чьё это место?» ('+String(r).slice(0,30)+')');
+      await P.pick(ANS[SL[i].k+SL[i].side])}
+    T.ok(await P.waitFor(`/УРА/.test(document.getElementById('picktitle').textContent)&&!pick.hidden`,4000),'все олени на местах — надпись «УРА!»');await P.pick('Понятно').catch(()=>{});P.log('расставил оленей')});
+  await T.step('stable',async P=>{const r0=await P.act([2,107],'сани (без упряжи)');T.ok(!(await P.E('ss.harness')),'без упряжи в руках сани не едут: «'+String(r0).slice(0,40)+'»');
+    await P.hold('упряжь');await P.act([2,107],'сани: надеть упряжку');T.ok(await P.waitFor('ss.harness'),'упряжка надета');await P.act([2,107],'сани');T.ok(await P.waitFor('ss.done'),'сани взлетели')});
   return 'kitchen'},
 
 async kitchen(T){
