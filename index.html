@@ -1717,7 +1717,7 @@ const SOLID_S=[[0,0,W,80],[0,0,16,108],[250,0,6,H],[0,H-3,W,3],[18,84,21,20],[40
 
 // ---------- окно выбора ----------
 const pick=document.getElementById('pickbox');
-function openPick(title,text,opts,noCancel){document.getElementById('picktitle').textContent=title;document.getElementById('pickclose').hidden=!!noCancel;document.getElementById('picktext').textContent=text;
+function openPick(title,text,opts,noCancel){document.getElementById('picktitle').textContent=title;document.getElementById('pickclose').hidden=!!noCancel||opts.some(o=>/^(Отмена|Закрыть|Отойти)$/.test(o.label));document.getElementById('picktext').textContent=text;
   const box=document.getElementById('pickopts');box.innerHTML='';box.style.display='';
   opts.forEach(o=>{const b=document.createElement('button');b.type='button';b.className='btn'+(o.ghost?' ghost':'');b.textContent=o.label;if(o.dim)b.classList.add('dim');
     b.addEventListener('click',()=>{if(o.keep){o.fn(b);return}closePick();o.fn()});box.appendChild(b)});
@@ -2949,7 +2949,7 @@ const ITEMS_K=[
  {x:44,y:112,hit:[2,36,37,62],act(){if(sk.p1)return'В холодильнике молоко, масло и сыр.';sk.p1=true;privNote('Рецепт: что класть','«1. Мука. 2. Мёд. 3. Имбирь. 4. Серебряная корица. 5. Звёздная пыль. Класть строго по порядку! Корица только серебряная: от обычной олени чихают. Выпекать столько минут, сколько оленей в упряжке Санты».');return'Вы открыли холодильник. Между банками с вареньем заложен лист из книги рецептов! Его видите только вы.'}},
  {x:56,y:104,hit:[42,50,26,19],act(){return'Книга рецептов миссис Клаус целиком вмёрзла в лёд. Страницы не перелистнуть. Какие-то листы, наверное, выпали раньше.'}},
  {x:58,y:104,hit:[42,69,31,29],act(){const c=['звезда','ёлка','колокольчик','олень'];
-   openPick('Ящик с формочками','Четыре формочки для пряников. Взять можно одну.',c.map(n=>({label:'Формочка: '+n,fn:()=>{c.forEach(z=>drop('формочка: '+z));take('формочка: '+n);say(people[me],'Вы взяли формочку «'+n+'».')}})).concat([{label:'Отмена',ghost:true,fn:()=>{}}]));return null}},
+   openPick('Ящик с формочками','Четыре формочки для пряников. Взять можно одну. Подсказка на холодильнике.',c.map(n=>({label:'Формочка: '+n,fn:()=>{c.forEach(z=>drop('формочка: '+z));take('формочка: '+n);say(people[me],'Вы взяли формочку «'+n+'».')}})).concat([{label:'Отмена',ghost:true,fn:()=>{}}]));return null}},
  {x:72,y:104,hit:[73,65,30,31],act(){return'В ящике кухонные полотенца.'}},
  {x:72,y:104,hit:[48,10,47,41],act(){return'За окном метель. На подоконнике кувшин с ветками рябины.'}},
  {x:128,y:132,hit:[117,72,22,14],act(){return bowlAct()}},
