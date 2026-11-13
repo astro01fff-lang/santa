@@ -74,6 +74,16 @@ async holdRace(c,ok){// двое в одну долю секунды берут 
     await Promise.all(P.map(p=>p.E(`holdIt('пустое ведро');0`)));await W(3000);
     const v=await Promise.all(P.map(p=>p.E(`TEAM.inv.filter(x=>baseIt(x)==='пустое ведро').join('|')`)));
     ok(v.every(x=>x===v[0])&&!v[0].includes('|')&&v[0].startsWith('@'),'попытка '+(r+1)+': у всех одинаково и вещь одна ('+v.join(' / ')+')')}},
+async doors(c,ok){// после каждого перехода между частями комнаты персонаж стоит на полу и может уйти (кликом мыши)
+  const p=c.P[0];
+  for(const [lv,from,door,name] of [['stable','stable',[236,0],'на сеновал'],['stable','loft',[0,118],'с сеновала'],['stable','stable',[0,44],'в кузницу'],['stable','forge',[0,26],'из кузницы'],['kitchen','kitchen',[232,22],'в кладовую'],['kitchen','pantry',[186,110],'в погреб'],['kitchen','cellar',[0,5],'из погреба'],['kitchen','pantry',[0,24],'из кладовой']]){
+    if(await p.E('levelOf(ROOM)')!==lv)await c.goto(lv);const lf={stable:'stable',kitchen:'kitchen'}[lv];
+    if(await p.E('ROOM')!==from)await p.E(`goScene('${from}',[100,120]);0`);await W(300);
+    await p.act(door,'дверь '+name);await W(500);const x0=await p.E('[people[me].x,people[me].y]');
+    const tgt=await p.E(`(()=>{for(const [x,y] of [[120,130],[60,140],[180,140],[100,100]]){const t=nearestFree(x,y,20);const q=people[me];if(t&&findPath(q.x+8,q.y+20,t)&&Math.hypot(t[0]*GS-q.x,t[1]*GS-q.y)>30)return[t[0]*GS+2,t[1]*GS+2]}return null})()`);
+    if(!tgt){ok(false,'после перехода '+name+' некуда идти (персонаж застрял)');continue}
+    await p.clickAt(tgt[0],tgt[1]-6);await W(2500);const x1=await p.E('[people[me].x,people[me].y]');
+    ok(Math.hypot(x1[0]-x0[0],x1[1]-x0[1])>8,'после перехода '+name+' персонаж может уйти ('+x0.map(Math.round)+' → '+x1.map(Math.round)+')')}},
 async offline(c,ok){// пропала связь у игрока на 10 с: его действия доходят после возвращения, позиция и инвентарь сходятся
   const {lead,fol}=c;await fol.setOffline(true);await fol.act([6,143],'ведро');await W(10000);await fol.setOffline(false);
   ok(await lead.waitFor(`anyHas('пустое ведро')`,15000),'ведро, взятое без связи, появилось у товарища после восстановления');
