@@ -64,10 +64,12 @@ async work(T){
     await T.step('work',async P=>{for(let k=0;k<5&&!(await P.E(`!!sw.boxes[${i}].name`));k++){const lab=await P.E(`TEAM.inv.map(baseIt).find(x=>x.startsWith('табличка'))`);if(!lab){await W(800);continue}await P.hold(lab);const r=await P.act(await boxHit(P,i),'коробка '+i);P.log('табличка на коробку '+i+': '+String(r).slice(0,40));await W(500)}
       T.ok(await P.waitFor(`!!sw.boxes[${i}].name`),'табличка на коробке '+(i+1))});
     await T.step('work',async P=>{const w=await P.E(`WANT[sw.boxes[${i}].name]`);let r;
-      {const by=await P.E(`(()=>{const g=sw.gifts.find(g=>g.n===WANT[sw.boxes[${i}].name]&&!g.gone);return g&&!g.on&&g.by!=null&&g.by!==me?g.by:null})()`);
-       if(by!==null){for(const Q of T.P)if(Q!==P&&await Q.E('me')===by){Q.log('кладёт в коробку '+i+' подарок, который уже держит');await Q.act(await boxHit(Q,i),'коробка '+i);T.ok(await Q.waitFor(`sw.boxes[${i}].done`),'коробка '+(i+1)+' собрана');return}}}
-      for(let att=0;att<3&&!(await P.E(`sw.boxes[${i}].done`));att++){const got=await takeGift(P,i);P.log('снял с ленты «'+w+'»'+(att?' (повтор '+att+')':''));if(!got)continue;
-        await P.act(await boxHit(P,i),'коробка '+i);P.log('положил в коробку '+i);await P.waitFor(`sw.boxes[${i}].done`,4000)}
+      for(let att=0;att<4&&!(await P.E(`sw.boxes[${i}].done`));att++){
+        const by=await P.E(`(()=>{const g=sw.gifts.find(g=>g.n===WANT[sw.boxes[${i}].name]&&!g.gone);return g&&!g.on&&g.by!=null&&g.by!==me?g.by:null})()`);
+        let Q=null;if(by!==null)for(const R of T.P)if(R!==P&&await R.E('me')===by)Q=R;
+        if(Q){Q.log('кладёт в коробку '+i+' подарок, который уже держит');await Q.act(await boxHit(Q,i),'коробка '+i)}
+        else{const got=await takeGift(P,i);P.log('снял с ленты «'+w+'»'+(att?' (повтор '+att+')':''));if(got){await P.act(await boxHit(P,i),'коробка '+i);P.log('положил в коробку '+i)}}
+        await P.waitFor(`sw.boxes[${i}].done`,4000)}
       T.ok(await P.waitFor(`sw.boxes[${i}].done`),'коробка '+(i+1)+' собрана')});
   }
   await T.step('work',async P=>{T.ok(await P.waitFor('sw.done'),'все подарки разложены')});
