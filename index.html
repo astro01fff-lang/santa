@@ -1717,7 +1717,7 @@ const SOLID_S=[[0,0,W,80],[0,0,16,108],[250,0,6,H],[0,H-3,W,3],[18,84,21,20],[40
 
 // ---------- окно выбора ----------
 const pick=document.getElementById('pickbox');
-function openPick(title,text,opts){document.getElementById('picktitle').textContent=title;document.getElementById('picktext').textContent=text;
+function openPick(title,text,opts,noCancel){document.getElementById('picktitle').textContent=title;document.getElementById('pickclose').hidden=!!noCancel;document.getElementById('picktext').textContent=text;
   const box=document.getElementById('pickopts');box.innerHTML='';box.style.display='';
   opts.forEach(o=>{const b=document.createElement('button');b.type='button';b.className='btn'+(o.ghost?' ghost':'');b.textContent=o.label;if(o.dim)b.classList.add('dim');
     b.addEventListener('click',()=>{if(o.keep){o.fn(b);return}closePick();o.fn()});box.appendChild(b)});
@@ -1750,25 +1750,31 @@ function slotAct(si){
   const sl=SLOTS[si],key=sl.k+sl.side;
   if(ss.done)return'Упряжка готова.';
   if(ss.slot[key]){const n=ss.slot[key];
+    if(ss.order&&!ss.harness&&holds('упряжь'))return harnessUp();
     if(n==='Скакун'&&!ss.shod){const r=shoeAct();if(r)return r}
     openPick('Это '+n,'Пара '+sl.k+(sl.k===1?', впереди всех':sl.k===4?', у самых саней':'')+'. '+(n==='Скакун'&&!ss.shod?(ss.shoeOn?'Подкова приложена к копыту, но ещё не прибита.':'Скакун хромает: не хватает подковы.'):DEER[n].d[0].toUpperCase()+DEER[n].d.slice(1)+'.'),
-      [{label:'Вернуть '+n+' в стойло',fn:()=>{delete ss.slot[key];renderSide();say(people[me],n+' вернулся в стойло.')}},{label:'Оставить',ghost:true,fn:()=>{}}]);return null}
-  if(!holds('упряжь'))return handMsg('упряжь','Здесь место для оленя в упряжке.');
-  if(!ss.namesOK)return'Сначала разберитесь, кто есть кто: на стойлах нет табличек.';
+      [{label:'Вернуть '+n+' в стойло',fn:()=>{delete ss.slot[key];ss.order=false;ss.harness=false;renderSide();say(people[me],n+' вернулся в стойло.')}},{label:'Оставить',ghost:true,fn:()=>{}}]);return null}
+  if(!ss.namesOK)return'Чьё это место? Сначала разберитесь, кто есть кто: на стойлах нет табличек.';
   const placed=Object.values(ss.slot);
-  const opts=DNAMES.filter(n=>!placed.includes(n)).map(n=>({label:n,fn:()=>{ss.slot[key]=n;renderSide();say(people[me],n+' теперь в паре '+sl.k+'.')}}));
-  openPick('Пара '+sl.k,(sl.k===1?'Первая пара, впереди всех. ':sl.k===4?'Последняя пара, у самых саней. ':'')+(ss.slot[key]?'Сейчас здесь '+ss.slot[key]+'.':'Кого сюда поставить?'),opts);
+  const opts=DNAMES.filter(n=>!placed.includes(n)).map(n=>({label:n,fn:()=>{ss.slot[key]=n;renderSide();say(people[me],n+' теперь в паре '+sl.k+'.');checkOrder()}}));
+  openPick('Чьё это место?','Пара '+sl.k+(sl.k===1?', впереди всех':sl.k===4?', у самых саней':'')+'. Выберите оленя.',opts);
   return null;
 }
+// все 8 мест заняты: проверяем порядок; когда всё верно — пора надевать упряжь
+function checkOrder(){if(Object.keys(ss.slot).length<8)return;const ok=SLOTS.filter(s=>PAIR[ss.slot[s.k+s.side]]===s.k).length;
+  if(ok===8){if(!ss.order){ss.order=true;renderSide();try{sfx('success')}catch(e){}openPick('УРА!','Все олени расставлены правильно, пора отправляться в путь. Наденьте упряжку: возьмите упряжь в руки и нажмите на сани.',[{label:'Понятно',fn:()=>{}}],true)}}
+  else{ss.pen+=30;penFx={t:performance.now(),x:120,y:128};say(people[me],'Все места заняты, но на своих местах только '+ok+' из 8. Олени фыркают и путаются. +30 секунд.')}}
+function harnessUp(){ss.harness=true;drop('упряжь');renderSide();try{sfx('open')}catch(e){}
+  return ss.shod?'Упряжка надета! Садитесь в сани, пора в путь.':'Упряжка надета! Но Скакун хромает: без новой подковы далеко не улететь.'}
 function sledAct(){
   if(ss.tarp){ss.tarp=false;renderSide();return'Вы сдёрнули брезент. На боку саней вырезан узор: звезда, колокольчик, подкова, снежинка.'}
   if(ss.done)return'Сани взлетают!';
   const n=Object.keys(ss.slot).length;
-  if(n<8)return'Сани ждут упряжку: поставлено '+n+' из 8 оленей.';
+  if(n<8)return'Сани ждут оленей: на своих местах '+n+' из 8. Нажимайте на квадратики перед санями.';
+  if(!ss.order){const ok=SLOTS.filter(s=>PAIR[ss.slot[s.k+s.side]]===s.k).length;return'Олени стоят не на своих местах: правильно '+ok+' из 8. Поменяйте их, нажимая на оленей.'}
+  if(!ss.harness){if(!holds('упряжь'))return handMsg('упряжь','Олени на местах. Наденьте на них упряжку.');return harnessUp()}
   if(!ss.shod)return'Скакун хромает. С ним так далеко не улететь.';
-  const ok=SLOTS.filter(s=>PAIR[ss.slot[s.k+s.side]]===s.k).length;
-  if(ok===8){ss.done=true;sfx('bells');ss.flyT=performance.now();renderSide();autoNext('kitchen',4200);return'Трогай! Бубенцы звенят, олени разгоняются… Сани взлетают!'}
-  ss.pen+=30;penFx={t:performance.now(),x:120,y:128};return'Олени путаются в упряжи и спорят. На своих местах '+ok+' из 8. +30 секунд.';
+  {ss.done=true;sfx('bells');ss.flyT=performance.now();renderSide();autoNext('kitchen',4200);return'Трогай! Бубенцы звенят, олени разгоняются… Сани взлетают!'}
 }
 function chestAct(){
   if(ss.chest)return'Сундук пуст.';
@@ -1904,7 +1910,7 @@ function hdStable(t,dt){
     g.strokeStyle='#4a2c1c';g.lineWidth=3;g.beginPath();g.moveTo(x0+3,146);g.lineTo(x0+41,120);g.stroke();
     if(ss.tags[i]){QQ(g,cx-16,124,32,11,'#e8d8b0');QQ(g,cx-16,134,32,1,'#8a7a5a')}}
   // следы мест упряжки
-  if((anyHas('упряжь')||Object.keys(ss.slot).length)&&!ss.done)SLOTS.forEach(s=>{if(!ss.slot[s.k+s.side]){g.strokeStyle='rgba(242,193,78,.35)';g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(s.x*2-14,s.y*2-8,28,10);g.setLineDash([])}});
+  if((ss.namesOK||anyHas('упряжь')||Object.keys(ss.slot).length)&&!ss.done)SLOTS.forEach(s=>{if(!ss.slot[s.k+s.side]){g.strokeStyle='rgba(242,193,78,.35)';g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(s.x*2-14,s.y*2-8,28,10);g.setLineDash([])}});
 }
 function stableEnts(t){
   const out=[];let fx=0,fy=0;
@@ -2218,7 +2224,7 @@ function hdStableImg(t,dt){
   // сани: после взлёта уезжают и поднимаются вместе с упряжкой
   if(!ss.tarp){if(ss.done){gp('s_nosled');const {fx,lift}=sledFly();const im=GP.s_sled;if(okI(im)){g.save();g.imageSmoothingEnabled=true;g.drawImage(im,IX(-12)+fx,IY(614)-lift,IX(520),IY(356));g.restore()}}else gp('s_sleigh')}
   // места упряжки
-  if((anyHas('упряжь')||Object.keys(ss.slot).length)&&!ss.done)SLOTS.forEach(s=>{if(!ss.slot[s.k+s.side]){g.strokeStyle='rgba(242,193,78,.5)';g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(s.x*2-24,s.y*2-6,48,14);g.setLineDash([])}});
+  if((ss.namesOK||anyHas('упряжь')||Object.keys(ss.slot).length)&&!ss.done)SLOTS.forEach(s=>{if(!ss.slot[s.k+s.side]){g.strokeStyle='rgba(242,193,78,.5)';g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(s.x*2-24,s.y*2-6,48,14);g.setLineDash([])}});
   if(ss.done){const e=(performance.now()-ss.flyT)/1000;for(let i=0;i<14;i++){const a=(i*47+e*90)%360*Math.PI/180;g.fillStyle=`rgba(255,230,140,${Math.max(0,.9-e*.15)})`;g.fillRect(IX(240)+Math.cos(a)*(40+i*3),IY(760)+Math.sin(a)*(18+i),2,2)}}
 }
 function sledFly(){if(!ss.done)return{fx:0,lift:0};const e=(performance.now()-ss.flyT)/1000;return{fx:Math.max(0,e-.5)*e*60,lift:Math.max(0,e-1.2)*e*14}}
@@ -3302,7 +3308,7 @@ function frame0(now){
     ctx.textBaseline='bottom'}
   if(ST){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`${Math.max(8,Math.round(S*2.4))}px 'Press Start 2P', monospace`;
     if(ss.namesOK)for(let i=0;i<8;i++){const x=STX[i]*S,y=64.5*S;ctx.strokeStyle='rgba(124,211,154,.9)';ctx.lineWidth=Math.max(2,S*.5);ctx.strokeRect(x-S*10.5,y-S*4.3,S*21,S*8.6)}
-    if((anyHas('упряжь')||Object.keys(ss.slot).length)&&!ss.done){ctx.font=`${Math.max(7,Math.round(S*2))}px 'Press Start 2P', monospace`;ctx.fillStyle='rgba(244,236,216,.85)';
+    if((ss.namesOK||anyHas('упряжь')||Object.keys(ss.slot).length)&&!ss.done){ctx.font=`${Math.max(7,Math.round(S*2))}px 'Press Start 2P', monospace`;ctx.fillStyle='rgba(244,236,216,.85)';
       for(let k=1;k<=4;k++)ctx.fillText('пара '+k,(190-(k-1)*30)*S,171*S);ctx.textAlign='left';ctx.fillText('вперёд →',204*S,119*S);ctx.textAlign='center'}
     if(penFx){const a=1-(now-penFx.t)/1400;if(a<=0)penFx=null;else{ctx.font=`${Math.round(S*3.4)}px 'Press Start 2P', monospace`;ctx.fillStyle=`rgba(255,110,90,${a})`;ctx.fillText('+30 сек',penFx.x*S,(penFx.y-12-(1-a)*10)*S)}}
     ctx.textBaseline='bottom'}
