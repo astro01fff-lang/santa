@@ -60,7 +60,9 @@ const run={bugs:[],pend:[],t0:Date.now(),seed:SEED,
       T.levels[lv]={sec:Math.round((Date.now()-t0)/1000),ok:T.checks.slice(cs).every(c=>c.ok),checks:T.checks.length-cs,moved};
       if(want==='flight'&&!levels.includes('flight'))break}
     T.done=Date.now()}
-  async function hostGoto(T,lv){console.log(`  ⤳ ведущая переводит ${T.name} на ${lv}`);try{await host.click('#nav button >> text=Команды');await W(300);await host.selectOption('#goto_'+T.id,lv);await host.click(`#goto_${T.id} + button`);await W(300);if(await host.locator('#dlgOk').isVisible())await host.click('#dlgOk');await W(3500);for(const P of T.P){await P.waitRoom(lv);await P.install()}}catch(e){run.bug({team:T,sev:'серьёзный',title:'Ведущая не смогла перевести команду: '+e.message.split('\n')[0]})}}
+  let hostQ=Promise.resolve();
+  function hostGoto(T,lv){const r=hostQ.then(()=>hostGoto0(T,lv));hostQ=r.catch(()=>{});return r}/* ведущая переводит команды по очереди */
+  async function hostGoto0(T,lv){console.log(`  ⤳ ведущая переводит ${T.name} на ${lv}`);try{await host.click('#nav button >> text=Команды');await W(300);await host.selectOption('#goto_'+T.id,lv);await host.click(`#goto_${T.id} + button`);await W(300);if(await host.locator('#dlgOk').isVisible())await host.click('#dlgOk');await W(3500);for(const P of T.P){await P.waitRoom(lv);await P.install()}}catch(e){run.bug({team:T,sev:'серьёзный',title:'Ведущая не смогла перевести команду: '+e.message.split('\n')[0]})}}
   await Promise.all(teams.map(T=>play(T).catch(e=>run.bug({team:T,sev:'критический',title:'Прогон команды упал: '+e.message.split('\n')[0]}))));
   // ведущая видит финиш
   await W(3000);await host.click('#nav button >> text=Результаты').catch(()=>{});await W(800);const fin=await host.$eval('#s-res',e=>e.innerText).catch(()=>null);

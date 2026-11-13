@@ -2873,7 +2873,9 @@ const KITICON={'мука':'мука','мёд':'мёд','мёд во льду':'�
 const OVEN=[170,58];
 // --- переход между комнатами одного уровня
 let sceneFadeT=0;
-function goScene(sc,pos){const p=people[me];p.scene=sc;p.x=pos[0];p.y=pos[1];p.tx=null;path=null;pendingLook=false;bubble=null;sfx('open');sceneFadeT=performance.now();setView(sc)}
+function goScene(sc,pos){const p=people[me];p.scene=sc;p.x=pos[0];p.y=pos[1];p.tx=null;path=null;pendingLook=false;bubble=null;sfx('open');sceneFadeT=performance.now();setView(sc);unstick(p)}
+// страховка: если после перехода персонаж стоит в непроходимом месте (мебель, сено), ставим его на ближайший свободный пол
+function unstick(p){try{const fx=p.x+8,fy=p.y+20;if(nearestFree(fx,fy,8))return;const t=nearestFree(fx,fy,60);if(t){p.x=t[0]*GS+2-8;p.y=t[1]*GS+2-20}}catch(e){}}
 function setView(sc){ROOM=sc;WW=W;WH=H;GW=W/GS|0;GH=H/GS|0;camX=0;camY=0;
   const NM={kitchen:'Кухня миссис Клаус',pantry:'Кладовая',cellar:'Погреб',loft:'Сеновал',forge:'Кузница',stable:'Конюшня'};document.getElementById('roomname').textContent=NM[sc]||document.getElementById('roomname').textContent;renderSide()}
 function whereIs(){const by={};people.forEach(p=>{const s=p.scene||ROOM;(by[s]=by[s]||[]).push(OUTFITS[p.i].name)});return by}
@@ -2989,7 +2991,7 @@ const ITEMS_CL=[
 // --- сеновал и кузница
 const ITEMS_LF=[
  {x:104,y:104,hit:[96,38,13,24],act(){if(ss.lantern)return'Тут стоял фонарь.';ss.lantern=true;take('фонарь');return'Вы взяли со стола фонарь. Тёплый!'}},
- {x:70,y:142,hit:[0,118,64,42],act(){goScene('stable',[214,92]);return null}},
+ {x:70,y:142,hit:[0,118,64,42],act(){goScene('stable',[222,62]);return null}},
  {x:118,y:104,hit:[110,48,23,14],act(){if(ss.lp0)return'Книга примет. Остальные страницы пустые.';ss.lp0=true;privNote(...PAGES[0]);return'На столе книга примет оленей! Вы прочитали страницу. Её видите только вы.'}},
  {x:166,y:104,hit:[157,22,36,30],act(){if(ss.lp1)return'Доска с записками. Больше ничего полезного.';ss.lp1=true;privNote(...PAGES[1]);return'На доске приколот вырванный лист из книги примет! Его видите только вы.'}},
  {x:66,y:108,hit:[52,65,22,24],act(){if(ss.lp2)return'Пустая бочка.';ss.lp2=true;privNote(...PAGES[2]);return'В бочке лежит страница из книги примет! Её видите только вы.'}},
