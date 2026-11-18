@@ -62,7 +62,7 @@ aside{display:flex;flex-direction:column;gap:14px;min-width:0}
 .modal[hidden]{display:none}
 .intro{gap:10px;width:min(480px,100%)}
 .audioui{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;width:100%;justify-content:flex-end}
-.audioui .btn{font-size:9px;padding:8px 10px}.audioui .btn[aria-pressed="false"],#mbtn[aria-pressed="false"],#sbtn[aria-pressed="false"]{opacity:.55}
+.audioui .btn{font-size:9px;padding:8px 10px}.audioui .btn[aria-pressed="false"],#mbtn[aria-pressed="false"],#sbtn[aria-pressed="false"],#mbtn2[aria-pressed="false"],#sbtn2[aria-pressed="false"],#mbtn3[aria-pressed="false"],#sbtn3[aria-pressed="false"]{opacity:.55}
 .vol{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}.vol input{width:80px;accent-color:#f2c14e}
 .modal:not([hidden])>.sheet,.modal:not([hidden])>form{animation:sheetIn .22s ease-out}
 @keyframes sheetIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
@@ -3189,11 +3189,16 @@ function sfx(n){if(window.__SPEC||!AU.ctx||!AU.sound)return;const c=AU.ctx,t=c.c
 // ---- кнопки звука ----
 function auUI(){const box=document.getElementById('audioui');if(!box)return;
   const mb=document.getElementById('mbtn'),sb2=document.getElementById('sbtn'),mv=document.getElementById('mvol'),sv=document.getElementById('svol');
-  // кнопки звука — в нижней панели игры: видны всегда, в том числе в режиме «Весь экран» и на маленьком экране
-  {const hr=document.querySelector('.hotbar .hb-right');if(hr){mb.className='btn notesbtn';sb2.className='btn notesbtn';hr.prepend(sb2);hr.prepend(mb)}}
-  const upd=()=>{mb.setAttribute('aria-pressed',AU.music?'true':'false');mb.textContent=AU.music?'♪ Музыка':'♪ Музыка: выкл';sb2.setAttribute('aria-pressed',AU.sound?'true':'false');sb2.textContent=AU.sound?'🔊 Звуки':'🔈 Звуки: выкл';mv.value=AU.mv;sv.value=AU.sv};
-  mb.addEventListener('click',()=>{auInit();AU.music=!AU.music;auApply();auSave();upd()});
-  sb2.addEventListener('click',()=>{auInit();AU.sound=!AU.sound;auApply();auSave();upd();sfx('click')});
+  // кнопки музыки и звуков: наверху (рядом с громкостью), внизу под игрой и на заставке — переключают одно и то же
+  const mk=(id,cls)=>{const b=document.createElement('button');b.type='button';b.id=id;b.className=cls;return b};
+  const MB=[mb],SB=[sb2];
+  {const hr=document.querySelector('.hotbar .hb-right');if(hr){const a=mk('mbtn2','btn notesbtn'),c=mk('sbtn2','btn notesbtn');hr.prepend(c);hr.prepend(a);MB.push(a);SB.push(c)}}
+  {const pb=document.querySelector('#prolog .pl-btns');if(pb){const a=mk('mbtn3','btn ghost'),c=mk('sbtn3','btn ghost');pb.prepend(c);pb.prepend(a);MB.push(a);SB.push(c)}}
+  const upd=()=>{MB.forEach(b=>{b.setAttribute('aria-pressed',AU.music?'true':'false');b.textContent=AU.music?'♪ Музыка':'♪ Музыка: выкл'});
+    SB.forEach(b=>{b.setAttribute('aria-pressed',AU.sound?'true':'false');b.textContent=AU.sound?'🔊 Звуки':'🔈 Звуки: выкл'});mv.value=AU.mv;sv.value=AU.sv};
+  window.__auUpd=upd;
+  MB.forEach(b=>b.addEventListener('click',()=>{auInit();AU.music=!AU.music;auApply();auSave();upd()}));
+  SB.forEach(b=>b.addEventListener('click',()=>{auInit();AU.sound=!AU.sound;auApply();auSave();upd();sfx('click')}));
   mv.addEventListener('input',()=>{auInit();AU.mv=+mv.value;auApply();auSave()});sv.addEventListener('input',()=>{auInit();AU.sv=+sv.value;auApply();auSave()});
   upd()}
 ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>auInit(),{capture:true}));
@@ -3417,7 +3422,7 @@ function plDraw(now){if(plWait){plT0=now}
   const once=(k,t,n)=>{if(e>t&&!plSnd[k]){plSnd[k]=1;try{sfx(n)}catch(_){}}};once('w',6,'shield');if(E>6&&!plSnd.m){plSnd.m=1;try{auStartMusic('ice')}catch(_){}}if(E>26&&!plSnd.m2){plSnd.m2=1;try{auStartMusic('cozy')}catch(_){}}once('b',11,'hit');once('f',12.4,'shatter');once('d',19.6,'open');
   if(E>PL_END-.5){const nb=document.getElementById('plnext');if(nb.hidden){nb.hidden=false;nb.focus()}}
   if(!plBox.hidden)plRaf=requestAnimationFrame(plDraw)}
-function plUpdAU(){try{const mb=document.getElementById('mbtn'),sb2=document.getElementById('sbtn');mb.setAttribute('aria-pressed','true');mb.textContent='♪ Музыка: вкл';sb2.setAttribute('aria-pressed','true');sb2.textContent='🔊 Звуки: вкл'}catch(_){}}
+function plUpdAU(){try{window.__auUpd&&window.__auUpd()}catch(_){}}
 function plGo(){plWait=false;document.getElementById('plstart').hidden=true;auInit();let auSet=null;try{auSet=localStorage.getItem('santa_audio')}catch(e){}if(auSet===null&&(!AU.music||!AU.sound)){/* выбор игрока (выключил звук) не трогаем */AU.music=true;AU.sound=true;auApply();auSave();plUpdAU()}AU.track=null;auStartMusic(CUT==='fin'?'win':'cozy');plT0=performance.now();plCapI=-1;plSnd={};document.getElementById('plskip').focus()}
 function openCut(mode,wait){CUT=mode;plBox.hidden=false;keys.clear();plT0=performance.now();plCapI=-1;plSnd={};const nb=document.getElementById('plnext');nb.hidden=true;nb.textContent=mode==='fin'?'Итоги':'Начать игру';
   document.getElementById('pltext').textContent='';plWait=!!wait;document.getElementById('plstart').hidden=!wait;if(!wait)plGo();
