@@ -36,7 +36,7 @@ const run={bugs:[],pend:[],t0:Date.now(),seed:SEED,
   for(const T of teams)for(const P of T.P){const vis=`document.getElementById('prolog').hidden?null:(document.getElementById('plt')||document.getElementById('prolog')).textContent.length`;
     let a=null;for(let k=0;k<60&&a===null;k++){a=await P.E(vis).catch(()=>null);if(a===null)await W(250)}await W(1500);const b=await P.E(vis).catch(()=>null);
     if(T===teams[0])T.ok(a!==null,P.name+': после отсчёта показан пролог','серьёзный')}
-  for(const T of teams)for(const P of T.P){await P.waitReady();T.ok(await P.E(`(()=>{const m=document.getElementById('mbtn'),s=document.getElementById('sbtn');return !!(m&&s&&m.closest('.hotbar')&&m.offsetParent&&s.offsetParent)})()`),P.name+': кнопки музыки и звука видны внизу','серьёзный')}
+  for(const T of teams)for(const P of T.P){await P.waitReady();T.ok(await P.E(`(()=>{const ok=id=>{const e=document.getElementById(id);return !!(e&&e.offsetParent)};return ok('mbtn')&&ok('sbtn')&&ok('mbtn2')&&ok('sbtn2')&&!!document.getElementById('mbtn2').closest('.hotbar')})()`),P.name+': кнопки музыки и звука видны наверху и внизу','серьёзный')}
   // экраны команд у ведущей: без звука
   try{await host.click('#nav button >> text=Экраны команд');await W(400);await host.click('#monToggle');await W(5000);const fr=host.frames().filter(f=>/spec=1/.test(f.url()));
     teams[0].ok(fr.length===NT,'у ведущей открыты экраны всех команд: '+fr.length);for(const f of fr){await f.evaluate(()=>document.body.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))).catch(()=>{})}await W(800);
