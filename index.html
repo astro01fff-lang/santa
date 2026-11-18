@@ -3633,12 +3633,12 @@ function render(){
 let justPicked=false,t0=Date.now(),myName=LS('santa_name_'+SID)||'',pendingChar=null,charErr='';
 function req(o){C.publish(B+'/req',J({pid:PID,cid:CID,...o}),{qos:1})}
 // ---------- связь ----------
-C.on('connect',()=>{chip.classList.remove('off');document.getElementById('netchipt').textContent='Связь есть';
+C.on('connect',()=>{chip.classList.remove('off');if(NET.lostAt){NET.lostAt=0;NET.holdLead=performance.now()+5000}/* вернулись после обрыва: сначала принимаем снимок команды, лидером не становимся */document.getElementById('netchipt').textContent='Связь есть';
   C.subscribe(B+'/cfg',1);C.subscribe(B+'/roster',1);C.subscribe(B+'/all',1);C.subscribe(B+'/time',0);C.subscribe(B+'/pres/+',0);
   if(!SPEC)C.publish(B+'/pres/'+PID,J({on:1,cid:CID,t:Date.now()}),{retain:true});if(myTeam)subTeam(myTeam);render()});
-C.on('close',()=>{chip.classList.add('off');document.getElementById('netchipt').textContent='Нет связи, переподключаемся…'});
+C.on('close',()=>{chip.classList.add('off');NET.lostAt=performance.now();document.getElementById('netchipt').textContent='Нет связи, переподключаемся…'});
 function subTeam(t){if(teamSubs===t)return;if(teamSubs)C.unsubscribe(B+'/t/'+teamSubs+'/#');teamSubs=t;C.subscribe(B+'/t/'+t+'/#',1)}
-C.on('message',(topic,str,ret)=>{let m;try{m=JSON.parse(str)}catch(e){return}
+C.on('message',(topic,str,ret)=>{{const n=performance.now();if(NET.lastIn&&n-NET.lastIn>4000)NET.holdLead=n+5000;NET.lastIn=n}/* долго ничего не приходило — значит, обрыв был у нас: сначала принимаем снимок команды */let m;try{m=JSON.parse(str)}catch(e){return}
   const rest=topic.slice(B.length+1);
   if(rest==='cfg'){onCfg(m);return}
   if(rest==='roster'){onRoster(m);return}
@@ -3782,7 +3782,7 @@ function computeLeader(){if(!roster||!myTeam)return -1;const mem=teamMembers(myT
   const alive=mem.filter(m=>m.slot===mySlot&&!SPEC?true:(lastPos[m.slot]&&now-lastPos[m.slot].t<6000));
   const visible=alive.filter(m=>m.slot===mySlot&&!SPEC?document.visibilityState==='visible':lastPos[m.slot].v);
   const pool=visible.length?visible:alive;return pool.length?Math.min(...pool.map(m=>m.slot)):-1}
-function leaderTick(){const L=computeLeader();const was=NET.leader;leaderSlot=L;NET.leader=!SPEC&&L===mySlot&&mySlot>=0;
+function leaderTick(){const L=computeLeader();const was=NET.leader;leaderSlot=L;NET.leader=!SPEC&&L===mySlot&&mySlot>=0&&!(NET.holdLead&&performance.now()<NET.holdLead)&&!(NET.lostAt&&!C.connected)&&!(NET.lastIn&&performance.now()-NET.lastIn>4000);
   if(NET.leader&&!was&&sb)bossTakeover();
   if(people)people.forEach(p=>{if(p.i===me&&!SPEC)return;const lp=lastPos[p.i];p.off=!p.gone&&(!lp||performance.now()-lp.t>8000)})}
 // ---------- события ----------

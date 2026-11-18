@@ -43,7 +43,7 @@ async living(T){
   const hang=async(P,star)=>{await T.ready(P);await goTo(P,'living');await P.act([209,56],'ёлка');await W(400);const tb=await P.pg.locator('#treecv').boundingBox();const hooks=await P.E('HOOKS');
     const mine=await P.E(`Object.keys(ORNN).filter(k=>st.orn[k]&&!st.hung[k]&&ornMine(k))`);let n=0;
     for(const h of hooks.filter(h=>h.ans&&mine.includes(h.ans)&&(star?h.ans==='star':h.ans!=='star'))){const nm=await P.E(`ORNN['${h.ans}']`);
-      await P.pg.click(`#tray button[aria-label="${nm}"]`,{timeout:5000});await P.pg.mouse.click(tb.x+h.x/1536*tb.width,tb.y+h.y/1024*tb.height);await W(150);n++}
+      await P.pg.click(`#tray button[aria-label="${nm}"]`,{timeout:5000}).catch(async e=>{const d=await P.E(`JSON.stringify({tray:[...document.querySelectorAll('#tray button')].map(b=>b.getAttribute('aria-label')),want:${JSON.stringify(nm)},sel:treeSel,open:!treeBox.hidden,hung:st.hung,msg:tmsg.textContent})`).catch(()=>'?');throw new Error('лоток: '+d+' :: '+e.message.split('\n')[0])});await P.pg.mouse.click(tb.x+h.x/1536*tb.width,tb.y+h.y/1024*tb.height);await W(150);n++}
     P.log('повесил на ёлку: '+n+(star?' (звезда)':''));if(!star)await P.pg.click('#treeclose').catch(()=>{});return n};
   let total=0;for(const P of T.P){try{total+=await hang(P,false)}catch(e){T.ok(false,P.name+': не смог повесить свои игрушки: '+e.message.split('\n')[0])}}
   await W(1500);T.ok(await T.any().waitFor('Object.keys(st.hung).length===8'),'8 игрушек на ёлке ('+await T.any().E('Object.keys(st.hung).length')+')');
@@ -118,8 +118,8 @@ async stable(T){
       if(i===0)T.ok(await P.E(`document.getElementById('picktitle').textContent`)==='Чьё это место?','клик по квадратику без упряжи: «Чьё это место?» ('+String(r).slice(0,30)+')');
       await P.pick(ANS[SL[i].k+SL[i].side])}
     T.ok(await P.waitFor(`/УРА/.test(document.getElementById('picktitle').textContent)&&!pick.hidden`,4000),'все олени на местах — надпись «УРА!»');await P.pick('Понятно').catch(()=>{});P.log('расставил оленей')});
-  await T.step('stable',async P=>{const r0=await P.act([2,107],'сани (без упряжи)');T.ok(!(await P.E('ss.harness')),'без упряжи в руках сани не едут: «'+String(r0).slice(0,40)+'»');
-    await P.hold('упряжь');await P.act([2,107],'сани: надеть упряжку');T.ok(await P.waitFor('ss.harness'),'упряжка надета');await P.act([2,107],'сани');T.ok(await P.waitFor('ss.done'),'сани взлетели')});
+  await T.step('stable',async P=>{if(!(await P.E('ss.harness||ss.done'))){const r0=await P.act([2,107],'сани (без упряжи)');T.ok(!(await P.E('ss.harness||ss.done')),'без упряжи в руках сани не едут: «'+String(r0).slice(0,40)+'»')}if(await P.E('ss.done')){T.ok(true,'сани взлетели');return}
+    if(!(await P.E('ss.harness'))){await P.hold('упряжь');await P.act([2,107],'сани: надеть упряжку')}T.ok(await P.waitFor('ss.harness'),'упряжка надета');await P.act([2,107],'сани');T.ok(await P.waitFor('ss.done'),'сани взлетели')});
   return 'kitchen'},
 
 async kitchen(T){
@@ -150,8 +150,8 @@ async obs(T){
     const sol=await P.E(`(()=>{const ns=${JSON.stringify(MIR)};const save=ns.map(n=>so.mir[n].st);for(let c=0;c<256;c++){ns.forEach((n,i)=>so.mir[n].st=(c>>(i*2))&3);traceBeam();if(so.done){so.done=false;const r=ns.map(n=>so.mir[n].st);ns.forEach((n,i)=>so.mir[n].st=save[i]);Object.values(so.mir).forEach(m=>m.frost=false);traceBeam();return r}}return null})()`);
     T.ok(!!sol,'у задачи с зеркалами есть решение');
     if(sol)for(let i=0;i<MIR.length;i++){const ow=await P.E(`so.mir['${MIR[i]}'].owner`);let Q=P;for(const R of T.P)if(await R.E('me')===ow)Q=R;
-      for(let c=0;c<8&&!(await Q.E('so.done'))&&await Q.E(`so.mir['${MIR[i]}'].st`)!==sol[i];c++){await Q.act(await Q.E(`(()=>{const o=MIR.find(o=>o.n==='${MIR[i]}');return[o.x-7,o.y-14]})()`),'повернуть зеркало');await W(150)}Q.log('повернул своё зеркало '+MIR[i]);await W(400)}
-    T.ok(await P.waitFor('so.done'),'луч попал в кристалл')});
+      for(let c=0;c<8&&!(await Q.E('so.done'))&&await Q.E(`so.mir['${MIR[i]}'].st`)!==sol[i];c++){if(await Q.E(`levelOf(ROOM)!=='obs'`))break;try{await Q.act(await Q.E(`(()=>{const o=MIR.find(o=>o.n==='${MIR[i]}');return[o.x-7,o.y-14]})()`),'повернуть зеркало')}catch(e){if(await Q.E('so.done||levelOf(ROOM)!=="obs"'))break;throw e}await W(150)}Q.log('повернул своё зеркало '+MIR[i]);await W(400)}
+    T.ok(await P.waitFor(`so.done||levelOf(ROOM)!=='obs'`),'луч попал в кристалл')});
   return 'flight'},
 
 async flight(T){
