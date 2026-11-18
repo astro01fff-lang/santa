@@ -34,9 +34,11 @@ async boss(c,ok){// финал: без щита, оба стреляют, не �
   const {lead,fol}=c;await c.goto('boss');
   for(const [k,p] of c.P.entries()){for(let a=0;a<6&&!(await p.E('hasWand(me)'));a++){await p.E(`(()=>{const it=bossItems()[${k}]||bossItems()[0];BOT.near(it.x,it.y);it.act(people[me]);return 0})()`);await W(300)}ok(await p.waitFor('hasWand(me)',4000),p.name+' получил жезл')}
   const h0=await lead.E('sb.hp');for(let k=0;k<4;k++){await fol.E('bossShoot();0');await W(1300)}const h1=await lead.E('sb.hp');ok(h1<h0,'выстрелы не-лидера ранят Королеву ('+Math.round(h0)+'→'+Math.round(h1)+')');
+  {await W(6000);const h2=await lead.E('sb.hp');ok(h2<=h1+0.01,'Королева не лечится, даже если по ней 6 секунд не стреляют ('+Math.round(h1)+' → '+Math.round(h2)+')')}
   // заморозка одного — атаки на паузе
   const fm=await fol.E('me');await lead.E(`sb.frozen[${fm}]=true;sb.lives[${fm}]=0;sb.nextAtk=performance.now()+100;0`);await W(1500);
   const atk=await lead.E(`[sb.spikes.length,sb.orbs.length,sb.nextAtk-performance.now()]`);ok(atk[0]===0&&atk[1]===0&&atk[2]>500,'пока товарища отогревают, Королева не атакует ('+atk.map(Math.round)+')');
+  {const h0=await lead.E('sb.hp');await lead.E('sb.lastHit=performance.now()-10000;0');await W(3000);const h1=await lead.E('sb.hp');ok(h1<=h0+0.01,'пока товарища отогревают, Королева не лечится ('+Math.round(h0)+' → '+Math.round(h1)+')')}
   await lead.E(`(()=>{const q=people[${fm}];const p=people[me];p.x=q.x+6;p.y=q.y;return 0})()`);ok(await lead.waitFor(`!isFrozen(${fm})`,6000),'товарищ оттаял, когда к нему подошли');
   let phases=new Set();for(let t=0;t<500;t++){const ph=await lead.E('sb.phase');phases.add(ph);if(ph==='win')break;for(const p of c.P)await p.E(`sb.frozen={};sb.lives={};bossShoot();0`).catch(()=>{});await W(300)}
   ok(!phases.has('shield'),'щита нет ни разу (фазы: '+[...phases]+')');ok(await lead.E(`sb.phase==='win'`),'Королева побеждена (здоровье '+Math.round(await lead.E('sb.hp'))+', фазы: '+[...phases]+')');ok(await fol.waitFor(`sb.phase==='win'`,5000),'победа видна обоим');

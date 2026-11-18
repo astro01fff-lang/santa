@@ -2674,7 +2674,7 @@ function freeze(i){if(sb.phase==='win'||isFrozen(i))return;const now=performance
 function thawTick(now,dt){if(sb.phase==='win')return;const PP=people.filter(q=>!q.gone&&!q.off);const all=PP.length>0&&PP.every(p=>isFrozen(p.i));
   if(all){if(!sb.allT)sb.allT=now;if(now-sb.allT>2200){sb.allT=0;sb.saves=(sb.saves||0)+1;
       if(sb.saves===1){sb.santaT=now;sb.nextAtk=now+8000;sb.spikes=[];sb.orbs=[];}
-      else{sb.pen+=60;sb.hp=Math.max(sb.hp,50);if(sb.phase==='shield')sb.phase='fight';sb.spikes=[];sb.orbs=[];qTaunt('Ха-ха! Пока вы мёрзли, я залечила раны! +60 секунд');}
+      else{sb.pen+=60;if(sb.phase==='shield')sb.phase='fight';sb.spikes=[];sb.orbs=[];qTaunt('Ха-ха! Вся команда во льду! +60 секунд');}
       PP.forEach(p=>{delete sb.frozen[p.i];delete sb.fallT[p.i];sb.lives[p.i]=3;sparkBurst(p.x+8,p.y+16,sb.saves===1?'#ffe9a8':'#cfefff',24)});sfx('shatter')}return}
   PP.forEach(p=>{if(!isFrozen(p.i))return;const alive=PP.filter(q=>!isFrozen(q.i));const near=alive.filter(q=>Math.hypot(q.x-p.x,q.y-p.y)<22);
     const ok=near.length>=alive.length&&alive.length>0;sb.thaw[p.i]=Math.max(0,Math.min(1,(sb.thaw[p.i]||0)+(ok?dt/3:-dt/6)));p.thawN=near.length;p.thawNeed=alive.length;
@@ -2713,7 +2713,6 @@ function bossTick(now,dt){
     {const live=people.filter(p=>!p.gone&&!p.off);const thawing=live.some(p=>isFrozen(p.i))&&!live.every(p=>isFrozen(p.i));
      if(thawing){sb.nextAtk=Math.max(sb.nextAtk,now+2500);sb.spikes=sb.spikes.filter(q=>now<q.t0);sb.orbs=[]}}
     if(now>sb.nextAtk)bossAttack(now);
-    if(sb.phase==='fight'&&sb.lastHit&&now-sb.lastHit>4000&&sb.hp<100){const cap=100;sb.hp=Math.min(cap,sb.hp+dt*1.2);if(!sb.regT||now-sb.regT>6000){sb.regT=now;qTaunt('Холод лечит меня! Не давайте мне передышки!')}}
   }else if(sb.phase==='intro'){sb.qx=192;sb.qy=118+Math.sin(now/700)*3}
   sb.spikes.forEach(s=>{if(!s.hit&&now>s.t0+1500){s.hit=true;sfx('spike');sb.shake=Math.max(sb.shake,now+180);people.filter(p=>!p.gone&&!p.off).forEach(p=>{if(Math.hypot(p.x+8-s.x,p.y+20-s.y)<10)freeze(p.i)});for(let k=0;k<5;k++)sb.parts.push({x:s.x,y:s.y-4,vx:(Math.random()-.5)*70,vy:-30-Math.random()*40,life:.5,t:0,col:'#e8f8ff',s:1.4})}});
   sb.spikes=sb.spikes.filter(s=>now<s.t0+2900);
