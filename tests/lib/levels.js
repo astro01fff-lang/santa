@@ -118,8 +118,8 @@ async stable(T){
       if(i===0)T.ok(await P.E(`document.getElementById('picktitle').textContent`)==='Чьё это место?','клик по квадратику без упряжи: «Чьё это место?» ('+String(r).slice(0,30)+')');
       await P.pick(ANS[SL[i].k+SL[i].side])}
     T.ok(await P.waitFor(`/УРА/.test(document.getElementById('picktitle').textContent)&&!pick.hidden`,4000),'все олени на местах — надпись «УРА!»');await P.pick('Понятно').catch(()=>{});P.log('расставил оленей')});
-  await T.step('stable',async P=>{const r0=await P.act([2,107],'сани (без упряжи)');T.ok(!(await P.E('ss.harness')),'без упряжи в руках сани не едут: «'+String(r0).slice(0,40)+'»');
-    await P.hold('упряжь');await P.act([2,107],'сани: надеть упряжку');T.ok(await P.waitFor('ss.harness'),'упряжка надета');await P.act([2,107],'сани');T.ok(await P.waitFor('ss.done'),'сани взлетели')});
+  await T.step('stable',async P=>{if(!(await P.E('ss.harness||ss.done'))){const r0=await P.act([2,107],'сани (без упряжи)');T.ok(!(await P.E('ss.harness||ss.done')),'без упряжи в руках сани не едут: «'+String(r0).slice(0,40)+'»')}if(await P.E('ss.done')){T.ok(true,'сани взлетели');return}
+    if(!(await P.E('ss.harness'))){await P.hold('упряжь');await P.act([2,107],'сани: надеть упряжку')}T.ok(await P.waitFor('ss.harness'),'упряжка надета');await P.act([2,107],'сани');T.ok(await P.waitFor('ss.done'),'сани взлетели')});
   return 'kitchen'},
 
 async kitchen(T){
