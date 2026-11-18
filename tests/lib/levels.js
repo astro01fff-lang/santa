@@ -150,8 +150,8 @@ async obs(T){
     const sol=await P.E(`(()=>{const ns=${JSON.stringify(MIR)};const save=ns.map(n=>so.mir[n].st);for(let c=0;c<256;c++){ns.forEach((n,i)=>so.mir[n].st=(c>>(i*2))&3);traceBeam();if(so.done){so.done=false;const r=ns.map(n=>so.mir[n].st);ns.forEach((n,i)=>so.mir[n].st=save[i]);Object.values(so.mir).forEach(m=>m.frost=false);traceBeam();return r}}return null})()`);
     T.ok(!!sol,'у задачи с зеркалами есть решение');
     if(sol)for(let i=0;i<MIR.length;i++){const ow=await P.E(`so.mir['${MIR[i]}'].owner`);let Q=P;for(const R of T.P)if(await R.E('me')===ow)Q=R;
-      for(let c=0;c<8&&!(await Q.E('so.done'))&&await Q.E(`so.mir['${MIR[i]}'].st`)!==sol[i];c++){await Q.act(await Q.E(`(()=>{const o=MIR.find(o=>o.n==='${MIR[i]}');return[o.x-7,o.y-14]})()`),'повернуть зеркало');await W(150)}Q.log('повернул своё зеркало '+MIR[i]);await W(400)}
-    T.ok(await P.waitFor('so.done'),'луч попал в кристалл')});
+      for(let c=0;c<8&&!(await Q.E('so.done'))&&await Q.E(`so.mir['${MIR[i]}'].st`)!==sol[i];c++){if(await Q.E(`levelOf(ROOM)!=='obs'`))break;try{await Q.act(await Q.E(`(()=>{const o=MIR.find(o=>o.n==='${MIR[i]}');return[o.x-7,o.y-14]})()`),'повернуть зеркало')}catch(e){if(await Q.E('so.done||levelOf(ROOM)!=="obs"'))break;throw e}await W(150)}Q.log('повернул своё зеркало '+MIR[i]);await W(400)}
+    T.ok(await P.waitFor(`so.done||levelOf(ROOM)!=='obs'`),'луч попал в кристалл')});
   return 'flight'},
 
 async flight(T){
