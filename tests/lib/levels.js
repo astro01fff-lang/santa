@@ -43,7 +43,7 @@ async living(T){
   const hang=async(P,star)=>{await T.ready(P);await goTo(P,'living');await P.act([209,56],'ёлка');await W(400);const tb=await P.pg.locator('#treecv').boundingBox();const hooks=await P.E('HOOKS');
     const mine=await P.E(`Object.keys(ORNN).filter(k=>st.orn[k]&&!st.hung[k]&&ornMine(k))`);let n=0;
     for(const h of hooks.filter(h=>h.ans&&mine.includes(h.ans)&&(star?h.ans==='star':h.ans!=='star'))){const nm=await P.E(`ORNN['${h.ans}']`);
-      await P.pg.click(`#tray button[aria-label="${nm}"]`,{timeout:5000});await P.pg.mouse.click(tb.x+h.x/1536*tb.width,tb.y+h.y/1024*tb.height);await W(150);n++}
+      await P.pg.click(`#tray button[aria-label="${nm}"]`,{timeout:5000}).catch(async e=>{const d=await P.E(`JSON.stringify({tray:[...document.querySelectorAll('#tray button')].map(b=>b.getAttribute('aria-label')),want:${JSON.stringify(nm)},sel:treeSel,open:!treeBox.hidden,hung:st.hung,msg:tmsg.textContent})`).catch(()=>'?');throw new Error('лоток: '+d+' :: '+e.message.split('\n')[0])});await P.pg.mouse.click(tb.x+h.x/1536*tb.width,tb.y+h.y/1024*tb.height);await W(150);n++}
     P.log('повесил на ёлку: '+n+(star?' (звезда)':''));if(!star)await P.pg.click('#treeclose').catch(()=>{});return n};
   let total=0;for(const P of T.P){try{total+=await hang(P,false)}catch(e){T.ok(false,P.name+': не смог повесить свои игрушки: '+e.message.split('\n')[0])}}
   await W(1500);T.ok(await T.any().waitFor('Object.keys(st.hung).length===8'),'8 игрушек на ёлке ('+await T.any().E('Object.keys(st.hung).length')+')');
