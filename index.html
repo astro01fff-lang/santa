@@ -1107,6 +1107,7 @@ function goRoom(r){
   const SP=r==='loft'?[[72,140],[90,140],[110,130],[130,130]]:r==='forge'?[[36,116],[60,130],[80,140],[100,150]]:r==='pantry'?[[30,118],[60,120],[90,130],[120,130]]:r==='cellar'?[[66,112],[90,120],[110,130],[130,140]]:r==='kitchen'?[[90,140],[112,148],[150,140],[172,148]]:r==='boss'?[[164,222],[180,232],[196,222],[212,232]]:r==='clock'?[[40,116],[58,124],[40,134],[58,142]]:r==='work'?START_W:r==='stable'?[[92,66],[110,66],[128,66],[146,66]]:r==='obs'?[[82,90],[98,96],[150,92],[166,96]]:r==='palace'?[[120,140],[136,140],[104,150],[152,150]]:r==='gates'?[[16,64],[16,80],[16,96],[16,112]]:START;
   for(let k=SP.length;k<OUTFITS.length;k++){const b0=SP[k%SP.length];let pt=null;for(const [ox,oy] of [[12,10],[-12,10],[20,0],[-20,0],[0,14],[24,14],[-24,14],[0,-12]]){const q=[b0[0]+ox,b0[1]+oy];if(!hits(q[0],q[1])&&!SP.some(z=>Math.hypot(z[0]-q[0],z[1]-q[1])<8)){pt=q;break}}SP.push(pt||[b0[0],b0[1]])}
   people=OUTFITS.map((o,i)=>({i,scene:r,x:SP[i][0],y:SP[i][1],dir:r==='work'?'right':'down',frame:0,ft:0,moving:false,tx:null,ty:null,wait:1+Math.random()*2,held:null}));
+  try{people.forEach(unstick)}catch(e){}
   document.getElementById('roomname').textContent=r==='kitchen'?'Кухня миссис Клаус':r==='boss'?'Ледяной дворец':r==='clock'?'Часовая башня':r==='work'?'Мастерская эльфов':r==='stable'?'Конюшня':r==='obs'?'Обсерватория':r==='palace'?'Ледяной дворец':r==='gates'?'Ледяные ворота':'Гостиная Санты';
   document.querySelectorAll('.rtab').forEach(b=>b.setAttribute('aria-pressed',b.dataset.room===r?'true':'false'));
   renderSide();
@@ -2880,7 +2881,13 @@ const OVEN=[170,58];
 let sceneFadeT=0;
 function goScene(sc,pos){const p=people[me];p.scene=sc;p.x=pos[0];p.y=pos[1];p.tx=null;path=null;pendingLook=false;bubble=null;sfx('open');sceneFadeT=performance.now();setView(sc);unstick(p)}
 // страховка: если после перехода персонаж стоит в непроходимом месте (мебель, сено), ставим его на ближайший свободный пол
-function unstick(p){try{const fx=p.x+8,fy=p.y+20;if(nearestFree(fx,fy,8))return;const t=nearestFree(fx,fy,60);if(t){p.x=t[0]*GS+2-8;p.y=t[1]*GS+2-20}}catch(e){}}
+function unstick(p){try{const fx=p.x+8,fy=p.y+20;
+  // основная (самая большая) область пола; маленькие отрезанные «карманы» и стены — переставляем на неё
+  const lab={};let id=0,big=-1,bs=0;for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW;gx++){if(!free(gx,gy)||lab[gx+','+gy]!==undefined)continue;let n=0;const q=[[gx,gy]];lab[gx+','+gy]=id;
+    while(q.length){const [x,y]=q.pop();n++;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const X=x+dx,Y=y+dy,k=X+','+Y;if(lab[k]===undefined&&free(X,Y)){lab[k]=id;q.push([X,Y])}}}if(n>bs){bs=n;big=id}id++}
+  const t=nearestFree(fx,fy,8);if(t&&lab[t[0]+','+t[1]]===big)return;
+  let best=null,bd=1e9;for(const k in lab){if(lab[k]!==big)continue;const [gx,gy]=k.split(',').map(Number);const d=Math.hypot(gx*GS+2-fx,gy*GS+2-fy);if(d<bd){bd=d;best=[gx,gy]}}
+  if(best){p.x=best[0]*GS+2-8;p.y=best[1]*GS+2-20}}catch(e){}}
 function setView(sc){ROOM=sc;WW=W;WH=H;GW=W/GS|0;GH=H/GS|0;camX=0;camY=0;
   const NM={kitchen:'Кухня миссис Клаус',pantry:'Кладовая',cellar:'Погреб',loft:'Сеновал',forge:'Кузница',stable:'Конюшня'};document.getElementById('roomname').textContent=NM[sc]||document.getElementById('roomname').textContent;renderSide()}
 function whereIs(){const by={};people.forEach(p=>{const s=p.scene||ROOM;(by[s]=by[s]||[]).push(OUTFITS[p.i].name)});return by}
