@@ -57,6 +57,7 @@ const run={bugs:[],pend:[],t0:Date.now(),seed:SEED,
       if(want!=='flight'&&lv!=='flight'){for(const P of T.P){const seen=await P.E(`(window.__BANNERS||[]).length`).catch(()=>0);if(!seen&&P.reloadAt&&Date.now()-P.reloadAt<20000){P.log('баннер пропущен: обновлял страницу');continue}T.ok(seen>0,P.name+': показан баннер «Уровень пройден!»')}}
       if(!moved){run.bug({team:T,sev:'критический',title:'Команда не перешла на «'+(LVNAME[want]||want)+'» после прохождения уровня',level:lv});await hostGoto(T,want==='flight'?'boss':want)}
       else if(want!=='flight'&&want!=='boss'){let hv=null;for(let k=0;k<12;k++){hv=await host.$eval('#goto_'+T.id,e=>e.value).catch(()=>null);if(hv===want)break;await W(500)}T.ok(hv===want,'панель ведущей видит команду на уровне «'+LVNAME[want]+'» ('+hv+')')}
+      await T.sync().catch(()=>{});/* в конце каждого уровня: состояние у всех одинаковое, дублей нет */
       T.levels[lv]={sec:Math.round((Date.now()-t0)/1000),ok:T.checks.slice(cs).every(c=>c.ok),checks:T.checks.length-cs,moved};
       if(want==='flight'&&!levels.includes('flight'))break}
     T.done=Date.now()}

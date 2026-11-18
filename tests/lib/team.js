@@ -38,7 +38,9 @@ class Team{
       else{P.log('нажал Escape');await P.pg.keyboard.press('Escape');await P.closeUI()}}
     else if(kind==='active'){const box=await P.pg.locator('#game').boundingBox().catch(()=>null);if(box){P.log('быстро накликал по сцене');for(let k=0;k<6;k++){await P.pg.mouse.click(box.x+box.width*(.2+.6*this.R()),box.y+box.height*(.4+.5*this.R()));await W(40)}await W(400);await P.closeUI()}}
     else if(kind==='unstable'){if(this.R()<.4){const ms=2500+this.R()*5000;await P.setOffline(true);await W(ms);await P.setOffline(false);await W(800)}}}
-  async sync(){await W(1500);if(this.P.length<2)return;
+  async sync(){await W(1500);
+    for(const P of this.P){const d=await P.E('(window.__DUPS||[]).splice(0)').catch(()=>[]);if(d&&d.length)this.ok(false,P.name+': вещь в инвентаре задвоилась: '+d.slice(0,3).join(' | '),'серьёзный')}
+    if(this.P.length<2)return;
     const snap=P=>P.E(`(()=>{const out={};const walk=(o,p,d)=>{if(d>3||o==null)return;for(const k in o){const v=o[k];if(/^(so\.(beam|passed|hitDecoy)|sc\.ang|st\.(hangT|catT)|sk\.melt|sw\.gifts\.\d+\.s$)/.test(p+k))continue;if(/T$|^t$|At$|^t0$|cd|parts|beams|spikes|orbs|shots|taunt|melt|^s$|frost/.test(k))continue;if(typeof v==='boolean'||typeof v==='string'||(typeof v==='number'&&Number.isInteger(v)&&Math.abs(v)<1000))out[p+k]=v;else if(typeof v==='object')walk(v,p+k+'.',d+1)}};
       const L=levelOf(ROOM);const R={living:'st',work:'sw',clock:'sc',stable:'ss',kitchen:'sk',obs:'so'}[L];if(R)walk(eval(R),R+'.',0);out.inv=TEAM.inv.map(baseIt).sort().join('|');out.level=L;return out})()`);
     let diff=[];for(let a=0;a<4;a++){const all=await Promise.all(this.P.map(snap));const A=all[0];diff=[];
