@@ -4,7 +4,7 @@
 const {chromium}=require('playwright');const fs=require('fs'),path=require('path'),cp=require('child_process');
 const {Player,W}=require('./lib/player');const {Team}=require('./lib/team');const {LEVELS,ORDER}=require('./lib/levels');
 const A=process.argv.slice(2);const arg=(k,d)=>{const i=A.indexOf('--'+k);return i<0?d:(A[i+1]&&!A[i+1].startsWith('--')?A[i+1]:true)};
-const NT=+arg('teams',4),NP=+arg('players',2),SEED=+arg('seed',Date.now()%100000),CHAOS=!!arg('chaos',false),ONLY=arg('levels',null);
+const NT=+arg('teams',4),NP=+arg('players',2),NL=+arg('light-teams',0),SEED=+arg('seed',Date.now()%100000),CHAOS=!!arg('chaos',false),ONLY=arg('levels',null);
 const PORT=8765,BU='&bu='+encodeURIComponent('ws://127.0.0.1:9001'),BASE='http://127.0.0.1:'+PORT;
 const OUT=path.join(__dirname,'out',(CHAOS?'chaos-':'run-')+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'));fs.mkdirSync(path.join(OUT,'shots'),{recursive:true});
 const BASEPR=[['sequential','sequential','explorer'],['active','explorer','careless'],['careless','sequential','unstable'],['unstable','active','sequential']];
@@ -26,11 +26,15 @@ const run={bugs:[],pend:[],t0:Date.now(),seed:SEED,
   console.log(`QA: команд ${NT} по ${NP} игрока, сид ${SEED}${CHAOS?', режим хаоса':''}. Отчёт: ${OUT}`);
   // ведущая
   const host=await (await browser.newContext({viewport:{width:1400,height:900}})).newPage();const hostErr=[];host.on('pageerror',e=>hostErr.push(e.message));
-  await host.goto(BASE+'/host.html?x=1'+BU);await W(800);await host.fill('#nTeams',String(NT));await host.click('#nCreate');await W(2500);
+  await host.goto(BASE+'/host.html?x=1'+BU);await W(800);await host.fill('#nTeams',String(NT+NL));await host.click('#nCreate');await W(2500);
   const sid=new URL(host.url()).searchParams.get('s');
   const teams=[];for(let t=0;t<NT;t++){const T=new Team(run,'t'+(t+1),'Команда '+(t+1),PROFILES[t%PROFILES.length],SEED*31+t);teams.push(T);
     for(let i=0;i<NP;i++){const P=new Player(run,T,i,'Игрок'+(t+1)+'.'+(i+1));await P.open(browser,`${BASE}/index.html?s=${sid}&t=${T.id}${BU}`);
       await P.pg.fill('#netui input',P.name);await P.pg.click('#netui .btn.go');await W(900);await P.pg.click(`#netui .ch >> nth=${i}`);await W(900);await P.pg.click('#netui >> text=Я готов(а)');await W(400);T.P.push(P)}}
+  // лёгкие команды (нагрузочный тест): регистрируются как настоящие игроки
+  const lights=[];if(NL){const {Light}=require('./lib/light');const url='ws://127.0.0.1:9001';
+    for(let t=NT;t<NT+NL;t++)for(let i=0;i<NP;i++){const L=new Light({url,sid,team:'t'+(t+1),slot:i,char:i,name:'Лёгкий'+(t+1)+'.'+(i+1)});await L.connect();L.join();lights.push(L);await W(150)}
+    await W(3000);console.log('лёгких игроков: '+lights.length+' в '+NL+' командах')}
   const tStart=Date.now();await host.click('#bStart');await W(500);if(await host.locator('#dlgOk').isVisible())await host.click('#dlgOk');
   // пролог: текст появляется постепенно, у обоих игроков
   for(const T of teams)for(const P of T.P){const vis=`document.getElementById('prolog').hidden?null:(document.getElementById('plt')||document.getElementById('prolog')).textContent.length`;
@@ -39,7 +43,7 @@ const run={bugs:[],pend:[],t0:Date.now(),seed:SEED,
   for(const T of teams)for(const P of T.P){await P.waitReady();T.ok(await P.E(`(()=>{const ok=id=>{const e=document.getElementById(id);return !!(e&&e.offsetParent)};return ok('mbtn')&&ok('sbtn')&&ok('mbtn2')&&ok('sbtn2')&&!!document.getElementById('mbtn2').closest('.hotbar')})()`),P.name+': кнопки музыки и звука видны наверху и внизу','серьёзный')}
   // экраны команд у ведущей: без звука
   try{await host.click('#nav button >> text=Экраны команд');await W(400);await host.click('#monToggle');await W(5000);const fr=host.frames().filter(f=>/spec=1/.test(f.url()));
-    teams[0].ok(fr.length===NT,'у ведущей открыты экраны всех команд: '+fr.length);for(const f of fr){await f.evaluate(()=>document.body.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))).catch(()=>{})}await W(800);
+    teams[0].ok(fr.length===NT+NL,'у ведущей открыты экраны всех команд: '+fr.length);for(const f of fr){await f.evaluate(()=>document.body.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))).catch(()=>{})}await W(800);
     for(const f of fr){const s=await f.evaluate(()=>window.__EV?window.__EV('!!AU.ctx'):'нет').catch(e=>'ошибка');teams[0].ok(s===false,'экран команды у ведущей без звука ('+s+')')}
     await host.click('#monToggle');await host.click('#nav button >> text=Команды')}catch(e){run.bug({sev:'незначительный',title:'Не удалось проверить экраны команд у ведущей: '+e.message.split('\n')[0]})}
   // проход
@@ -64,12 +68,29 @@ const run={bugs:[],pend:[],t0:Date.now(),seed:SEED,
   let hostQ=Promise.resolve();
   function hostGoto(T,lv){const r=hostQ.then(()=>hostGoto0(T,lv));hostQ=r.catch(()=>{});return r}/* ведущая переводит команды по очереди */
   async function hostGoto0(T,lv){console.log(`  ⤳ ведущая переводит ${T.name} на ${lv}`);try{await host.click('#nav button >> text=Команды');await W(300);await host.selectOption('#goto_'+T.id,lv);await host.click(`#goto_${T.id} + button`);await W(300);if(await host.locator('#dlgOk').isVisible())await host.click('#dlgOk');await W(3500);for(const P of T.P){await P.waitRoom(lv);await P.install()}}catch(e){run.bug({team:T,sev:'серьёзный',title:'Ведущая не смогла перевести команду: '+e.message.split('\n')[0]})}}
+  // ведущая во время нагрузки: отклик панели (мс) раз в 5 с
+  const hostLag=[];let hostWatch=true;(async()=>{while(hostWatch){const t=Date.now();await host.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>r(1)))).catch(()=>{});hostLag.push(Date.now()-t);await W(5000)}})();
   await Promise.all(teams.map(T=>play(T).catch(e=>run.bug({team:T,sev:'критический',title:'Прогон команды упал: '+e.message.split('\n')[0]}))));
+  hostWatch=false;
+  let load=null;if(NL){const T0=teams[0];
+    // панель ведущей видит все команды и игроков
+    await host.click('#nav button >> text=Игра').catch(()=>{});await W(1500);const kp=await host.$eval('#kpis',e=>e.innerText.replace(/\s+/g,' ')).catch(()=>'');
+    await host.click('#nav button >> text=Команды').catch(()=>{});await W(1500);const nTeamsShown=await host.locator('select[id^=goto_]').count();
+    const lightLv=await host.$$eval('select[id^=goto_]',ss=>ss.map(s=>s.value)).catch(()=>[]);
+    T0.ok(nTeamsShown===NT+NL,'панель ведущей показывает все '+(NT+NL)+' команд ('+nTeamsShown+')');
+    T0.ok(lightLv.slice(NT).some(v=>v!=='living'),'панель ведущей видит прогресс лёгких команд по уровням: '+lightLv.join(','));
+    // «Экраны команд» на все команды: отклик панели
+    let monLag=[];try{await host.click('#nav button >> text=Экраны команд');await W(500);await host.click('#monToggle');await W(8000);
+      for(let k=0;k<6;k++){const t=Date.now();await host.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>r(1))));monLag.push(Date.now()-t);await W(2000)}
+      const fr=host.frames().filter(f=>/spec=1/.test(f.url())).length;T0.ok(fr===NT+NL,'«Экраны команд» открыли все '+(NT+NL)+' экранов ('+fr+')');await host.click('#monToggle')}catch(e){T0.ok(false,'«Экраны команд»: '+e.message.split('\n')[0])}
+    const sent=lights.reduce((a,L)=>a+L.sent,0),recv=lights.reduce((a,L)=>a+L.recv,0),sec=(Date.now()-tStart)/1000;
+    load={lightPlayers:lights.length,lightTeams:NL,kpis:kp,hostLagMs:{max:Math.max(...hostLag),avg:Math.round(hostLag.reduce((a,b)=>a+b,0)/Math.max(1,hostLag.length))},monitorLagMs:monLag,lightSentPerSec:Math.round(sent/sec*10)/10,lightRecvPerSec:Math.round(recv/sec*10)/10};
+    console.log('НАГРУЗКА:',JSON.stringify(load));lights.forEach(L=>L.stop())}
   // ведущая видит финиш
   await W(3000);await host.click('#nav button >> text=Результаты').catch(()=>{});await W(800);const fin=await host.$eval('#s-res',e=>e.innerText).catch(()=>null);
   await Promise.all(run.pend);
   // отчёт
-  const rep={seed:SEED,chaos:CHAOS,teams:teams.map(T=>({name:T.name,players:T.P.map(P=>({name:P.name,profile:PNAME[T.prof(P)],jsErrors:P.errors.length,netErrors:P.net.length,errors:P.errors.slice(0,8)})),levels:T.levels,checks:T.checks.length,failed:T.checks.filter(c=>!c.ok).length,failedSteps:T.failedSteps||0,minutes:T.done?((T.done-tStart)/60000).toFixed(1):null})),hostErrors:hostErr,hostFin:fin,bugs:run.bugs,checks:teams.flatMap(T=>T.checks.map(c=>Object.assign({team:T.name},c))),durationMin:((Date.now()-run.t0)/60000).toFixed(1)};
+  const rep={seed:SEED,chaos:CHAOS,teams:teams.map(T=>({name:T.name,players:T.P.map(P=>({name:P.name,profile:PNAME[T.prof(P)],jsErrors:P.errors.length,netErrors:P.net.length,errors:P.errors.slice(0,8)})),levels:T.levels,checks:T.checks.length,failed:T.checks.filter(c=>!c.ok).length,failedSteps:T.failedSteps||0,minutes:T.done?((T.done-tStart)/60000).toFixed(1):null})),hostErrors:hostErr,hostFin:fin,load,bugs:run.bugs,checks:teams.flatMap(T=>T.checks.map(c=>Object.assign({team:T.name},c))),durationMin:((Date.now()-run.t0)/60000).toFixed(1)};
   fs.writeFileSync(path.join(OUT,'report.json'),JSON.stringify(rep,null,1));fs.writeFileSync(path.join(OUT,'report.md'),require('./lib/report').md(rep,LVNAME));
   console.log(`\nГОТОВО за ${rep.durationMin} мин. Проверок: ${rep.checks.length}, провалено: ${rep.checks.filter(c=>!c.ok).length}, багов: ${run.bugs.length}. Отчёт: ${path.join(OUT,'report.md')}`);
   await browser.close();kids.forEach(k=>k.kill());process.exit(0)})();
